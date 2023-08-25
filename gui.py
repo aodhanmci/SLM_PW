@@ -36,7 +36,8 @@ def main():
     
     CCD_layout =  [  [sg.Text('CCD')],
                 [sg.Image(filename='', key='CCD Image')],
-                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')]
+                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
+                [sg.Button('save'), sg.Button('gain'), sg.Button('exposure')]
                                 ]
     # layout = [[sg.VPush()],
     #           [sg.Push(), sg.Column(column_to_be_centered,element_justification='c'), sg.Push()],
@@ -53,13 +54,18 @@ def main():
     imageWindow = pylon.PylonImageWindow()
     imageWindow.Create(1)
         # Create an instant camera object with the camera device found first.
-    camera = pylon.InstantCamera(tlf.CreateDevice(devices[2]))
+    camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
     running=False
     # Print the model name of the camera.
     print("Using device ", camera.GetDeviceInfo().GetModelName())
-    camera.StartGrabbingMax(5000, pylon.GrabStrategy_LatestImageOnly)
+
+    camera.Open()
+    camera.ExposureTimeRaw = 100000
+    camera.PixelFormat = "Mono12"
+    # camera.StartGrabbingMax(5000, pylon.GrabStrategy_LatestImageOnly)
+    camera.StartGrabbing()
     pylon.FeaturePersistence.Save("test.txt", camera.GetNodeMap())
-    camera.ExposureTimeRaw = 20000
+
     while True:
         event, values = window.read(timeout=20)
         if event == 'Exit' or event == sg.WIN_CLOSED:
@@ -75,12 +81,10 @@ def main():
             imgbytes = cv2.imencode('.png', img)[1].tobytes()
             window['CCD Image'].update(data=imgbytes)
             window['SLM Image'].update(data=imgbytes)
-            # camera.Close()
-
-
+            camera.Close()
  
         if running:
-            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            grabResult = camera.RetrieveResult(5000000, pylon.TimeoutHandling_ThrowException)
             data = grabResult.GetArray()
             data = cv2.imencode('.png', data)[1].tobytes()
             img = np.full((500, 500), 255)

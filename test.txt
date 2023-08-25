@@ -1,6 +1,6 @@
 # {05D8C294-F295-4dfb-9D01-096BD04049F4}
 # GenApi persistence file (version 3.1.0)
-# Device = Basler::GigECamera -- Basler generic GigEVision camera interface -- Device version = 3.8.0 -- Product GUID = 1F3C6A72-7842-4edd-9130-E2E90A2058BA -- Product version GUID = 3EFB0F43-DD0C-4A24-9AEC-898FEDCFE564
+# Device = Basler::GigECamera -- Basler generic GigEVision camera interface -- Device version = 3.8.0 -- Product GUID = 1F3C6A72-7842-4edd-9130-E2E90A2058BA -- Product version GUID = 89988872-73B1-414F-9D8C-BEA7B518170D
 GainAuto	Off
 GainSelector	All
 GainRaw	0
@@ -16,8 +16,9 @@ ReverseX	0
 ReverseY	0
 TestImageSelector	Off
 PgiMode	Off
-OffsetX	0
-OffsetY	0
+VignettingCorrectionMode	Off
+OffsetX	8
+OffsetY	8
 CenterX	0
 CenterY	0
 BinningModeHorizontal	Summing
@@ -44,7 +45,7 @@ TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureMode	Timed
 ExposureAuto	Off
-ExposureTimeRaw	2000000
+ExposureTimeRaw	100000
 ShutterMode	Global
 AcquisitionFrameRateEnable	0
 AcquisitionFrameRateAbs	100
@@ -73,7 +74,7 @@ LineSelector	Line3
 LineInverter	0
 LineSelector	Line1
 LineSelector	Line1
-LineDebouncerTimeRaw	0
+LineDebouncerTimeRaw	10000
 LineSelector	Line3
 LineDebouncerTimeRaw	0
 LineSelector	Line1
@@ -91,10 +92,10 @@ TimerSelector	Timer1
 TimerDelayRaw	0
 TimerSelector	Timer1
 TimerSelector	Timer1
-TimerDurationAbs	10
+TimerDurationAbs	4095
 TimerSelector	Timer1
 TimerSelector	Timer1
-TimerDurationRaw	10
+TimerDurationRaw	4095
 TimerSelector	Timer1
 CounterSelector	Counter1
 CounterEventSource	FrameTrigger
@@ -106,6 +107,7 @@ CounterResetSource	Off
 CounterSelector	Counter2
 CounterResetSource	Off
 CounterSelector	Counter1
+BslLightControlMode	Off
 LUTSelector	Luminance
 LUTEnable	0
 LUTSelector	Luminance
@@ -128,28 +130,28 @@ AutoTargetValue	2048
 GrayValueAdjustmentDampingRaw	700
 AutoGainRawLowerLimit	0
 AutoGainRawUpperLimit	239
-AutoExposureTimeAbsLowerLimit	80
-AutoExposureTimeAbsUpperLimit	500000
+AutoExposureTimeLowerLimitRaw	80
+AutoExposureTimeUpperLimitRaw	500000
 AutoFunctionProfile	GainMinimum
 AutoFunctionAOISelector	AOI1
-AutoFunctionAOIWidth	511
+AutoFunctionAOIWidth	1920
 AutoFunctionAOISelector	AOI2
-AutoFunctionAOIWidth	511
+AutoFunctionAOIWidth	1920
 AutoFunctionAOISelector	AOI1
 AutoFunctionAOISelector	AOI1
-AutoFunctionAOIHeight	384
+AutoFunctionAOIHeight	1200
 AutoFunctionAOISelector	AOI2
-AutoFunctionAOIHeight	384
+AutoFunctionAOIHeight	1200
 AutoFunctionAOISelector	AOI1
 AutoFunctionAOISelector	AOI1
-AutoFunctionAOIOffsetX	1
+AutoFunctionAOIOffsetX	8
 AutoFunctionAOISelector	AOI2
-AutoFunctionAOIOffsetX	1
+AutoFunctionAOIOffsetX	8
 AutoFunctionAOISelector	AOI1
 AutoFunctionAOISelector	AOI1
-AutoFunctionAOIOffsetY	2
+AutoFunctionAOIOffsetY	8
 AutoFunctionAOISelector	AOI2
-AutoFunctionAOIOffsetY	2
+AutoFunctionAOIOffsetY	8
 AutoFunctionAOISelector	AOI1
 UserDefinedValueSelector	Value1
 UserDefinedValue	0
