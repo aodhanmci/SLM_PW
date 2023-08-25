@@ -1,10 +1,27 @@
 import PySimpleGUI as sg
 import cv2
 import numpy as np
+from pypylon import pylon
+from pypylon import genicam
+import os
+import time
 
-"""
-Demo program that displays a webcam using OpenCV
-"""
+maxCamerasToUse = 2
+# get transport layer and all attached devices
+maximagestograb = 50
+tlf = pylon.TlFactory.GetInstance()
+devices = tlf.EnumerateDevices()
+NUM_CAMERAS = len(devices)
+os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
+exitCode = 0
+if NUM_CAMERAS == 0:
+    raise pylon.RuntimeException("No camera connected")
+else:
+    print(f'{NUM_CAMERAS} cameras detected:\n')
+    for counter, device in enumerate(devices):
+        print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+        print(f'{counter}) {device.GetFullName()}\n') # return unique code
+
 
 
 def main():
@@ -12,42 +29,72 @@ def main():
     sg.theme('Black')
 
     # define the window layout
-    column_to_be_centered = [  [sg.Text('SLM')],
-                [sg.Image(filename='', key='image')],
-                [sg.Text(size=(12,1), key='-OUT-')],
-                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')]]
+    SLM_layout = [  [sg.Text('SLM')],
+                [sg.Image(filename='', key='SLM Image')]
+                # [sg.Button('Upload Single'), sg.Button('1 loop'), sg.Button('5 loop')]
+                ]
+    
+    CCD_layout =  [  [sg.Text('CCD')],
+                [sg.Image(filename='', key='CCD Image')],
+                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')]
+                                ]
+    # layout = [[sg.VPush()],
+    #           [sg.Push(), sg.Column(column_to_be_centered,element_justification='c'), sg.Push()],
+    #           [sg.VPush()]]
 
-    layout = [[sg.VPush()],
-              [sg.Push(), sg.Column(column_to_be_centered,element_justification='c'), sg.Push()],
-              [sg.VPush()]]
-
+    layout =   [  [sg.Column(SLM_layout),
+     sg.VSeperator(),
+     sg.Column(CCD_layout)]]
     # create the window and show it without the plot
     window = sg.Window('SLM CCD',
-                       layout, location=(1920, 1080))
+                       layout, location=(0, 0))
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
-    cap = cv2.VideoCapture(0)
-    recording = False
-
+    imageWindow = pylon.PylonImageWindow()
+    imageWindow.Create(1)
+        # Create an instant camera object with the camera device found first.
+    camera = pylon.InstantCamera(tlf.CreateDevice(devices[2]))
+    running=False
+    # Print the model name of the camera.
+    print("Using device ", camera.GetDeviceInfo().GetModelName())
+    camera.StartGrabbingMax(5000, pylon.GrabStrategy_LatestImageOnly)
+    pylon.FeaturePersistence.Save("test.txt", camera.GetNodeMap())
+    camera.ExposureTimeRaw = 20000
     while True:
         event, values = window.read(timeout=20)
         if event == 'Exit' or event == sg.WIN_CLOSED:
             return
 
         elif event == 'Start':
-            recording = True
+            running = True
 
         elif event == 'Stop':
-            recording = False
-            img = np.full((1920, 1080), 255)
+            running = False
+            img = np.full((500, 500), 255)
             # this is faster, shorter and needs less includes
             imgbytes = cv2.imencode('.png', img)[1].tobytes()
-            window['image'].update(data=imgbytes)
+            window['CCD Image'].update(data=imgbytes)
+            window['SLM Image'].update(data=imgbytes)
+            # camera.Close()
 
-        if recording:
-            ret, frame = cap.read()
-            imgbytes = cv2.imencode('.png', frame)[1].tobytes()  # ditto
-            window['image'].update(data=imgbytes)
+
+ 
+        if running:
+            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            data = grabResult.GetArray()
+            data = cv2.imencode('.png', data)[1].tobytes()
+            img = np.full((500, 500), 255)
+            imgbytes = cv2.imencode('.png', img)[1].tobytes()
+            # imgdata = data.tobytes()
+            # imgbytes = cv2.imencode('.png', frame)[1].tobytes()  # ditto
+
+            window['CCD Image'].update(data)
+            # window['SLM Image'].update(imgbytes)
+
+        # if event == 'Exposure':
+        #     running = True
+        #     camera.ExposureTime.SetValue(5000)
+
 
 
 main()
