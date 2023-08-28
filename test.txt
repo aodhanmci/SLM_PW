@@ -45,7 +45,7 @@ TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureMode	Timed
 ExposureAuto	Off
-ExposureTimeRaw	100000
+ExposureTimeRaw	300
 ShutterMode	Global
 AcquisitionFrameRateEnable	0
 AcquisitionFrameRateAbs	100
@@ -126,7 +126,7 @@ GevStreamChannelSelector	StreamChannel0
 GevStreamChannelSelector	StreamChannel0
 GevSCBWRA	10
 GevStreamChannelSelector	StreamChannel0
-AutoTargetValue	2048
+AutoTargetValue	128
 GrayValueAdjustmentDampingRaw	700
 AutoGainRawLowerLimit	0
 AutoGainRawUpperLimit	239
