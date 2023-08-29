@@ -6,7 +6,7 @@ from pypylon import genicam
 import os
 import time
 import matplotlib.pyplot as plt
-
+from PIL import Image, ImageTk
 
 maxCamerasToUse = 2
 # get transport layer and all attached devices
@@ -24,6 +24,10 @@ else:
         print(f'{counter}) {device.GetFriendlyName()}') # return readable name
         print(f'{counter}) {device.GetFullName()}\n') # return unique code
 
+scale_percent = 60 # percent of original size
+width = int(1920 * scale_percent / 100)
+height = int(1200 * scale_percent / 100)
+dim = (width, height)
 
 
 def main():
@@ -33,8 +37,8 @@ def main():
     # define the window layout
     SLM_layout = [  [sg.Text('SLM')],
                 [sg.Image(filename='', key='SLM Image')],
-                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')]
-                # [sg.Button('Upload Single'), sg.Button('1 loop'), sg.Button('5 loop')]
+                [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
+                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop')]
                 ]
     
     CCD_layout =  [  [sg.Text('CCD')],
@@ -52,7 +56,7 @@ def main():
      sg.Column(CCD_layout)]]
     # create the window and show it without the plot
     window = sg.Window('SLM CCD',
-                       layout, location=(0, 0))
+                       layout, location=(100, 100), resizable=True)
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
     imageWindow = pylon.PylonImageWindow()
@@ -64,10 +68,10 @@ def main():
     print("Using device ", camera.GetDeviceInfo().GetModelName())
 
     camera.Open()
+    # default acquisition attributes when opening the camera
     camera.ExposureTimeRaw = 5000
     camera.GainRaw = 0
     camera.PixelFormat = "Mono8"
-    print(camera.Width.GetValue())
     # camera.StartGrabbingMax(5000, pylon.GrabStrategy_LatestImageOnly)
     camera.StartGrabbing()
     # pylon.FeaturePersistence.Save("test.txt", camera.GetNodeMap())
@@ -84,25 +88,15 @@ def main():
 
         elif event == 'Stop':
             running = False
-            img = np.full((500, 500), 255)
-            # this is faster, shorter and needs less includes
-            imgbytes = cv2.imencode('.png', img)[1].tobytes()
-            window['CCD Image'].update(data=imgbytes)
-            window['SLM Image'].update(data=imgbytes)
-            
 
         if running:
             grabResult = camera.RetrieveResult(50000, pylon.TimeoutHandling_ThrowException)
             data = grabResult.GetArray()
-            imgdata = cv2.imencode('.png', data)[1].tobytes()
-            img = np.full((500, 500), 255)
-            imgbytes = cv2.imencode('.png', img)[1].tobytes()
-    
-            # imgdata = data.tobytes()
-            # imgbytes = cv2.imencode('.png', frame)[1].tobytes()  # ditto
+
+            frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
+            imgdata = cv2.imencode('.png', frame)[1].tobytes()
 
             window['CCD Image'].update(imgdata)
-            window['SLM Image'].update(imgbytes)
         
         if event == 'save':
             filename = values['-INPUT_SAVE-']
@@ -111,6 +105,13 @@ def main():
             camera.ExposureTimeRaw = int(values['-INPUT_EXP-'])
         if event == 'gain':
             camera.GainRaw = int(values['-INPUT_Gain-'])
+        if event == 'Upload Single':
+            SLM_image = values["-SLM_Single-"]
+            print(SLM_image)
+            data = cv2.imread(SLM_image)
+            frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
+            SLM_image = cv2.imencode('.png', frame)[1].tobytes()
+            window['SLM Image'].update(SLM_image)
 
         # 
         # print
