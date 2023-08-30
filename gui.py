@@ -8,6 +8,8 @@ import time
 import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
 
+# EDITED CODE AGAIN
+
 maxCamerasToUse = 2
 # get transport layer and all attached devices
 maximagestograb = 50
