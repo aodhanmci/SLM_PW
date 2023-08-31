@@ -3,14 +3,14 @@ import cv2
 import screeninfo
 
 if __name__ == '__main__':
-    screen_id = 2
+    screen_id = 1
 
     # get the size of the screen
-    # screen = screeninfo.get_monitors()[screen_id]
-    screen = screeninfo.get_monitors()
+    screen = screeninfo.get_monitors()[screen_id]
+    # screen = screeninfo.get_monitors()
     print(screen)
     width, height = screen.width, screen.height
-    data = cv2.imread(filename='10lpmm_190amp.png')    
+    data = cv2.imread(filename='testRESULT.png')    
 
     window_name = 'SLM'
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
