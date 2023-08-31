@@ -7,6 +7,8 @@ import os
 import time
 import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
+from SLM_TEST_GUI import runFeedback, feedback
+import screeninfo
 
 # EDITED CODE AGAIN
 
@@ -31,7 +33,18 @@ width = int(1920 * scale_percent / 100)
 height = int(1200 * scale_percent / 100)
 dim = (width, height)
 
+screen_id = 1
 
+# get the size of the screen
+screen = screeninfo.get_monitors()[screen_id]
+# screen = screeninfo.get_monitors()
+print(screen)
+window_name = 'SLM'
+width, height = screen.width, screen.height
+cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+cv2.moveWindow(window_name, screen.x - 1, screen.y - 1)
+cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN,
+                                cv2.WINDOW_FULLSCREEN)
 def main():
 
     sg.theme('Black')
@@ -40,7 +53,7 @@ def main():
     SLM_layout = [  [sg.Text('SLM')],
                 [sg.Image(filename='', key='SLM Image')],
                 [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
-                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop')]
+                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear')]
                 ]
     
     CCD_layout =  [  [sg.Text('CCD')],
@@ -111,13 +124,38 @@ def main():
             SLM_image = values["-SLM_Single-"]
             print(SLM_image)
             data = cv2.imread(SLM_image)
+            print(type(data))
             frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
             SLM_image = cv2.imencode('.png', frame)[1].tobytes()
             window['SLM Image'].update(SLM_image)
+            
 
+            cv2.imshow(window_name, data)
+            # cv2.waitKey()
+        if event == 'Clear':
+            data = np.zeros((1920, 1080))
+            frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
+            SLM_image = cv2.imencode('.png', frame)[1].tobytes()
+            window['SLM Image'].update(SLM_image)
+        if event == '1 loop':
+            resultImg, resultArray, diff = feedback(initialArray = data)
+            print("DIFF: " + str(np.round(diff,2)))
+            frame = cv2.resize(resultArray, dim, interpolation=cv2.INTER_AREA)
+            SLM_image = cv2.imencode('.png', frame)[1].tobytes()
+            window['SLM Image'].update(SLM_image)
+            cv2.imshow(window_name, resultArray)
+
+            # resultImg.save('/Users/loasis/Documents/GitHub/SLM_PW/testRESULT.png')
+
+            # SLM_grating_img = Image.fromarray(resultArray, 'L')
+            # # data = cv2.imread(resultImg)
+            # data = cv2.imread(SLM_grating_img)
+            # frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
+            # SLM_image = cv2.imencode('.png', frame)[1].tobytes()
+            # window['SLM Image'].update(SLM_image)
         # 
         # print
 
-
+# print("Hello")
 
 main()
