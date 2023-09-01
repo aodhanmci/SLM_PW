@@ -14,32 +14,46 @@ from scipy.ndimage import gaussian_filter
 import time
 from os import listdir
 from os.path import isfile, join
-from IPython.display import display
+# from IPython.display import display
 
-def calibration():
+def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
     # lenspaper = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/lensPaper/crosshair4Img3.png")
     # lenspaper = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/test51/crosshairImg.png")
-    lenspaper = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/testResult.png")
+    # lenspaper = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/testResult.png")
     # display(lenspaper)
+    lenspaper = Image.fromarray(input)
     lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
     # display(lenspaper)
     
-    crosshair4 = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/lensPaper/crosshair4.png")
+    crosshair4 = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/crosshair4.png')
     width, height = crosshair4.size
     # display(crosshair4)
     # lenspaper = lenspaper.resize([int(width*2), int(height)])
     
-    def zoom_at(img, x, y, zoom):
-        global w, h
-        w, h = img.size
-        # print(w,h)
-        zoom2 = zoom * 2
-        img = img.crop((x - w / zoom2, y - h / zoom2, 
-                        x + w / (zoom2*0.86), y + h / (zoom2*1.06)))
-        return img.resize((width, height), Image.Resampling.LANCZOS)
+    w, h = lenspaper.size
+    x = width/2 - xShift
+    y = height/2 + yShift
+    lenspaper = lenspaper.crop((x - w / 2, y - h / 2,
+                                x + w / (2 * xZoom), y + h / (2 * yZoom)))
+    lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
+    lenspaper = lenspaper.rotate(angle)
+
+    return asarray(lenspaper)
+
+
+    # def zoom_at(img, xZoom = xZoom, yZoom = yZoom, xShift = xShift, yShift = yShift):
+    #     global w, h
+    #     w, h = img.size
+    #     # print(w,h)
+    #     zoom2 = 2
+    #     x = width/2 - xShift
+    #     y = height/2 + yShift
+    #     img = img.crop((x - w / zoom2, y - h / zoom2, 
+    #                     x + w / (zoom2*xZoom), y + h / (zoom2*yZoom)))
+    #     return img.resize((width, height), Image.Resampling.LANCZOS)
     
-    lenspaper = zoom_at(lenspaper, width/2 - 151, height/2 + 15, 1)
-    lenspaper = lenspaper.rotate(1.2)
+    # lenspaper = zoom_at(lenspaper, 151, 15)
+    # lenspaper = lenspaper.rotate(1.2)
     
     # lenspaper.save("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/lensPaper/crosshair4ImgFlipped.png")
     
@@ -117,7 +131,7 @@ def zoom_at(img, x, y, zoom):
     # print(w,h)
     zoom2 = zoom * 2
     img = img.crop((x - w / zoom2, y - h / zoom2, 
-                    x + w / (zoom2*0.86), y + h / (zoom2*1.06)))
+                    x + w / (zoom2*0.86), y + h / (zoom2*1.1)))
     return img.resize((width, height), Image.Resampling.LANCZOS)
 
 
@@ -186,7 +200,7 @@ def displayt(image, text):
 
 
 
-def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 175, blur = 5, innerBlur = 15, range = 5, maxIter = 100, yshift = 4, plot = False):
+def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 5, innerBlur = 15, range = 5, maxIter = 100, yshift = 4, plot = False):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     #####
@@ -199,9 +213,12 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     if np.any(initialArray != None):
         initialImg = Image.fromarray(initialArray)
+        print(initialImg.mode)
     
     blazed = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/190_rectangle_vertical_lines_1px.png')
     blazedData = asarray(blazed)
+
+    # initialImg.show()
 
     # display(initialImg)
     
@@ -213,11 +230,11 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
     
-    initialImg = zoom_at(initialImg, width/2 - 151, height/2 + 15, 1)     # Not final implementation of zoom function
+    initialImg = zoom_at(initialImg, width/2 - 275, height/2 + 13, 1)     # Not final implementation of zoom function
     initialImg = initialImg.rotate(1.2)     # Image is rotated 2°
     # initialImg = initialImg.convert("L")
     initialImgArray = asarray(initialImg)
-    initialImgArray = cv2.normalize(initialImgArray, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+    # initialImgArray = cv2.normalize(initialImgArray, None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
     # print(type(initialImgArray[0][0]))
     initialImg = Image.fromarray(initialImgArray)
     # display(initialImgTest)
@@ -518,7 +535,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
     yshiftArray = np.ones(shape = totalMultArray.shape)     # Initialize yshift array
     # print(yshiftArray[0][0])
-    yshiftArray = yshiftArray * 70
+    # yshiftArray = yshiftArray * 70
     # print(yshiftArray[0][0])
     # yshiftArray = yshiftArray
     # print(yshiftArray[0][0])
@@ -585,9 +602,10 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     # totalMultImg2 = Image.fromarray(totalMultArray2)
     # totalMultMap2 = totalMultImg2.load()
     
-    # for i in np.arange(width):
-    #     initialImg.putpixel((i, int(height/2-15)), int(255))
-    # initialImg.show()
+    if count == 0:
+        for i in np.arange(width):
+            initialImg.putpixel((i, int(height/2)), int(255))
+        initialImg.show()
     
     
     
@@ -646,21 +664,21 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
 
         
         for i in np.arange(width):
-            aboveStrip = np.append(aboveStrip, aboveImgArray[int(height/2-15), i])
-            belowStrip = np.append(belowStrip, belowImgArray[int(height/2-15), i])
-            aboveMaxStrip = np.append(aboveMaxStrip, aboveImgMaxArray[int(height/2-15), i])
-            belowMaxStrip = np.append(belowMaxStrip, belowImgMaxArray[int(height/2-15), i])
-            aboveMaxBlurredStrip = np.append(aboveMaxBlurredStrip, aboveMaxBlurredArray[int(height/2-15), i])
-            belowMaxBlurredStrip = np.append(belowMaxBlurredStrip, belowMaxBlurredArray[int(height/2-15), i])
-            aboveMultStrip = np.append(aboveMultStrip, aboveMultArray[int(height/2-15), i])
-            diffImgStrip = np.append(diffImgStrip, diffImgArray[int(height/2-15), i])
-            initialStrip = np.append(initialStrip, initialArray[int(height/2-15), i])
-            goalStrip = np.append(goalStrip, goalArray[int(height/2-15), i])
-            aboveBlurredStrip = np.append(aboveBlurredStrip, aboveBlurredArray[int(height/2-15), i])
-            belowMultStrip = np.append(belowMultStrip, belowMultArray[int(height/2-15), i])
-            belowBlurredStrip = np.append(belowBlurredStrip, belowBlurredArray[int(height/2-15), i])
-            totalMultStrip = np.append(totalMultStrip, totalMultArray[int(height/2-15), i])
-            yshiftStrip = np.append(yshiftStrip, yshiftArray[int(height/2-15), i])
+            aboveStrip = np.append(aboveStrip, aboveImgArray[int(height/2), i])
+            belowStrip = np.append(belowStrip, belowImgArray[int(height/2), i])
+            aboveMaxStrip = np.append(aboveMaxStrip, aboveImgMaxArray[int(height/2), i])
+            belowMaxStrip = np.append(belowMaxStrip, belowImgMaxArray[int(height/2), i])
+            aboveMaxBlurredStrip = np.append(aboveMaxBlurredStrip, aboveMaxBlurredArray[int(height/2), i])
+            belowMaxBlurredStrip = np.append(belowMaxBlurredStrip, belowMaxBlurredArray[int(height/2), i])
+            aboveMultStrip = np.append(aboveMultStrip, aboveMultArray[int(height/2), i])
+            diffImgStrip = np.append(diffImgStrip, diffImgArray[int(height/2), i])
+            initialStrip = np.append(initialStrip, initialArray[int(height/2), i])
+            goalStrip = np.append(goalStrip, goalArray[int(height/2), i])
+            aboveBlurredStrip = np.append(aboveBlurredStrip, aboveBlurredArray[int(height/2), i])
+            belowMultStrip = np.append(belowMultStrip, belowMultArray[int(height/2), i])
+            belowBlurredStrip = np.append(belowBlurredStrip, belowBlurredArray[int(height/2), i])
+            totalMultStrip = np.append(totalMultStrip, totalMultArray[int(height/2), i])
+            yshiftStrip = np.append(yshiftStrip, yshiftArray[int(height/2), i])
             goalBlurredStrip = np.append(goalBlurredStrip, goalArrayBlurred[int(height/2), i])
             # aveTestStrip = np.append(aveTestStrip, array3[int(height/2+30), i])
         # """
@@ -680,12 +698,12 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
         # plt.plot(np.arange(width), totalMultStrip, label = "TotalMult", color = "yellow")
         # plt.plot(np.arange(width), diffImgStrip, label = "DiffImg", color = "yellow")
         # plt.plot(np.arange(width), aboveBlurredStrip, label = "AboveBlurred")
-        plt.plot(np.arange(width), yshiftStrip, label = "YShift", color = "red")
-        plt.plot(np.arange(width), goalBlurredStrip, label = "GoalBlurred")
+        # plt.plot(np.arange(width), yshiftStrip, label = "YShift", color = "red")
+        # plt.plot(np.arange(width), goalBlurredStrip, label = "GoalBlurred")
 
         
         plt.legend()
-        plt.xlim(750,1125)
+        plt.xlim(550,1325)
         plt.ylim(0,260)
         plt.title("Test " + str(testno) + ", Trial " + str(count) + ", AveDiff = " + str(np.round(diff,2)) + ", 15AMP_SIGMA20")
         # plt.savefig("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/test" + str(testno) + "/plot" + str(count) + "TEST_15AMP_SIGMA20.png")
@@ -706,30 +724,47 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #################
 
 
-def runFeedback(testno = None, initArray = None):
+def runFeedback(testno = None, initArray = None, maxIter = 5):
     # while i <= 11:
-    for i in np.arange(15):
-        if i == 0:
-            feedback(
-                # initial = "feedbackAlgorithm/test" + str(testno) + "/initial", 
-                # testno = testno, 
+    for i in np.arange(maxIter):
+
+        try:
+            gratingImg, gratingArray, diff = feedback(
                 initialArray = initArray,
-                count = i,
-                plot = True
-                )
-        else:
-            try:
-                # file = None
-                # while file == None:
+                count = i
+            )
+
+            initArray = gratingArray
+            resultArray = gratingArray
+
+            trialCompleted = True
+
+            print("Completed round " + str(i))
+
+        except:
+            pass
+
+        # if i == 0:
+        #     feedback(
+        #         # initial = "feedbackAlgorithm/test" + str(testno) + "/initial", 
+        #         # testno = testno, 
+        #         initialArray = initArray,
+        #         count = i,
+        #         plot = True
+        #         )
+        # else:
+        #     try:
+        #         # file = None
+        #         # while file == None:
                     
-                feedback(initial = "feedbackAlgorithm/test" + str(testno) + "/" + str(i) + "Result", testno = testno, count = i,
-                            plot = True
-                         )
-            except:
-                # count = i - 1
-                # time.sleep(5)
-                # continue
-                pass
+        #         feedback(initial = "feedbackAlgorithm/test" + str(testno) + "/" + str(i) + "Result", testno = testno, count = i,
+        #                     plot = True
+        #                  )
+        #     except:
+        #         # count = i - 1
+        #         # time.sleep(5)
+        #         # continue
+        #         pass
 
 # runFeedback(51)
 
