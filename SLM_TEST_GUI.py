@@ -9,7 +9,7 @@ from scipy.ndimage import gaussian_filter
 import time
 from os import listdir
 from os.path import isfile, join
-from IPython.display import display
+# from IPython.display import display
 
 def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
     lenspaper = Image.fromarray(input)

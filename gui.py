@@ -7,7 +7,7 @@ import os
 import time
 import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
-from SLM_TEST_GUI import runFeedback, feedback, calibration
+from SLM_TEST_GUI import feedback, calibration
 import screeninfo
 from numpy import asarray
 # from pyautogui import typewrite, write, press
@@ -78,6 +78,8 @@ def clearSLM(window):
     displayImage(dataClear, window)
 
 fig, ax = plt.subplots()
+# plt.ion()
+# plt.show()
 
 def main():
 
@@ -159,9 +161,12 @@ def main():
 
             # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
-            ax.plot(data[120, :])
-            plt.pause(1e-3)
-            plt.show()
+            # ax.plot(data[120, :])
+            
+            # plt.draw()
+            # plt.pause(0.001)
+            # plt.cla()
+
         
         if event == 'save':
             filename = values['-INPUT_SAVE-']
