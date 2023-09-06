@@ -160,8 +160,7 @@ def main():
             # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
             ax.plot(data[120, :])
-            plt.show()
-            ax.clear()
+            fig.canvas.draw()
         
         if event == 'save':
             filename = values['-INPUT_SAVE-']
