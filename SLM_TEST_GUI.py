@@ -316,10 +316,6 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #####
     
     
-    # """
-    # wfCorrectionArray = wavefront()
-    # totalMultArray = totalMultArray + wfCorrectionArray
-    # if count == 0:
     # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
     yshiftArray = np.ones(shape = totalMultArray.shape)     # Initialize yshift array
     # print(yshiftArray[0][0])
@@ -338,7 +334,6 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     # totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
     totalMultArray = totalMultArray
     
-    # """
     
     
     ######
