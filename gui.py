@@ -15,8 +15,10 @@ import pyautogui
 # from IPython.display import display
 import csv
 import pandas as pd
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
-# EDITED CODE AGAIN
 
 maxCamerasToUse = 2
 # get transport layer and all attached devices
@@ -56,6 +58,14 @@ cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN,
 crosshairImg = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/crosshair4.png')
 crosshairArray = asarray(crosshairImg)
 
+
+
+def draw_figure(canvas, figure, loc=(0, 0)):
+    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    figure_canvas_agg.draw()
+    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+    return figure_canvas_agg
+
 def displayImage(dataArray, window):
     frame = cv2.resize(dataArray, dim, interpolation=cv2.INTER_AREA)
     SLM_image = cv2.imencode('.png', frame)[1].tobytes()
@@ -77,7 +87,6 @@ def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
 
-fig, ax = plt.subplots()
 
 def main():
 
@@ -89,7 +98,7 @@ def main():
     SLM_layout = [  [sg.Text('SLM')],
                 [sg.Image(filename='', key='SLM Image')],
                 [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
-                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate')]
+                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate'), sg.Button('Lineout')]
                 ]
     
     CCD_layout =  [  [sg.Text('CCD')],
@@ -108,6 +117,37 @@ def main():
     # create the window and show it without the plot
     window = sg.Window('SLM CCD',
                        layout, location=(100, 100), resizable=True)
+
+
+    # layout = [[sg.Text('Animated Matplotlib', size=(40, 1),
+    #             justification='center', font='Helvetica 20')],
+    #           [sg.Canvas(size=(640, 480), key='-CANVAS-')],
+    #           [sg.Text('Progress through the data')],
+    #           [sg.Slider(range=(0, NUM_DATAPOINTS), size=(60, 10),
+    #             orientation='h', key='-SLIDER-')],
+    #           [sg.Text('Number of data points to display on screen')],
+    #            [sg.Slider(range=(10, 500), default_value=40, size=(40, 10),
+    #                 orientation='h', key='-SLIDER-DATAPOINTS-')],
+    #           [sg.Button('Exit', size=(10, 1), pad=((280, 0), 3), font='Helvetica 14')]]
+
+    # # create the form and show it without the plot
+    # window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
+    #             layout, finalize=True)
+
+    # canvas_elem = window['-CANVAS-']
+    # slider_elem = window['-SLIDER-']
+    # canvas = canvas_elem.TKCanvas
+
+    # draw the initial plot in the window
+    # fig = Figure()
+    # ax = fig.add_subplot(111)
+    # ax.set_xlabel("X axis")
+    # ax.set_ylabel("Y axis")
+    # ax.grid()
+    # fig_agg = draw_figure(canvas, fig)
+    # make a bunch of random data points
+    # dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
+
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
     imageWindow = pylon.PylonImageWindow()
@@ -130,6 +170,10 @@ def main():
     # camera.StartGrabbingMax(5000, pylon.GrabStrategy_LatestImageOnly)
     camera.StartGrabbing()
     # pylon.FeaturePersistence.Save("test.txt", camera.GetNodeMap())
+
+
+
+
 
     while True:
         event, values = window.read(timeout=20)
@@ -159,10 +203,7 @@ def main():
 
             # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
-            ax.plot(data[120, :])
-            plt.pause(1e-3)
-            plt.show()
-        
+
         if event == 'save':
             filename = values['-INPUT_SAVE-']
             cv2.imwrite(f'/Users/loasis/Documents/GitHub/SLM_PW/{filename}.png', data)
