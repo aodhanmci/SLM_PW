@@ -53,7 +53,7 @@ cv2.moveWindow(window_name, screen.x - 1, screen.y - 1)
 cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN,
                                 cv2.WINDOW_FULLSCREEN)
 
-crosshairImg = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/crosshair4.png')
+crosshairImg = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibratrion/crosshair4.png')
 crosshairArray = asarray(crosshairImg)
 
 def displayImage(dataArray, window):
