@@ -53,7 +53,7 @@ cv2.moveWindow(window_name, screen.x - 1, screen.y - 1)
 cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN,
                                 cv2.WINDOW_FULLSCREEN)
 
-crosshairImg = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/crosshair4.png')
+crosshairImg = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/crosshair4.png')
 crosshairArray = asarray(crosshairImg)
 
 def displayImage(dataArray, window):
@@ -76,6 +76,8 @@ def grabCCD(camera, window):
 def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
+
+fig, ax = plt.subplots()
 
 def main():
 
@@ -157,6 +159,9 @@ def main():
 
             # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
+            ax.plot(data[120, :])
+            plt.pause(1e-3)
+            plt.show()
         
         if event == 'save':
             filename = values['-INPUT_SAVE-']
@@ -196,11 +201,20 @@ def main():
                 # try:
                 camera.StartGrabbingMax(1)
                 data = grabCCD(camera, window)
-                gratingImg, gratingArray, diff = feedback(
-                    count = i,
-                    plot = True,
-                    initialArray = data
-                )
+                if i == 0:
+                    gratingImg, gratingArray, diff, threshold = feedback(
+                        count = i,
+                        plot = True,
+                        # threshold = 175,
+                        initialArray = data
+                    )
+                else:
+                    gratingImg, gratingArray, diff, threshold = feedback(
+                        count = i,
+                        plot = True,
+                        threshold = threshold,
+                        initialArray = data
+                    )
                 displayImage(gratingArray, window)
                 window.refresh()
                 time.sleep(1)
@@ -216,29 +230,11 @@ def main():
                
                 if i == 8:
                     camera.StartGrabbing()
-                # except:
-                #     print("ERROR")
-                #     pass
+
         if event == 'Calibrate':
                 match = False
                 camera.StopGrabbing()
                 while match == False:
-                # data = grabCCD(camera, window)
-
-                    # for i in np.arange(2):
-                    #     displayImage(data, window)
-                    #     window.refresh()
-                    #     time.sleep(0.1)
-                    #     displayImage(crosshairArray, window)
-                    #     window.refresh()
-                    #     time.sleep(0.1)
-                    #     data = grabCCD(camera, window)
-                    # displayImage(crosshairArray, window)
-                    # time.sleep(2)
-                    # camera.StartGrabbingMax(1)
-                    # time.sleep(1)
-                    # window.refresh()
-                    # time.sleep(2)
 
                     xZoom = input("Enter xZoom: ")
                     yZoom = input("Enter yZoom: ")
@@ -252,15 +248,7 @@ def main():
                     data2Img.show()
                     crosshairImg.show()
 
-            # userInput = input("Input here: ")
-                # if userInput == "Done":
-                #     match = True
-            
 
 
-        # 
-        # print
-
-# print("Hello")
 
 main()
