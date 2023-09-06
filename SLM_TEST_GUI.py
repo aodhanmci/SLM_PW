@@ -93,7 +93,7 @@ def displayt(image, text):
 
 
 
-def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 5, innerBlur = 15, range = 5, maxIter = 100, yshift = 4, plot = False):
+def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 5, innerBlur = 15, rangeVal = 5, maxIter = 100, yshift = 4, plot = False):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     #####
@@ -132,9 +132,10 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     
     
-    
-    threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.75
-    
+    if count == 0:
+        threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.75
+    else:
+        threshold = threshold
     
     
     #####
@@ -260,24 +261,45 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     #####
     # Find difference between threshold and max of result image and turn into multiplication of above and below. Used to add and subtract by smaller increments as image gets closer to goal
-    # THIS IS A MORE CONSERVATIVE APPLICATION OF THE FEEDBACK. HOWEVER, ADJUSTMENTS GET SLOWER AND SLOWER CLOSER TO THE GOAL. TESTING HAS SHOWN THIS IS NOT ENTIRELY NECESSARY, SO NOT CURRENTLY BEING USED. APPLY DIFFMULT AGAIN IF NEW TESTING SHOWS THAT MORE FEEDBACK TRIALS LEADS TO INSANE NOISE AND POSITIVE FEEDBACK LOOP ISSUES
     #####
     
 
     coords = np.stack((xi, yi), axis=1)
     initialVals = initialArray[[xi],[yi]]
+    initialMax = np.amax(initialVals)
+    initialMin = np.amin(initialVals)
     initialAvg = np.mean(initialVals[0])
     diff = np.abs(initialAvg - threshold)
+    pv = np.abs(initialMax - initialMin)
     diffMult = diff/100*2
+    maxDiff = np.abs(initialMax - threshold)
+    minDiff = np.abs(initialMin - threshold)
 
     
     #####
     # "diff" is calculated as absolute difference between the average values of the input beam's threshold area and the threshold value. Average is used to exclude any single-pixel bright specks. This does not currently stop the algorithm, it is just to print a notice once the flattening is sufficient. However, could be used to end the algorithm entirely
     #####
     
+    diffTest = False
+    pvTest = False
+    rangeTest = False
+    allTest = False
     
     if diff <= 5.0:
-        print("ERROR LESS THAN 5. FLATTENING COMPLETE.")
+        print("ERROR LESS THAN 5")
+        diffTest = True
+    
+    if pv <= 10:
+        print("PEAK-TO-VALLEY LESS THAN 10")
+        pvTest = True
+    
+    if maxDiff <= rangeVal and minDiff <= rangeVal:
+        print("MAX AND MIN RANGE WITHIN 5")
+        rangeTest = True
+    
+    if diffTest == True and pvTest == True and rangeTest == True:
+        print("ALL CHECKS NOMINAL. FLATTENING COMPLETE.")
+        allTest = True
     
     #####
     
@@ -371,7 +393,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
 
 
 
-    return totalMultImg, totalMultArray, diff, threshold
+    return totalMultImg, totalMultArray, diff, threshold, allTest
     
     #################
 

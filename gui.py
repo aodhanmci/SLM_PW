@@ -202,14 +202,14 @@ def main():
                 camera.StartGrabbingMax(1)
                 data = grabCCD(camera, window)
                 if i == 0:
-                    gratingImg, gratingArray, diff, threshold = feedback(
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
                         count = i,
                         plot = True,
                         # threshold = 175,
                         initialArray = data
                     )
                 else:
-                    gratingImg, gratingArray, diff, threshold = feedback(
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
                         count = i,
                         plot = True,
                         threshold = threshold,
