@@ -77,6 +77,8 @@ def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
 
+fig, ax = plt.subplots()
+
 def main():
 
     sg.theme('Black')
@@ -157,6 +159,9 @@ def main():
 
             # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
+            ax.plot(data[120, :])
+            plt.show()
+            ax.clear()
         
         if event == 'save':
             filename = values['-INPUT_SAVE-']
