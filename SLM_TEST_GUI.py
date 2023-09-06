@@ -1,8 +1,3 @@
-##############################
-# code to look at the effect of an SLM on the amplitude and phase of a beam
-# originally written by Jeroen, converted by Aodhan
-##############################
-
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors as colors
