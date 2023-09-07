@@ -10,15 +10,10 @@ from PIL import Image, ImageTk
 from SLM_TEST_GUI import runFeedback, feedback, calibration
 import screeninfo
 from numpy import asarray
-# from pyautogui import typewrite, write, press
-import pyautogui
-# from IPython.display import display
 import csv
 import pandas as pd
-import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 from matplotlib.figure import Figure
-
 
 maxCamerasToUse = 2
 # get transport layer and all attached devices
@@ -118,35 +113,26 @@ def main():
     window = sg.Window('SLM CCD',
                        layout, location=(100, 100), resizable=True)
 
-
-    # layout = [[sg.Text('Animated Matplotlib', size=(40, 1),
+# second window  things
+    # layout2 = [[sg.Text('Animated Matplotlib', size=(40, 1),
     #             justification='center', font='Helvetica 20')],
-    #           [sg.Canvas(size=(640, 480), key='-CANVAS-')],
-    #           [sg.Text('Progress through the data')],
-    #           [sg.Slider(range=(0, NUM_DATAPOINTS), size=(60, 10),
-    #             orientation='h', key='-SLIDER-')],
-    #           [sg.Text('Number of data points to display on screen')],
-    #            [sg.Slider(range=(10, 500), default_value=40, size=(40, 10),
-    #                 orientation='h', key='-SLIDER-DATAPOINTS-')],
-    #           [sg.Button('Exit', size=(10, 1), pad=((280, 0), 3), font='Helvetica 14')]]
+    #           [sg.Canvas(size=(640, 480), key='-CANVAS-')]
+    # ]
 
     # # create the form and show it without the plot
-    # window = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
-    #             layout, finalize=True)
+    # window2 = sg.Window('Demo Application - Embedding Matplotlib In PySimpleGUI',
+    #             layout2, finalize=True)
 
-    # canvas_elem = window['-CANVAS-']
-    # slider_elem = window['-SLIDER-']
+    # canvas_elem = window2['-CANVAS-']
     # canvas = canvas_elem.TKCanvas
 
-    # draw the initial plot in the window
+    # # draw the initial plot in the window
     # fig = Figure()
     # ax = fig.add_subplot(111)
     # ax.set_xlabel("X axis")
     # ax.set_ylabel("Y axis")
     # ax.grid()
     # fig_agg = draw_figure(canvas, fig)
-    # make a bunch of random data points
-    # dpts = [randint(0, 10) for x in range(NUM_DATAPOINTS)]
 
 
     # ---===--- Event LOOP Read and display frames, operate the GUI --- #
@@ -195,15 +181,11 @@ def main():
             
 
         if running:
-            # grabResult = camera.RetrieveResult(50000, pylon.TimeoutHandling_ThrowException)
-            # data = grabResult.GetArray()
-
-            # frame = cv2.resize(data, dim, interpolation=cv2.INTER_AREA)
-            # imgdata = cv2.imencode('.png', frame)[1].tobytes()
-
-            # window['CCD Image'].update(imgdata)
             data = grabCCD(camera, window)
-
+            # ax.cla()                    # clear the subplot
+            # ax.grid()                   # draw the grid
+            # ax.plot(data[120, :],  color='purple')
+            # fig_agg.draw()
         if event == 'save':
             filename = values['-INPUT_SAVE-']
             cv2.imwrite(f'/Users/loasis/Documents/GitHub/SLM_PW/{filename}.png', data)
