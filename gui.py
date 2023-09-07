@@ -78,6 +78,18 @@ def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
 
+def center(image):
+    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = np.uint8(image)
+    ret,thresh = cv2.threshold(gray_image,127,255,0)
+    M = cv2.moments(thresh)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+    newImage = Image.fromarray(image)
+    # display(newImage)
+    
+    return cX, cY
+
 fig, ax = plt.subplots()
 # plt.ion()
 # plt.show()
