@@ -15,6 +15,7 @@ import pyautogui
 # from IPython.display import display
 import csv
 import pandas as pd
+import winsound
 
 # EDITED CODE AGAIN
 # THIS IS A TEST CHANGE BECAUSE GITHUB IS DUMB
@@ -150,6 +151,8 @@ def main():
         elif event == 'Stop':
             running = False
 
+            # cv2.destroyWindow('SLM')
+
             df = pd.DataFrame({'exposure': [camera.ExposureTimeRaw.GetValue()],
                                'gain': [camera.GainRaw.GetValue()]})
             df.to_csv('prevVals.csv', index=False)
@@ -175,9 +178,23 @@ def main():
             filename = values['-INPUT_SAVE-']
             cv2.imwrite(f'/Users/loasis/Documents/GitHub/SLM_PW/{filename}.png', data)
         if event == 'exposure':
-            camera.ExposureTimeRaw = int(values['-INPUT_EXP-'])
+            try:
+                camera.ExposureTimeRaw = int(values['-INPUT_EXP-'])
+                window['-INPUT_EXP-'].update(background_color=sg.theme_input_background_color())
+            except Exception as error:
+                window['-INPUT_EXP-'].update(background_color='red')
+                # print(error)
+                print("Exposure value not accepted. Please input a value above 34.")
         if event == 'gain':
-            camera.GainRaw = int(values['-INPUT_Gain-'])
+            # camera.GainRaw = int(values['-INPUT_Gain-'])
+            try:
+                camera.GainRaw = int(values['-INPUT_Gain-'])
+                window['-INPUT_Gain-'].update(background_color=sg.theme_input_background_color())
+            except Exception as error:
+                window['-INPUT_Gain-'].update(background_color='red')
+                # window['-INPUT_Gain-'].Widget.configure(highlightcolor='red', highlightthickness=2)
+                # print(error)
+                print("Gain value not accepted. Please input a value less than 360.")
         if event == 'Upload Single':
             SLM_image = values["-SLM_Single-"]
             print(SLM_image)
@@ -202,10 +219,11 @@ def main():
             # SLM_image = cv2.imencode('.png', frame)[1].tobytes()
             # window['SLM Image'].update(SLM_image)
         if event == '5 loop':
-            for i in np.arange(9):
+            numLoops = 9
+            for i in np.arange(numLoops):
                 camera.StopGrabbing()
                 # data = grabCCD(camera, window)
-                print("RUNNING")
+                # print("RUNNING")
                 # try:
                 camera.StartGrabbingMax(1)
                 data = grabCCD(camera, window)
@@ -236,7 +254,7 @@ def main():
 
                 window.refresh()
                
-                if i == 8:
+                if i == int(numLoops-1):
                     camera.StartGrabbing()
 
         if event == 'Calibrate':
