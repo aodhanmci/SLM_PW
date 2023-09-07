@@ -15,7 +15,7 @@ def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2
     lenspaper = Image.fromarray(input)
     lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
     
-    crosshair4 = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/crosshair4.png')
+    crosshair4 = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/crosshair4.png')
     width, height = crosshair4.size
     
     w, h = lenspaper.size
@@ -56,6 +56,17 @@ def displayt(image, text):
     display(image2)
 
 
+def center(imageArray):
+    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = np.uint8(imageArray)
+    ret,thresh = cv2.threshold(gray_image,127,255,0)
+    M = cv2.moments(thresh)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+    newImage = Image.fromarray(imageArray)
+    # display(newImage)
+    
+    return cX, cY
 
 
 #####
@@ -75,7 +86,7 @@ def displayt(image, text):
 
 # innerBlur: The radius of Gaussian blurring to apply to the inner hotspot area. Without this value, grating would gain problematic and unwanted noise. Testing has shown innerBlur = 15 to be optimal, but can vary between ~5-25.
 
-# range: Theoretically used to calculate the max absolute difference between input image and goal image to check how close the input beam is to being "flat". However, not currently being used.
+# range: Theoretically used to calculate the max absolute difference between input image and goal image to check how close the input beam is to being "flat".
 
 # maxIter: Number of max iterations of the function to try and flatten the beam before exiting. Currently not being used.
 
@@ -108,7 +119,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
     
-    initialImg = zoom_at(initialImg, width/2 - 275, height/2 + 13, 1)     # Not final implementation of zoom function
+    initialImg = zoom_at(initialImg, width/2 - 115, height/2 + 13, 1)     # Not final implementation of zoom function
     initialImg = initialImg.rotate(1.2)     # Image is rotated 2°
     initialImgArray = asarray(initialImg)
     initialImg = Image.fromarray(initialImgArray)
@@ -124,7 +135,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     # Initial testing to use peak-to-valley to find "threshold image" instead of manually inputting a threshold
     #####
     
-    
+    cX, cY = center(initialArray)
     
     
     if count == 0:
@@ -280,6 +291,10 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     rangeTest = False
     allTest = False
     
+    print("DIFF: " + str(diff))
+    print("PV: " + str(pv))
+    print("MAXDIFF: " + str(maxDiff))
+
     if diff <= 5.0:
         print("ERROR LESS THAN 5")
         diffTest = True
@@ -341,8 +356,8 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     if count == 0:
         for i in np.arange(width):
-            initialImg.putpixel((i, int(height/2)), int(255))
-        initialImg.show()
+            initialImg.putpixel((i, cY), int(255))
+        # initialImg.show()
     
     
     # totalMultImg.save("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/test" + str(testno) + "/" + str(count+1) + "TEST_15AMP_SIMGA20.png")
@@ -354,9 +369,9 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     if plot:
         
-        plt.plot(np.arange(width), totalMultArray[int(height/2-15),:], label = "SLM Grating", color = "C2")
-        plt.plot(np.arange(width), initialArray[int(height/2-15),:], label = "Initial")
-        plt.plot(np.arange(width), goalArray[int(height/2-15),:], label = "Goal")
+        plt.plot(np.arange(width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
+        plt.plot(np.arange(width), initialArray[cY,:], label = "Initial")
+        plt.plot(np.arange(width), goalArray[cY,:], label = "Goal")
         # plt.plot(np.arange(width), goalArray[int(height/2-15),:], label = "TEST")
         # plt.plot(np.arange(width), aboveArray[int(height/2-15),:], label = "Above")
         # plt.plot(np.arange(width), belowArray[int(height/2-15),:], label = "Below")

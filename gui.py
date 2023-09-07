@@ -7,7 +7,7 @@ import os
 import time
 import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
-from SLM_TEST_GUI import feedback, calibration
+from SLM_TEST_GUI import feedback, calibration, center
 import screeninfo
 from numpy import asarray
 # from pyautogui import typewrite, write, press
@@ -78,17 +78,7 @@ def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
 
-def center(image):
-    # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray_image = np.uint8(image)
-    ret,thresh = cv2.threshold(gray_image,127,255,0)
-    M = cv2.moments(thresh)
-    cX = int(M["m10"] / M["m00"])
-    cY = int(M["m01"] / M["m00"])
-    newImage = Image.fromarray(image)
-    # display(newImage)
-    
-    return cX, cY
+
 
 fig, ax = plt.subplots()
 # plt.ion()
@@ -104,7 +94,7 @@ def main():
     SLM_layout = [  [sg.Text('SLM')],
                 [sg.Image(filename='', key='SLM Image')],
                 [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
-                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate')]
+                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate'), sg.Button('Save SLM Image')]
                 ]
     
     CCD_layout =  [  [sg.Text('CCD')],
@@ -241,7 +231,7 @@ def main():
                 # data = grabCCD(camera, window)
 
                 # gratingImg.show()
-                print("DIFF: " + str(np.round(diff,2)))
+                # print("DIFF: " + str(np.round(diff,2)))
                 # data = grabCCD(camera, window)
 
                 window.refresh()
@@ -250,21 +240,25 @@ def main():
                     camera.StartGrabbing()
 
         if event == 'Calibrate':
-                match = False
-                camera.StopGrabbing()
-                while match == False:
+            match = False
+            camera.StopGrabbing()
+            while match == False:
 
-                    xZoom = input("Enter xZoom: ")
-                    yZoom = input("Enter yZoom: ")
-                    xShift = input("Enter xShift: ")
-                    yShift = input("Enter yShift: ")
-                    angle = input("Enter angle: ")
+                xZoom = input("Enter xZoom: ")
+                yZoom = input("Enter yZoom: ")
+                xShift = input("Enter xShift: ")
+                yShift = input("Enter yShift: ")
+                angle = input("Enter angle: ")
 
-                    data2 = calibration(data, float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
+                data2 = calibration(data, float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
 
-                    data2Img = Image.fromarray(data2)
-                    data2Img.show()
-                    crosshairImg.show()
+                data2Img = Image.fromarray(data2)
+                data2Img.show()
+                crosshairImg.show()
+        
+        if event == "Save SLM Image":
+            gratingImg.save('/Users/loasis/Documents/GitHub/SLM_PW/SLMimage.png')
+            print("SLM image saved")
 
 
 
