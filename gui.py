@@ -111,7 +111,7 @@ def main():
      sg.Column(CCD_layout)]]
     # create the window and show it without the plot
     window = sg.Window('SLM CCD',
-                       layout, location=(100, 100), resizable=True)
+                       layout, location=(100, 100), resizable=False)
 
 # second window  things
     # layout2 = [[sg.Text('Animated Matplotlib', size=(40, 1),
