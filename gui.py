@@ -19,11 +19,11 @@ from tkinter import messagebox
 # THIS IS A TEST CHANGE BECAUSE GITHUB IS DUMB
 
 
-width = 500
-height = 500
+window_width = 500
+window_height = 500
 root = tk.Tk()
 root.title("SLM CCD")
-root.geometry(f"{width}x{height}")
+root.geometry(f"{window_width}x{window_height}")
 
 # Create a label for the SLM image
 slm_image_label = tk.Label(root)
@@ -35,39 +35,27 @@ ccd_image_label.pack()
 
 # Create buttons
 start_button = tk.Button(root, text="Start")
+start_button.place(x=0, y=height-20, height=20, width=30)
 stop_button = tk.Button(root, text="Stop")
+stop_button.place(x=30, y=height-20, height=20, width=30)
 exit_button = tk.Button(root, text="Exit")
+exit_button.place(x=60, y=height-20, height=20, width=30)
 upload_single_button = tk.Button(root, text="Upload Single")
 one_loop_button = tk.Button(root, text="1 loop")
 five_loop_button = tk.Button(root, text="5 loop")
 clear_button = tk.Button(root, text="Clear")
 calibrate_button = tk.Button(root, text="Calibrate")
 
-start_button.pack()
-stop_button.pack()
-exit_button.pack()
-upload_single_button.pack()
-one_loop_button.pack()
-five_loop_button.pack()
-clear_button.pack()
-calibrate_button.pack()
-
 # Create labels and entry widgets for exposure, gain, and save file
 exposure_label = tk.Label(root, text="Exposure")
 gain_label = tk.Label(root, text="Gain")
 save_label = tk.Label(root, text="Save File")
 
-exposure_label.pack()
 exposure_entry = tk.Entry(root)
-exposure_entry.pack()
-
-gain_label.pack()
 gain_entry = tk.Entry(root)
-gain_entry.pack()
-
-save_label.pack()
 save_entry = tk.Entry(root)
-save_entry.pack()
+
+root.mainloop()
 # maxCamerasToUse = 2
 # # get transport layer and all attached devices
 # maximagestograb = 50
