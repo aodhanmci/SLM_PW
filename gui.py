@@ -7,13 +7,15 @@ import os
 import time
 import matplotlib.pyplot as plt
 from PIL import Image, ImageTk
-from SLM_TEST_GUI import runFeedback, feedback, calibration
+from SLM_TEST_GUI import feedback, calibration, center
 import screeninfo
 from numpy import asarray
 import csv
 import pandas as pd
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
-from matplotlib.figure import Figure
+import winsound
+
+# EDITED CODE AGAIN
+# THIS IS A TEST CHANGE BECAUSE GITHUB IS DUMB
 
 maxCamerasToUse = 2
 # get transport layer and all attached devices
@@ -82,7 +84,6 @@ def clearSLM(window):
     dataClear = np.zeros((1920,1080))
     displayImage(dataClear, window)
 
-
 def main():
 
     sg.theme('Black')
@@ -93,7 +94,7 @@ def main():
     SLM_layout = [  [sg.Text('SLM')],
                 [sg.Image(filename='', key='SLM Image')],
                 [sg.Button('Start'), sg.Button('Stop'), sg.Button('Exit')],
-                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate'), sg.Button('Lineout')]
+                [sg.Button('Upload Single'), sg.FileBrowse(key="-SLM_Single-"), sg.Button('1 loop'), sg.Button('5 loop'), sg.Button('Clear'), sg.Button('Calibrate')]
                 ]
     
     CCD_layout =  [  [sg.Text('CCD')],
@@ -175,6 +176,8 @@ def main():
         elif event == 'Stop':
             running = False
 
+            # cv2.destroyWindow('SLM')
+
             df = pd.DataFrame({'exposure': [camera.ExposureTimeRaw.GetValue()],
                                'gain': [camera.GainRaw.GetValue()]})
             df.to_csv('prevVals.csv', index=False)
@@ -182,17 +185,28 @@ def main():
 
         if running:
             data = grabCCD(camera, window)
-            # ax.cla()                    # clear the subplot
-            # ax.grid()                   # draw the grid
-            # ax.plot(data[120, :],  color='purple')
-            # fig_agg.draw()
+        
         if event == 'save':
             filename = values['-INPUT_SAVE-']
             cv2.imwrite(f'/Users/loasis/Documents/GitHub/SLM_PW/{filename}.png', data)
         if event == 'exposure':
-            camera.ExposureTimeRaw = int(values['-INPUT_EXP-'])
+            try:
+                camera.ExposureTimeRaw = int(values['-INPUT_EXP-'])
+                window['-INPUT_EXP-'].update(background_color=sg.theme_input_background_color())
+            except Exception as error:
+                window['-INPUT_EXP-'].update(background_color='red')
+                # print(error)
+                print("Exposure value not accepted. Please input a value above 34.")
         if event == 'gain':
-            camera.GainRaw = int(values['-INPUT_Gain-'])
+            # camera.GainRaw = int(values['-INPUT_Gain-'])
+            try:
+                camera.GainRaw = int(values['-INPUT_Gain-'])
+                window['-INPUT_Gain-'].update(background_color=sg.theme_input_background_color())
+            except Exception as error:
+                window['-INPUT_Gain-'].update(background_color='red')
+                # window['-INPUT_Gain-'].Widget.configure(highlightcolor='red', highlightthickness=2)
+                # print(error)
+                print("Gain value not accepted. Please input a value less than 360.")
         if event == 'Upload Single':
             SLM_image = values["-SLM_Single-"]
             print(SLM_image)
@@ -217,18 +231,28 @@ def main():
             # SLM_image = cv2.imencode('.png', frame)[1].tobytes()
             # window['SLM Image'].update(SLM_image)
         if event == '5 loop':
-            for i in np.arange(9):
+            numLoops = 9
+            for i in np.arange(numLoops):
                 camera.StopGrabbing()
                 # data = grabCCD(camera, window)
-                print("RUNNING")
+                # print("RUNNING")
                 # try:
                 camera.StartGrabbingMax(1)
                 data = grabCCD(camera, window)
-                gratingImg, gratingArray, diff = feedback(
-                    count = i,
-                    plot = True,
-                    initialArray = data
-                )
+                if i == 0:
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                        count = i,
+                        plot = True,
+                        # threshold = 175,
+                        initialArray = data
+                    )
+                else:
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                        count = i,
+                        plot = True,
+                        threshold = threshold,
+                        initialArray = data
+                    )
                 displayImage(gratingArray, window)
                 window.refresh()
                 time.sleep(1)
@@ -237,58 +261,36 @@ def main():
                 # data = grabCCD(camera, window)
 
                 # gratingImg.show()
-                print("DIFF: " + str(np.round(diff,2)))
+                # print("DIFF: " + str(np.round(diff,2)))
                 # data = grabCCD(camera, window)
 
                 window.refresh()
                
-                if i == 8:
+                if i == int(numLoops-1):
                     camera.StartGrabbing()
-                # except:
-                #     print("ERROR")
-                #     pass
+
         if event == 'Calibrate':
-                match = False
-                camera.StopGrabbing()
-                while match == False:
-                # data = grabCCD(camera, window)
+            match = False
+            camera.StopGrabbing()
+            while match == False:
 
-                    # for i in np.arange(2):
-                    #     displayImage(data, window)
-                    #     window.refresh()
-                    #     time.sleep(0.1)
-                    #     displayImage(crosshairArray, window)
-                    #     window.refresh()
-                    #     time.sleep(0.1)
-                    #     data = grabCCD(camera, window)
-                    # displayImage(crosshairArray, window)
-                    # time.sleep(2)
-                    # camera.StartGrabbingMax(1)
-                    # time.sleep(1)
-                    # window.refresh()
-                    # time.sleep(2)
+                xZoom = input("Enter xZoom: ")
+                yZoom = input("Enter yZoom: ")
+                xShift = input("Enter xShift: ")
+                yShift = input("Enter yShift: ")
+                angle = input("Enter angle: ")
 
-                    xZoom = input("Enter xZoom: ")
-                    yZoom = input("Enter yZoom: ")
-                    xShift = input("Enter xShift: ")
-                    yShift = input("Enter yShift: ")
-                    angle = input("Enter angle: ")
+                data2 = calibration(data, float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
 
-                    data2 = calibration(data, float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
-
-                    data2Img = Image.fromarray(data2)
-                    data2Img.show()
-                    crosshairImg.show()
-
-            # userInput = input("Input here: ")
-                # if userInput == "Done":
-                #     match = True
-            
+                data2Img = Image.fromarray(data2)
+                data2Img.show()
+                crosshairImg.show()
+        
+        if event == "Save SLM Image":
+            gratingImg.save('/Users/loasis/Documents/GitHub/SLM_PW/SLMimage.png')
+            print("SLM image saved")
 
 
-        # 
-        # print
 
-# print("Hello")
 
 main()
