@@ -17,6 +17,11 @@ button_gap = 0
 window_width = 1200
 window_height = 600
 
+scale_percent = 60 # percent of original size
+width_scale = int(1920 * scale_percent / 100)
+height_scale = int(1200 * scale_percent / 100)
+dim = (width_scale, height_scale)
+
 second_row_button_height = window_height-2*large_button_height-button_gap
 first_row_button_height = window_height-large_button_height
 
@@ -81,10 +86,10 @@ class Page(tk.Frame):
         # self.vid = oneCameraCapture.cameraCapture()
         image_size = 4/4*window_width
         #Create a canvas that will fit the camera source
-        self.canvas_SLM = tk.Canvas(window, width=int(window_width/2),height=int(window_width/4))
+        self.canvas_SLM = tk.Canvas(window, width=width_scale,height=height_scale)
         self.canvas_SLM.place(x=475, y=window_height/2, anchor=tk.CENTER)
 
-        self.canvas_CCD = tk.Canvas(window, width=int(window_width/2),height=int(window_width/4))
+        self.canvas_CCD = tk.Canvas(window, width=width_scale,height=height_scale)
         self.canvas_CCD.place(x=0.9*1200, y=window_height/2, anchor=tk.CENTER)
 
         self.delay=10
