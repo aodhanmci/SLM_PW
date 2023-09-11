@@ -20,6 +20,11 @@ button_gap = 0
 window_width = 1200
 window_height = 600
 
+scale_percent = 60 # percent of original size
+width_scale = int(window_width * scale_percent / 100)
+height_scale = int(window_height * scale_percent / 100)
+dim = (width_scale, height_scale)
+
 second_row_button_height = window_height-2*large_button_height-button_gap
 first_row_button_height = window_height-large_button_height
 
@@ -36,7 +41,7 @@ class Page(tk.Frame):
 
         window.geometry(f"{window_width}x{window_height}")
 
-# Create a label for the SLM image
+        # Create a label for the SLM image
         self.vid = oneCameraCapture.cameraCapture(self)
         self.slm_image_label = tk.Label(window, text="SLM")
         self.slm_image_label.place(x=0.25*window_width, y=20)
@@ -85,11 +90,11 @@ class Page(tk.Frame):
         
         image_size = 4/4*window_width
         #Create a canvas that will fit the camera source
-        self.canvas_SLM = tk.Canvas(window, width=int(window_width/2),height=int(window_width/4))
+        self.canvas_SLM = tk.Canvas(window, width=width_scale,height=height_scale)
         self.canvas_SLM.place(x=475, y=window_height/2, anchor=tk.CENTER)
 
-        self.canvas_CCD = tk.Canvas(window, width=int(window_width/2),height=int(window_width/4))
-        self.canvas_CCD.place(x=0.9*1200, y=window_height/2, anchor=tk.CENTER)
+        self.canvas_CCD = tk.Canvas(window, width=width_scale,height=height_scale)
+        self.canvas_CCD.place(x=0.5*window_width, y=window_height/2, anchor=tk.CENTER)
 
         self.delay=10
         self.update()
@@ -100,7 +105,7 @@ class Page(tk.Frame):
         #Get a frame from cameraCapture
 
         # Example arrays (you can replace these with your actual image data)
-        image_array1 = np.random.randint(0, 256, size=(int(window_width), int(window_height)), dtype=np.uint8)
+        image_array1 = np.random.randint(0, 256, size=(width_scale, height_scale), dtype=np.uint8)
 
         # Convert NumPy arrays to Pillow Images
         image1 = Image.fromarray(image_array1)
@@ -112,10 +117,11 @@ class Page(tk.Frame):
         self.canvas_SLM.create_image(0, 0, anchor=tk.CENTER, image=photo1)
         self.canvas_SLM.photo = photo1  # Store a reference to prevent garbage collection
 
-        frame = self.vid.getFrame() #This is an array
-        frame = cv2.resize(frame, dsize=(int(window_width/2), int(window_width/4)), interpolation=cv2.INTER_CUBIC)
+        frame = self.vid.getFrame().T #This is an array
+        print(np.shape(frame))
+        frame = cv2.resize(frame, dsize=(width_scale, height_scale), interpolation=cv2.INTER_CUBIC)
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.canvas_CCD.create_image(int(window_width/2),int(window_width/4),image=self.photo)
+        self.canvas_CCD.create_image(0, 0, image=self.photo)
 
         self.window.after(self.delay, self.update)
 
