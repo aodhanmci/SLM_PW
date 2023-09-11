@@ -9,12 +9,14 @@ import time
 import cv2
 import numpy as np
 import tkinter as tk
+import video_display
 
 class cameraCapture(tk.Frame):
-    def __init__(self):
+    
+    def __init__(self, page_instance):
         self.img0 = []
-        self.windowName = 'title'
-
+        self.windowName = 'SLM CCD'
+        self.page = page_instance
         try:
             # Create an instant camera object with the camera device found first.
             # maxCamerasToUse = 2
@@ -33,15 +35,19 @@ class cameraCapture(tk.Frame):
                 for counter, device in enumerate(devices):
                     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
                     print(f'{counter}) {device.GetFullName()}\n') # return unique code
-            self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-                       
-            self.camera.Open()  #Need to open camera before can use camera.ExposureTime
-            self.camera.ExposureTime.SetValue(500)
-            self.camera.Width=2448
-            self.camera.Height=2048
+            self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
+            running=False
             # Print the model name of the camera.
             print("Using device ", self.camera.GetDeviceInfo().GetModelName())
-            print("Exposure time ", self.camera.ExposureTime.GetValue())
+
+            # self.camera.PixelFormat = "Mono8"
+       
+            self.camera.Open()  #Need to open camera before can use camera.ExposureTime
+            self.camera.ExposureTimeRaw = 1000
+
+            # Print the model name of the camera.
+            # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
+            # print("Exposure time ", self.camera.ExposureTime.GetValue())
 
             # According to their default configuration, the cameras are
             # set up for free-running continuous acquisition.
@@ -78,6 +84,27 @@ class cameraCapture(tk.Frame):
             # Error handling
             print("An exception occurred.", e.GetDescription())
             exitCode = 1
+    def exposure_change(self):
+        try:
+            self.camera.ExposureTimeRaw = int(self.page.exposure_entry.get())
+            self.page.exposure_entry.config(background="white")
+        except ValueError:
+            self.page.exposure_entry.config(background="red")
+
+    def gain_change(self):
+        try:
+            self.camera.GainRaw = int(self.page.gain_entry.get())
+            self.page.gain_entry.config(background="white")
+        except ValueError:
+            self.page.gain_entry.config(background="red")
+    def save_image(self):
+        filename = self.page.save_entry.get()
+        try:
+            cv2.imwrite(f'{filename}.png', self.img0)  # Save the captured image to a file
+            print(f"Image saved as {filename}")
+        except ValueError:
+            self.page.gain_entry.config(background="red")
+
 
 
 if __name__ == "__main__":
