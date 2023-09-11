@@ -17,11 +17,6 @@ button_gap = 0
 window_width = 1200
 window_height = 600
 
-scale_percent = 60 # percent of original size
-width_scale = int(1920 * scale_percent / 100)
-height_scale = int(1200 * scale_percent / 100)
-dim = (width_scale, height_scale)
-
 second_row_button_height = window_height-2*large_button_height-button_gap
 first_row_button_height = window_height-large_button_height
 
