@@ -2,8 +2,8 @@ import os
 
 os.environ["PYLON_CAMEMU"] = "3"
 
-# from pypylon import genicam
-# from pypylon import pylon
+from pypylon import genicam
+from pypylon import pylon
 import sys
 import time
 import cv2
@@ -17,6 +17,22 @@ class cameraCapture(tk.Frame):
 
         try:
             # Create an instant camera object with the camera device found first.
+            # maxCamerasToUse = 2
+            # get transport layer and all attached devices
+            maximagestograb = 50
+            tlf = pylon.TlFactory.GetInstance()
+            devices = tlf.EnumerateDevices()
+            NUM_CAMERAS = len(devices)
+            os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
+            exitCode = 0
+            if NUM_CAMERAS == 0:
+                raise pylon.RuntimeException("No camera connected")
+            else:
+                print(f'{NUM_CAMERAS} cameras detected:\n')
+                
+                for counter, device in enumerate(devices):
+                    print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+                    print(f'{counter}) {device.GetFullName()}\n') # return unique code
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
                        
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
