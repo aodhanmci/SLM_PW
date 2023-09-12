@@ -17,8 +17,8 @@ large_button_width = 90
 
 button_gap = 0
 
-window_width = 1920
-window_height = 1080
+window_width = 1500
+window_height = 600
 
 scale_percent = 40 # percent of original size
 width_scale = int(window_width * scale_percent / 100)
@@ -88,13 +88,12 @@ class Page(tk.Frame):
         self.save_entry.place(x=window_width-1*large_button_width, **lower_row_dict)
         #Open camera source
         
-        image_size = 4/4*window_width
         #Create a canvas that will fit the camera source
-        self.canvas_SLM = tk.Canvas(window, height=height_scale,width=width_scale)
-        self.canvas_SLM.place(x=475, y=window_height/2, anchor=tk.CENTER)
+        self.SLM_image_widget = tk.Label(window, width=width_scale, height=height_scale)
+        self.SLM_image_widget.place(x=1*window_width/4, y=window_height/2, anchor=tk.CENTER)
 
-        self.ccd_image_widget = tk.Label(window)
-        self.ccd_image_widget.place(x=width_scale, y=height_scale, anchor=tk.CENTER)
+        self.ccd_image_widget = tk.Label(window, width=width_scale, height=height_scale)
+        self.ccd_image_widget.place(x=3*window_width/4, y=window_height/2, anchor=tk.CENTER)
 
         self.delay=10
         self.update()
@@ -105,23 +104,25 @@ class Page(tk.Frame):
         #Get a frame from cameraCapture
 
         # Example arrays (you can replace these with your actual image data)
-        image_array1 = np.random.randint(0, 256, size=(width_scale, height_scale), dtype=np.uint8)
-
+        image_array1 = np.random.randint(0, 256, size=(width_scale, height_scale), dtype=np.uint8).T
+        image_array2 = np.random.randint(0, 10, size=(width_scale, height_scale), dtype=np.uint8).T
         # Convert NumPy arrays to Pillow Images
         image1 = Image.fromarray(image_array1)
+        image2 = Image.fromarray(image_array2)
 
-        # Convert Pillow Images to PhotoImage objects
-        photo1 = ImageTk.PhotoImage(image=image1)
+        photo1 = PIL.ImageTk.PhotoImage(image=image1)
+        self.SLM_image_widget.photo = photo1
+        self.SLM_image_widget.config(image=photo1)
 
-        # self.canvas_SLM.config(width=image1.width, height=image1.height)
-        self.canvas_SLM.create_image(0, 0, anchor=tk.CENTER, image=photo1)
-        self.canvas_SLM.photo = photo1  # Store a reference to prevent garbage collection
+        photo2 = PIL.ImageTk.PhotoImage(image=image2)
+        self.ccd_image_widget.photo = photo2
+        self.ccd_image_widget.config(image=photo2)
 
-        ccd_data = self.vid.getFrame() #This is an array
-        ccd_data = cv2.resize(ccd_data, dsize=(width_scale, height_scale), interpolation=cv2.INTER_CUBIC)
-        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(ccd_data))
-        self.ccd_image_widget.config(image=self.photo)
-        self.ccd_image_widget.photo = self.photo
+        # ccd_data = self.vid.getFrame() #This is an array
+        # ccd_data = cv2.resize(ccd_data, dsize=(width_scale, height_scale), interpolation=cv2.INTER_CUBIC)
+        # self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(ccd_data))
+        # self.ccd_image_widget.config(image=self.photo)
+        # self.ccd_image_widget.photo = self.photo
 
         self.window.after(self.delay, self.update)
 
