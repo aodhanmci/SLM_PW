@@ -17,14 +17,14 @@ large_button_width = 90
 
 button_gap = 0
 
-window_width = 1200
-window_height = 600
+window_width = 1920
+window_height = 1080
 
-scale_percent = 60 # percent of original size
+scale_percent = 40 # percent of original size
 width_scale = int(window_width * scale_percent / 100)
 height_scale = int(window_height * scale_percent / 100)
 dim = (width_scale, height_scale)
-
+print(dim)
 second_row_button_height = window_height-2*large_button_height-button_gap
 first_row_button_height = window_height-large_button_height
 
@@ -90,11 +90,11 @@ class Page(tk.Frame):
         
         image_size = 4/4*window_width
         #Create a canvas that will fit the camera source
-        self.canvas_SLM = tk.Canvas(window, width=width_scale,height=height_scale)
+        self.canvas_SLM = tk.Canvas(window, height=height_scale,width=width_scale)
         self.canvas_SLM.place(x=475, y=window_height/2, anchor=tk.CENTER)
 
-        self.canvas_CCD = tk.Canvas(window, width=width_scale,height=height_scale)
-        self.canvas_CCD.place(x=0.5*window_width, y=window_height/2, anchor=tk.CENTER)
+        self.ccd_image_widget = tk.Label(window)
+        self.ccd_image_widget.place(x=width_scale, y=height_scale, anchor=tk.CENTER)
 
         self.delay=10
         self.update()
@@ -117,11 +117,11 @@ class Page(tk.Frame):
         self.canvas_SLM.create_image(0, 0, anchor=tk.CENTER, image=photo1)
         self.canvas_SLM.photo = photo1  # Store a reference to prevent garbage collection
 
-        frame = self.vid.getFrame().T #This is an array
-        print(np.shape(frame))
-        frame = cv2.resize(frame, dsize=(width_scale, height_scale), interpolation=cv2.INTER_CUBIC)
-        self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.canvas_CCD.create_image(0, 0, image=self.photo)
+        ccd_data = self.vid.getFrame() #This is an array
+        ccd_data = cv2.resize(ccd_data, dsize=(width_scale, height_scale), interpolation=cv2.INTER_CUBIC)
+        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(ccd_data))
+        self.ccd_image_widget.config(image=self.photo)
+        self.ccd_image_widget.photo = self.photo
 
         self.window.after(self.delay, self.update)
 

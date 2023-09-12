@@ -43,6 +43,7 @@ class cameraCapture(tk.Frame):
             # self.camera.PixelFormat = "Mono8"
        
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
+            # self.camera.PixelFormat = "Mono8"
             self.camera.ExposureTimeRaw = 1000
 
             # Print the model name of the camera.
@@ -56,7 +57,7 @@ class cameraCapture(tk.Frame):
 
             # converting to opencv bgr format
             self.converter = pylon.ImageFormatConverter()
-            self.converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+            self.converter.OutputPixelFormat = pylon.PixelType_Mono8
             self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
         except genicam.GenericException as e:
