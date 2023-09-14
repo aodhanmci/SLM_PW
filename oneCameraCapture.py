@@ -13,16 +13,20 @@ from tkinter import ttk, PhotoImage, filedialog
 from tkinter.filedialog import askopenfile
 import video_display
 from PIL import Image, ImageTk
+import pandas as pd
 
 class cameraCapture(tk.Frame):
 
-    def __init__(self, page_instance):
+    def __init__(self, page_instance, window2_instance):
         self.img0 = []
         self.windowName = 'SLM CCD'
         self.page = page_instance
-        # self.SLMdilp = Image.open('10lpmm_190amp.png')
+        self.window2 = window2_instance
+        # self.SLMdisp = Image.open('10lpmm_190amp.png')
+
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
         try:
+            df = pd.read_csv('prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
             # maxCamerasToUse = 2
             # get transport layer and all attached devices
@@ -40,15 +44,15 @@ class cameraCapture(tk.Frame):
                     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
                     print(f'{counter}) {device.GetFullName()}\n') # return unique code
             self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
-            running=False
+            # running=False
             # Print the model name of the camera.
             print("Using device ", self.camera.GetDeviceInfo().GetModelName())
 
             # self.camera.PixelFormat = "Mono8"
-       
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
             # self.camera.PixelFormat = "Mono8"
-            self.camera.ExposureTimeRaw = 1000
+            self.camera.ExposureTimeRaw = int(df.exposure[0])
+            self.camera.GainRaw = int(df.gain[0])
 
             # Print the model name of the camera.
             # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
@@ -64,10 +68,14 @@ class cameraCapture(tk.Frame):
             self.converter.OutputPixelFormat = pylon.PixelType_Mono8
             self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
-        except genicam.GenericException as e:
-            # Error handling
-            print("An exception occurred.", e.GetDescription())
-            exitCode = 1
+        # except genicam.GenericException as e:
+        #     # Error handling
+        #     print("An exception occurred.", e.GetDescription())
+        #     exitCode = 1
+
+        except Exception as error:
+            print(error)
+            pass
 
     def getFrame(self):
         try:
@@ -110,49 +118,62 @@ class cameraCapture(tk.Frame):
         filename = self.page.save_entry.get()
         try:
             cv2.imwrite(f'{filename}.png', self.img0)  # Save the captured image to a file
-            print(f"Image saved as {filename}")
+            print(f"Image saved as {filename}.png")
+            self.page.save_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
-            self.page.gain_entry.config(background="red")
+            self.page.save_button.config(background="red")
     
     def browse(self):
         global img
-        f_types = [('PNG files', '*.png')]
-        filename = filedialog.askopenfilename(filetypes=f_types)
-        # self.browseImg = ImageTk.PhotoImage(file=filename)
-        self.browseImg = Image.open(filename)
-        # img_width = img.width()
-        # img_height = img.height()
-        self.browseImgArray = np.asarray(self.browseImg)
-        # print(self.browseImgArray)
-        # self.browseImgArray = self.browseImgArray.astype(np.uint8)
-        # return self.browseResultArray
+        try:
+            f_types = [('hurry up and pick one', '*.png')]
+            filename = filedialog.askopenfilename(filetypes=f_types)
+            self.browseImg = Image.open(filename)
+            # img_width = img.width()
+            # img_height = img.height()
+            self.browseImgArray = np.asarray(self.browseImg)
+            self.page.browse_button.config(background='SystemButtonFace')
+        except Exception as error:
+            self.page.browse_button.config(background='red')
+            print(error)
 
     def displayToSLM(self):
-        # try:
-        testImg = Image.open("test.png")
-        self.SLMdisp = Image.fromarray(self.browseImgArray)
+        try:
+            self.SLMdisp = Image.fromarray(self.browseImgArray)
+            self.page.display_button.config(background='SystemButtonFace')
+        except AttributeError as error:
+            print("NO IMAGE SELECTED")
+            # print(error)
+            self.page.display_button.config(background='red')
+        except Exception as error:
+            print(error)
 
     def clearSLM(self):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
 
-    def stop(self):
+    def stopGUI(self):
+        # self.camera.StopGrabbing()
+        # print("Stopped")
+        pass
+
+    def exitGUI(self):
+        print("GOODBYE")
+        df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
+                           'gain': [self.page.gain_entry.get()]})
+        df.to_csv('prevVals.csv', index=False)
         self.page.window.destroy()
         self.camera.Close
-
+    
+    def testFunc(self):
+        # print(self.page.gain_entry.get())
+        # df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
+        #                    'gain': [self.page.gain_entry.get()]})
+        # df.to_csv('prevVals.csv', index=False)
+        pass
 
 if __name__ == "__main__":
     testWidget = cameraCapture()
     while testWidget.camera.IsGrabbing():
         #input("Press Enter to continue...")
         testWidget.getFrame()
-
-        #If window has been closed using the X button, close program
-        # getWindowProperty() returns -1 as soon as the window is closed
-        if cv2.getWindowProperty(testWidget.windowName, 0) < 0:
-            cv2.destroyAllWindows()
-            break
-        if testWidget.k == 27: #If press ESC key
-            print('ESC')
-            cv2.destroyAllWindows()
-            break
