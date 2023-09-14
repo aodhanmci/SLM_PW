@@ -131,25 +131,14 @@ class cameraCapture(tk.Frame):
     def displayToSLM(self):
         # try:
         testImg = Image.open("test.png")
-        # print(type(testImg))
-        # testImg = cv2.resize(testImg, dsize = (self.page.SLMdim[0], self.page.SLMdim[1]))
-        # testImg.show()
-        # testLabel = tk.Label(self.window, testImg)
-        # self.SLMdisp = Image.fromarray(np.uint8(self.browseImgArray), "L")
-        # print(type(Image.fromarray(self.browseImgArray)))
         self.SLMdisp = Image.fromarray(self.browseImgArray)
-        # print(type(self.SLMdisp))
-        # print(self.SLMdisp.mode)
-        # self.SLMdisp = testImg
-        # print(type(self.SLMdisp))
-        # print(self.SLMdisp.mode)
-        # print("DONE")
-        # except Exception as error:
-        #     print(error)
-        # Image.fromarray(self.browseResultArray).show()
 
     def clearSLM(self):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
+
+    def stop(self):
+        self.page.window.destroy()
+        self.camera.Close
 
 
 if __name__ == "__main__":

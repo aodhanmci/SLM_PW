@@ -60,7 +60,7 @@ class Page(tk.Frame):
         # Create buttons
         self.start_button = tk.Button(window, text="Start")
         self.start_button.place(x=0, **upper_row_dict)
-        self.stop_button = tk.Button(window, text="Stop")
+        self.stop_button = tk.Button(window, text="Stop", command=self.vid.stop)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
         self.exit_button = tk.Button(window, text="Exit")
         self.exit_button.place(x=2*large_button_width, **upper_row_dict)
@@ -94,13 +94,20 @@ class Page(tk.Frame):
         self.save_entry.place(x=window_width-1*large_button_width, **upper_row_dict)
         
         # Detect SLM monitor
-        self.SLMdisplayNum = 1
-        self.SLMdim = (int(get_monitors()[self.SLMdisplayNum].width), int(get_monitors()[self.SLMdisplayNum].height))
+        self.SLMdisplayNum = 0
+        self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
+        self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
+
+        # cv2.namedWindow('SLM', cv2.WINDOW_NORMAL)
+        # cv2.moveWindow('SLM', self.SLMdisplay.x - 1, self.SLMdisplay.y - 1)
+        # cv2.setWindowProperty('SLM', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         # print(self.SLMdim)     # width = 1280, height = 1024
 
 
+
+
         #Create a canvas that will fit the camera source
-        self.SLM_image_widget = tk.Label(window, width=int(self.SLMdim[1]*scale_percent/100), height=int(self.SLMdim[0]*scale_percent/100))
+        self.SLM_image_widget = tk.Label(window, width=int(self.SLMdim[0]*scale_percent/100), height=int(self.SLMdim[1]*scale_percent/100))
         self.SLM_image_widget.place(x=1*window_width/4, y=window_height/2, anchor=tk.CENTER)
 
         # self.ccd_image_widget = tk.Label(window, width=width_scale, height=height_scale)
@@ -109,6 +116,9 @@ class Page(tk.Frame):
 
         self.delay=10
         self.update()
+
+
+
 
 
 
@@ -124,10 +134,12 @@ class Page(tk.Frame):
 
         photo1 = np.asarray(self.vid.SLMdisp)
         # print(type(photo1))
-        photo1 = cv2.resize(photo1, dsize=(int(self.SLMdim[1]*scale_percent/100), int(self.SLMdim[0]*scale_percent/100)))
+        photo1 = cv2.resize(photo1, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
         photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(photo1))
         self.SLM_image_widget.photo = photo1
         self.SLM_image_widget.config(image=photo1)
+
+        # cv2.imshow('SLM', np.asarray(self.vid.SLMdisp))
 
         # photo2 = PIL.ImageTk.PhotoImage(image=image2)
         # self.ccd_image_widget.photo = photo2
@@ -142,10 +154,46 @@ class Page(tk.Frame):
         self.window.after(self.delay, self.update)
 
 
+        # label = tk.Label(self.window2)
+        # photo2 = PIL.ImageTk.PhotoImage(image=self.vid.SLMdisp)
+        # label.photo = photo2
+        # label.config(image=photo2)
+        # self.window2.mainloop()
+
+
+class window2(tk.Toplevel):
+    def __init__(self, parent):
+
+        tk.Toplevel.__init__(self,parent)
+        self.parent = parent
+        self.title("Second Window")
+        self.geometry(f"{window_width}x{window_height}")
+        self.another_widget = tk.Label(self, width = 600, height = 400)
+        self.another_widget.place(x=300, y=200, anchor=tk.CENTER)
+
+
+
+        self.delay=10
+        self.update2()
+
+    def update2(self):
+
+        # image2 = np.asarray(Image.open("data.png"))
+        image2 = np.random.randint(0, 256, size=(1200,800), dtype=np.uint8).T
+        image2 = cv2.resize(np.uint8(image2), dsize=(600, 400))
+        image3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(image2))
+        self.another_widget.photo = image3
+        self.another_widget.config(image=image3)
+
+        self.after(self.delay, self.update2)
 
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     testWidget = Page(root, root) 
+
+    window2 = window2(root)
+
     root.mainloop()
+
