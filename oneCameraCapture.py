@@ -14,6 +14,7 @@ from tkinter.filedialog import askopenfile
 import video_display
 from PIL import Image, ImageTk
 import pandas as pd
+from SLM_TEST_HM import *
 
 class cameraCapture(tk.Frame):
 
@@ -171,6 +172,26 @@ class cameraCapture(tk.Frame):
         #                    'gain': [self.page.gain_entry.get()]})
         # df.to_csv('prevVals.csv', index=False)
         pass
+
+    def nloops(self):
+        numLoops = 1
+        for i in np.arange(numLoops):
+
+            if  i == 0:
+                gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                    count = i,
+                    plot = True,
+                    initialArray = self.img0
+                )
+            else:
+                gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                    count = i,
+                    plot = True,
+                    threshold = threshold,
+                    initialArray = self.img0
+                )
+            self.page.update()
+            time.sleep(1)
 
 if __name__ == "__main__":
     testWidget = cameraCapture()
