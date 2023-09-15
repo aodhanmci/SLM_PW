@@ -7,7 +7,7 @@ from PIL import Image, ImageTk, ImageOps
 import numpy as np
 import cv2
 import PIL
-import SLM_TEST_GUI
+from SLM_TEST_HM import *
 import screeninfo
 from screeninfo import get_monitors
 import pandas as pd
@@ -23,7 +23,7 @@ button_gap = 0
 window_width = 1500
 window_height = 1000
 
-scale_percent = 30 # percent of original size
+scale_percent = 40 # percent of original size
 width_scale = int(window_width * scale_percent / 100)
 height_scale = int(window_height * scale_percent / 100)
 # dim = (width_scale, height_scale)
@@ -51,8 +51,13 @@ class Page(tk.Frame):
         self.vid = oneCameraCapture.cameraCapture(self, self)
 
         # Detect SLM monitor
-        global SLMdim
-        self.SLMdisplayNum = 0
+        global mainDim, SLMdim
+
+        mainDisplayNum = 0
+        mainDisplay = screeninfo.get_monitors()[mainDisplayNum]
+        mainDim = (int(mainDisplay.width), int(mainDisplay.height))
+
+        self.SLMdisplayNum = 1
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
         SLMdim = self.SLMdim
@@ -64,8 +69,8 @@ class Page(tk.Frame):
         # print(self.SLMdim)     # width = 1280, height = 1024
 
         # Define dimensions for object placement
-        SLMwidth = SLMdim[0] # 2560
-        SLMheight = SLMdim[1] # 1440
+        SLMwidth = SLMdim[0]
+        SLMheight = SLMdim[1]
 
         CCDwidth = self.vid.getFrame().shape[1] # 1920
         CCDheight = self.vid.getFrame().shape[0] # 1200
@@ -112,7 +117,7 @@ class Page(tk.Frame):
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
         self.one_loop_button = tk.Button(window, text="1 loop")
         self.one_loop_button.place(x=2*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="5 loop")
+        self.five_loop_button = tk.Button(window, text="5 loop", command=self.vid.nloops)
         self.five_loop_button.place(x=3*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
         self.clear_button.place(x=4*large_button_width, **lower_row_dict)
@@ -189,6 +194,7 @@ class Page(tk.Frame):
         image2 = self.image2
 
         self.delay=10
+        print("HELLO")
         self.update()
         
         onClose = self.vid.exitGUI
@@ -209,12 +215,11 @@ class Page(tk.Frame):
         # image1 = Image.fromarray(image_array1)
         # image2 = Image.fromarray(image_array2)
 
+        # photo1 = np.asarray(Image.open("./calibration/crosshair4.png"))
         photo1 = np.asarray(self.vid.SLMdisp)
         # print(image2)
         if image2[0][0] != None:
             check = np.array_equal(image2, photo1)
-            # print(image2[0][0])
-            # print("CHECK1: " + str(check))
             if check != True:
                 self.image2 = photo1
 
@@ -222,7 +227,7 @@ class Page(tk.Frame):
                 self.photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.photo1))
                 self.SLM_image_widget.photo = self.photo1
                 self.SLM_image_widget.config(image=self.photo1)
-                print("CHANGED1")
+                # print("CHANGED1")
 
         # photo2 = PIL.ImageTk.PhotoImage(image=image2)
         # self.ccd_image_widget.photo = photo2
@@ -244,20 +249,28 @@ class Page(tk.Frame):
         # self.window2.mainloop()
 
 
+
 class window2(tk.Toplevel, Page):
     def __init__(self, parent):
         global image2
-        # self.SLMimage = Image.open('10lpmm_190amp.png')
-        # self.SLMimage = Image.fromarray(np.random.randint(0, 256, size=(1200,800), dtype=np.uint8).T)
 
         self.SLMdims = SLMdim
+
+        # Get main display and SLM display dimensions to send window2 to SLM display
+        mainWidth = mainDim[0] # 2560
+        mainHeight = mainDim[1] # 1440
+        SLMwidth = SLMdim[0] # 1280
+        SLMheight = SLMdim[1] # 1024
+
+        # print(mainWidth, mainHeight, SLMwidth, SLMheight)
 
         tk.Toplevel.__init__(self,parent)
         self.parent = parent
         self.title("SLM DISPLAY")
+        self.geometry('%dx%d+%d+%d'%(SLMwidth, SLMheight, mainWidth, 0))
+        self.overrideredirect(1)
         # self.attributes("-fullscreen", True)
-        # self.geometry(f"{window_width}x{window_height}")
-        self.another_widget = tk.Label(self, width = SLMdim[0]*3, height = SLMdim[1]*3)
+        self.another_widget = tk.Label(self, width = int(SLMdim[0]*3), height = int(SLMdim[1]*3))
         self.another_widget.place(x=SLMdim[0]/2, y=SLMdim[1]/2, anchor=tk.CENTER)
 
         # self.image2 = np.zeros((SLMdim[0], SLMdim[1]))
@@ -275,34 +288,20 @@ class window2(tk.Toplevel, Page):
         # Only change image on SLM if the variable "photo1" from oneCameraCapture (created from Upload to SLM button) is different from current display on SLM
 
         if image2[0][0] != None:
-            # check = np.array_equal(image2, photo1)
-            # print(image2[0][0])
-            # print("CHECK2: " + str(check))
             if check != True:
                 image2 = photo1
-                # image2 = cv2.resize(np.uint8(image2), dsize=(2500, 1300))
-                # image2 = np.resize(image2, (140, 260))
-                image2 = ImageOps.fit(Image.fromarray(image2), (int(2160), int(140)))
+                image2 = ImageOps.fit(Image.fromarray(image2), (int(self.SLMdims[0]), int(self.SLMdims[1])))
                 image2 = np.asarray(image2)
-                # self.delay=10
-                # print("AFTER")
                 self.image3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(image2))
+                # self.image3 = PIL.ImageTk.PhotoImage(image=image2)
+                # self.image3 = image2
                 self.another_widget.photo = self.image3
                 # self.another_widget.image = self.image3
                 self.another_widget.config(image=self.image3)
-                print("CHANGED2")
+                # self.another_widget.attributes("-fullscreen", True)
+                # self.another_widget.pack(fill="both")
 
-        # self.image2 = photo1
-        # # image2 = cv2.resize(np.uint8(image2), dsize=(2500, 1300))
-        # # image2 = np.resize(image2, (140, 260))
-        # image2 = ImageOps.fit(Image.fromarray(self.image2), (int(2160), int(140)))
-        # image2 = np.asarray(image2)
-        # # self.delay=10
-        # # print("AFTER")
-        # self.image3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(image2))
-        # self.another_widget.photo = self.image3
-        # # self.another_widget.image = self.image3
-        # self.another_widget.config(image=self.image3)
+                # print("CHANGED2")
 
         self.after(self.delay, self.update2)
 
