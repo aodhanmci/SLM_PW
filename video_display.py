@@ -7,7 +7,7 @@ from PIL import Image, ImageTk, ImageOps
 import numpy as np
 import cv2
 import PIL
-from SLM_TEST_HM import *
+from SLM_HAMAMATSU import *
 import screeninfo
 from screeninfo import get_monitors
 import pandas as pd

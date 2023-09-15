@@ -14,7 +14,7 @@ from tkinter.filedialog import askopenfile
 import video_display
 from PIL import Image, ImageTk
 import pandas as pd
-from SLM_TEST_HM import *
+from SLM_HAMAMATSU import *
 
 class cameraCapture(tk.Frame):
 
@@ -174,9 +174,10 @@ class cameraCapture(tk.Frame):
         pass
 
     def nloops(self):
-        numLoops = 1
+        print("BEGINNING")
+        numLoops = 5
         for i in np.arange(numLoops):
-
+            print("BLOOP")
             if  i == 0:
                 gratingImg, gratingArray, diff, threshold, allTest = feedback(
                     count = i,
@@ -190,8 +191,10 @@ class cameraCapture(tk.Frame):
                     threshold = threshold,
                     initialArray = self.img0
                 )
+            self.SLMdisp = Image.fromarray(gratingArray)
             self.page.update()
             time.sleep(1)
+            print("ELOOP")
 
 if __name__ == "__main__":
     testWidget = cameraCapture()
