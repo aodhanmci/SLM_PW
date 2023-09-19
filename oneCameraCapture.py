@@ -95,10 +95,12 @@ class cameraCapture(tk.Frame):
 
             return self.img0
             
-        except genicam.GenericException as e:
-            # Error handling
-            print("An exception occurred.", e.GetDescription())
-            exitCode = 1
+        # except genicam.GenericException as e:
+        #     # Error handling
+        #     print("An exception occurred.", e.GetDescription())
+        #     exitCode = 1
+        except Exception as error:
+            print(error)
 
     def exposure_change(self):
         try:
@@ -168,11 +170,7 @@ class cameraCapture(tk.Frame):
         self.camera.Close
     
     def testFunc(self):
-        # print(self.page.gain_entry.get())
-        # df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
-        #                    'gain': [self.page.gain_entry.get()]})
-        # df.to_csv('prevVals.csv', index=False)
-        pass
+        self.camera.StartGrabbing()
 
     def nloops(self):
         print("BEGINNING")
@@ -209,6 +207,10 @@ class cameraCapture(tk.Frame):
         # input("Press enter to continue....")
         # cv2.imwrite(f'./HMPolTests/testImg.png', self.img0)  # Save the captured image to a file
         # print(f"Image saved as testImg.png")
+    
+    def oneloop(self):
+        # self.camera.StopGrabbing()
+        self.page.pressed = True
 
 if __name__ == "__main__":
     testWidget = cameraCapture()

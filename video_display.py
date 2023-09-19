@@ -116,13 +116,13 @@ class Page(tk.Frame):
         self.browse_button.place(x=0, **lower_row_dict)
         self.display_button = tk.Button(window, text="Display to SLM", command=self.vid.displayToSLM)
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
-        self.one_loop_button = tk.Button(window, text="1 loop")
+        self.one_loop_button = tk.Button(window, text="1 loop", command=self.vid.oneloop)
         self.one_loop_button.place(x=2*large_button_width, **lower_row_dict)
         self.five_loop_button = tk.Button(window, text="5 loop", command=self.vid.nloops)
         self.five_loop_button.place(x=3*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
         self.clear_button.place(x=4*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.vid.runThrough)
+        self.calibrate_button = tk.Button(window, text="Calibrate")
         self.calibrate_button.place(x=6*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
@@ -194,6 +194,10 @@ class Page(tk.Frame):
         self.image2[0][0] = None
         image2 = self.image2
 
+        self.pressed = False
+        self.count = 0
+        self.timer = 0
+
         self.delay=10
         print("HELLO")
         self.update()
@@ -207,7 +211,7 @@ class Page(tk.Frame):
 
     def update(self):
         #Get a frame from cameraCapture
-        global photo1, check
+        global photo1, check, threshold
         image2 = self.image2
         # Example arrays (you can replace these with your actual image data)
         # photo1 = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
@@ -217,7 +221,39 @@ class Page(tk.Frame):
         # image2 = Image.fromarray(image_array2)
 
         # photo1 = np.asarray(Image.open("./calibration/crosshair4.png"))
-        photo1 = np.asarray(self.vid.SLMdisp)
+        # photo1 = np.asarray(self.vid.SLMdisp)
+        maxLoops = 5
+        if self.pressed == True:
+            print("1 LOOP BUTTON PRESSED")
+            if self.timer != 3:
+                time.sleep(1)
+                self.timer += 1
+            if self.timer == 3:
+                if self.count == 0:
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        plot = True,
+                        initialArray = self.vid.getFrame()
+                        )
+                else:
+                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        plot = True,
+                        threshold = threshold,
+                        initialArray = self.vid.getFrame()
+                    )
+
+                photo1 = gratingArray
+
+                if self.count == maxLoops:
+                    self.count = 0
+                    self.pressed = False
+                    self.vid.SLMdisp = Image.fromarray(gratingArray)
+                else:
+                    self.count += 1
+                self.timer = 0
+        else:
+            photo1 = np.asarray(self.vid.SLMdisp)
         # print(image2)
         if image2[0][0] != None:
             check = np.array_equal(image2, photo1)

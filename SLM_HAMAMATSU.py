@@ -27,7 +27,7 @@ def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2
     lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
     lenspaper = lenspaper.rotate(angle)
 
-    return asarray(lenspaper)
+    # return asarray(lenspaper)
 
     display(crosshair4)
     display(lenspaper)
@@ -60,8 +60,9 @@ def displayt(image, text):
 def center(imageArray):
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_image = np.uint8(imageArray)
-    ret,thresh = cv2.threshold(gray_image,127,255,0)
+    ret,thresh = cv2.threshold(gray_image,50,255,0)
     M = cv2.moments(thresh)
+
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
     newImage = Image.fromarray(imageArray)
@@ -113,9 +114,9 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     if np.any(initialArray != None):
         initialImg = Image.fromarray(initialArray)
-        print(initialImg.mode)
+        # print(np.amax(initialArray))
     
-    blazed = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/HAMAMATSU_2px.png')
+    blazed = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
     
     initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
