@@ -11,6 +11,7 @@ from SLM_HAMAMATSU import *
 import screeninfo
 from screeninfo import get_monitors
 import pandas as pd
+import os
 
 small_button_height = 20
 small_button_width = 50
@@ -121,7 +122,7 @@ class Page(tk.Frame):
         self.five_loop_button.place(x=3*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
         self.clear_button.place(x=4*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate")
+        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.vid.runThrough)
         self.calibrate_button.place(x=6*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file

@@ -15,6 +15,7 @@ import video_display
 from PIL import Image, ImageTk
 import pandas as pd
 from SLM_HAMAMATSU import *
+import os
 
 class cameraCapture(tk.Frame):
 
@@ -195,6 +196,19 @@ class cameraCapture(tk.Frame):
             self.page.update()
             time.sleep(1)
             print("ELOOP")
+    
+    def runThrough(self):
+        # for pol in np.arange(0,360,10):
+        #     for gray in np.arange(0, 260, 10):
+        gray=160
+        # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
+        self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+        print("Image displayed.")
+        
+        # self.page.update()
+        # input("Press enter to continue....")
+        # cv2.imwrite(f'./HMPolTests/testImg.png', self.img0)  # Save the captured image to a file
+        # print(f"Image saved as testImg.png")
 
 if __name__ == "__main__":
     testWidget = cameraCapture()
