@@ -12,32 +12,15 @@ import screeninfo
 from screeninfo import get_monitors
 import pandas as pd
 import os
+import imageio.v3 as iio
+import laserbeamsize as lbs
 
-small_button_height = 20
-small_button_width = 50
 
-large_button_height = 30
-large_button_width = 90
-
-button_gap = 0
-
-window_width = 1500
-window_height = 1000
-
-scale_percent = 40 # percent of original size
-width_scale = int(window_width * scale_percent / 100)
-height_scale = int(window_height * scale_percent / 100)
-# dim = (width_scale, height_scale)
-first_row_button_height = window_height-2*large_button_height-2*button_gap
-second_row_button_height = window_height-large_button_height-button_gap
-
-upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
-lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
 class Page(tk.Frame):
 
     def __init__(self, parent, window):
-        global onClose
+        global onClose, scale_percent
 
         # self.grid()
 
@@ -45,9 +28,7 @@ class Page(tk.Frame):
 
         self.window = window
         window.title("SLM & CCD Control")
-        window.geometry(f"{window_width}x{window_height}")
-
-        df = pd.read_csv('prevVals.csv', usecols=['exposure','gain'])
+        # window.geometry(f"{window_width}x{window_height}")
         
         self.vid = oneCameraCapture.cameraCapture(self, self)
 
@@ -63,12 +44,6 @@ class Page(tk.Frame):
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
         SLMdim = self.SLMdim
 
-        # Move SLM monitor to second screen
-        # cv2.namedWindow('SLM', cv2.WINDOW_NORMAL)
-        # cv2.moveWindow('SLM', self.SLMdisplay.x - 1, self.SLMdisplay.y - 1)
-        # cv2.setWindowProperty('SLM', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        # print(self.SLMdim)     # width = 1280, height = 1024
-
         # Define dimensions for object placement
         SLMwidth = SLMdim[0]
         SLMheight = SLMdim[1]
@@ -76,8 +51,37 @@ class Page(tk.Frame):
         CCDwidth = self.vid.getFrame().shape[1] # 1920
         CCDheight = self.vid.getFrame().shape[0] # 1200
 
-        gap = (window_width - SLMwidth*scale_percent/100 - CCDwidth*scale_percent/100) / 3
+        scale_percent = 40 # percent of original size
 
+        gap = min(SLMwidth, CCDwidth)*scale_percent/600
+
+        window_width = int(SLMwidth*scale_percent/100 + CCDwidth*scale_percent/100 + 3*gap)
+        window_height = int(max(SLMheight, CCDheight)*scale_percent/50 + 3*gap)
+
+        window.geometry(f"{window_width}x{window_height}+{int(mainDim[0]/2-window_width/2)}+{int(mainDim[1]/2-window_height/2)}")
+
+        # gap = (window_width - SLMwidth*scale_percent/100 - CCDwidth*scale_percent/100) / 3
+
+        small_button_height = 20
+        small_button_width = 50
+
+        large_button_height = 30
+        large_button_width = 90
+
+        button_gap = 0
+
+        width_scale = int(window_width * scale_percent / 100)
+        height_scale = int(window_height * scale_percent / 100)
+        # dim = (width_scale, height_scale)
+        first_row_button_height = window_height-2*large_button_height-2*button_gap
+        second_row_button_height = window_height-large_button_height-button_gap
+
+        upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
+        lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
+
+
+
+        df = pd.read_csv('prevVals.csv', usecols=['exposure','gain','loop'])
 
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
@@ -87,13 +91,6 @@ class Page(tk.Frame):
             y= gap/2,
             anchor=tk.CENTER
             )
-
-        # UNNEEDED?
-        # self.slm_image_window = tk.Canvas(window, width = 100, height=100)
-        # self.slm_image_window.config(background='red')
-        # self.slm_image_window.pack()
-
-        # slm_image_window.create_image(0, 0, image = np.ones((100, 100)))
 
         # Create a label for the CCD image
         self.ccd_image_label = tk.Label(window, text="CCD")
@@ -111,6 +108,9 @@ class Page(tk.Frame):
         self.stop_button.place(x=large_button_width, **upper_row_dict)
         self.exit_button = tk.Button(window, text="Exit", command=self.vid.exitGUI)
         self.exit_button.place(x=2*large_button_width, **upper_row_dict)
+        self.loop_entry = tk.Entry(window)
+        self.loop_entry.insert(0, str(df.loop[0]))
+        self.loop_entry.place(x=3*large_button_width, **upper_row_dict)
 
         self.browse_button = tk.Button(window, text="Browse", command=self.vid.browse)
         self.browse_button.place(x=0, **lower_row_dict)
@@ -118,7 +118,7 @@ class Page(tk.Frame):
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
         self.one_loop_button = tk.Button(window, text="1 loop", command=self.vid.oneloop)
         self.one_loop_button.place(x=2*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="5 loop", command=self.vid.nloops)
+        self.five_loop_button = tk.Button(window, text="n loop", command=self.vid.nloops)
         self.five_loop_button.place(x=3*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
         self.clear_button.place(x=4*large_button_width, **lower_row_dict)
@@ -126,6 +126,8 @@ class Page(tk.Frame):
         self.crosshair_button.place(x=5*large_button_width, **lower_row_dict)
         self.calibrate_button = tk.Button(window, text="Calibrate", command=lambda: calibrate())
         self.calibrate_button.place(x=6*large_button_width, **lower_row_dict)
+        self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection())
+        self.circle_button.place(x=7*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
         self.exposure_button = tk.Button(window, text="Set Exposure", command=self.vid.exposure_change)
@@ -148,8 +150,8 @@ class Page(tk.Frame):
 
         #Create a canvas that will fit the camera source
         self.SLM_image_widget = tk.Label(window, 
-                                         width=int(self.SLMdim[0]*scale_percent/100),
-                                         height=int(self.SLMdim[1]*scale_percent/100),
+                                         width=int(SLMwidth*scale_percent/100),
+                                         height=int(SLMheight*scale_percent/100),
                                          anchor=tk.CENTER
                                          )
         # self.SLM_image_widget.config(background='orange')
@@ -157,21 +159,21 @@ class Page(tk.Frame):
                                     # x=1*window_width/3,
                                     x = int(SLMwidth*scale_percent/200 + gap),
                                     # y=window_height/2, 
-                                    y = int(SLMheight*scale_percent/200 + gap),
+                                    y = int(max(SLMheight, CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
         # self.ccd_image_widget = tk.Label(window, width=width_scale, height=height_scale)
         self.ccd_image_widget = tk.Label(window, 
-                                         width=int(self.vid.getFrame().shape[1]*scale_percent/100), 
-                                         height=int(self.vid.getFrame().shape[0]*scale_percent/100),
+                                         width=int(CCDwidth*scale_percent/100), 
+                                         height=int(CCDheight*scale_percent/100),
                                          anchor=tk.CENTER
                                          )
         self.ccd_image_widget.place(
                                     # x=2*window_width/3, 
                                     x = int(window_width - CCDwidth*scale_percent/200 - gap),
                                     # y=window_height/2, 
-                                    y = int(SLMheight*scale_percent/200 + gap),
+                                    y = int(max(SLMheight, CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
@@ -190,13 +192,30 @@ class Page(tk.Frame):
         #                             anchor=tk.CENTER
         #                             )
 
+        # #Create a canvas that will fit the camera source
+        # self.SLM_preview_widget = tk.Label(window, 
+        #                                  width=int(SLMwidth*scale_percent/100),
+        #                                  height=int(SLMheight*scale_percent/100),
+        #                                  anchor=tk.CENTER
+        #                                  )
+        # # self.SLM_image_widget.config(background='orange')
+        # self.SLM_preview_widget.place(
+        #                             # x=1*window_width/3,
+        #                             x = int(SLMwidth*scale_percent/200 + gap),
+        #                             # y=window_height/2, 
+        #                             y = int(max(SLMheight, CCDheight)*scale_percent/200 + 2*gap),
+        #                             anchor=tk.CENTER
+                                    # )
+
 
         global image2
         self.image2 = np.zeros((SLMdim[0], SLMdim[1]))
         self.image2[0][0] = None
         image2 = self.image2
 
-        self.pressed = False
+        self.circle_toggle = False
+        self.loop_pressed = False
+        self.nloop_pressed = False
         self.count = 0
         self.timer = 0
 
@@ -213,7 +232,7 @@ class Page(tk.Frame):
 
     def update(self):
         #Get a frame from cameraCapture
-        global photo1, check, threshold, calibrate
+        global photo1, check, threshold, calibrate, circleDetection
         image2 = self.image2
         # Example arrays (you can replace these with your actual image data)
         # photo1 = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
@@ -258,13 +277,17 @@ class Page(tk.Frame):
 
 
 
-        maxLoops = 10
-        if self.pressed == True:
+
+        if self.nloop_pressed == True or self.loop_pressed == True:
+            if self.loop_pressed == True:
+                maxLoops = 1
+            else:
+                maxLoops = int(self.loop_entry.get())
             # print("1 LOOP BUTTON PRESSED")
-            if self.timer != 10:
+            if self.timer != 2:
                 # time.sleep(1)
                 self.timer += 1
-            if self.timer == 10:
+            if self.timer == 2:
                 if self.count == 0:
                     gratingImg, gratingArray, diff, threshold, allTest = feedback(
                         count = self.count,
@@ -283,7 +306,8 @@ class Page(tk.Frame):
 
                 if self.count == maxLoops:
                     self.count = 0
-                    self.pressed = False
+                    self.nloop_pressed = False
+                    self.loop_pressed = False
                     self.vid.SLMdisp = Image.fromarray(gratingArray)
                 else:
                     self.count += 1
@@ -297,6 +321,7 @@ class Page(tk.Frame):
         # print(image2.shape)
         # print(photo1.shape)
 
+
         if image2[0][0] != None:
             check = np.array_equal(image2, photo1)
             if check != True:
@@ -308,16 +333,47 @@ class Page(tk.Frame):
                 self.SLM_image_widget.config(image=self.photo1)
                 # print("CHANGED SLM PREVIEW")
 
-        # photo2 = PIL.ImageTk.PhotoImage(image=image2)
-        # self.ccd_image_widget.photo = photo2
-        # self.ccd_image_widget.config(image=photo2)
 
         self.ccd_data = self.vid.getFrame() #This is an array
         self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+
+        #####
+        # TEST CIRCLE DETECTION
+        #####
+
+        def circleDetection():
+            # global circleToggle
+
+            if self.circle_toggle:
+                # print("OFF")
+                self.circle_toggle = False
+            else:
+                # print("ON")
+                self.circle_toggle = True
+
+        if self.circle_toggle:
+            try:
+                image = self.ccd_data
+                x, y, dx, dy, phi = lbs.beam_size(image)
+                detected_circle = np.uint16((x,y,(dx/3+dy/3)/2,phi))
+                cv2.circle(image, (detected_circle[0],detected_circle[1]), detected_circle[2], 255, 1)
+                # cv2.circle(image, (detected_circle[0],detected_circle[1]), detected_circle[3], 255, 1)
+                cv2.circle(image, (detected_circle[0],detected_circle[1]), 1, 255, 2)
+            except Exception as error:
+                print(error)
+
+        #####
+
+
+
         self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
         self.ccd_image_widget.config(image=self.photo)
         self.ccd_image_widget.photo = self.photo
         # print("CHANGED CCD")
+
+        # self.SLM_preview_widget.photo = self.vid.browseImg
+        # # self.another_widget.image = self.image3
+        # self.SLM_preview_widget.config(image=self.image3)
 
         self.window.after(self.delay, self.update)
 
@@ -348,8 +404,7 @@ class window2(tk.Toplevel, Page):
         self.parent = parent
         self.title("SLM DISPLAY")
         self.geometry('%dx%d+%d+%d'%(SLMwidth, SLMheight, mainWidth, 0))
-        self.overrideredirect(1)
-        # self.attributes("-fullscreen", True)
+        self.overrideredirect(1) # Remove window borders
         self.another_widget = tk.Label(self, width = int(SLMdim[0]*3), height = int(SLMdim[1]*3))
         self.another_widget.place(x=SLMdim[0]/2, y=SLMdim[1]/2, anchor=tk.CENTER)
 

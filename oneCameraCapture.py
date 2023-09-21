@@ -40,15 +40,16 @@ class cameraCapture(tk.Frame):
             if NUM_CAMERAS == 0:
                 raise pylon.RuntimeException("No camera connected")
             else:
-                print(f'{NUM_CAMERAS} cameras detected:\n')
+                # print(f'{NUM_CAMERAS} cameras detected:\n')
                 
-                for counter, device in enumerate(devices):
-                    print(f'{counter}) {device.GetFriendlyName()}') # return readable name
-                    print(f'{counter}) {device.GetFullName()}\n') # return unique code
-            self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
-            # running=False
-            # Print the model name of the camera.
-            print("Using device ", self.camera.GetDeviceInfo().GetModelName())
+                # for counter, device in enumerate(devices):
+                #     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+                #     print(f'{counter}) {device.GetFullName()}\n') # return unique code
+
+                self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
+                # running=False
+                # Print the model name of the camera.
+                print("Using device ", self.camera.GetDeviceInfo().GetModelName())
 
             # self.camera.PixelFormat = "Mono8"
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
@@ -152,6 +153,7 @@ class cameraCapture(tk.Frame):
             self.page.display_button.config(background='red')
         except Exception as error:
             print(error)
+            self.page.display_button.config(background='red')
 
     def clearSLM(self):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
@@ -164,7 +166,8 @@ class cameraCapture(tk.Frame):
     def exitGUI(self):
         print("GOODBYE")
         df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
-                           'gain': [self.page.gain_entry.get()]})
+                           'gain': [self.page.gain_entry.get()],
+                           'loop': [self.page.loop_entry.get()]})
         df.to_csv('prevVals.csv', index=False)
         self.page.window.destroy()
         self.camera.Close
@@ -174,29 +177,6 @@ class cameraCapture(tk.Frame):
     
     def testFunc(self):
         self.camera.StartGrabbing()
-
-    def nloops(self):
-        print("BEGINNING")
-        numLoops = 5
-        for i in np.arange(numLoops):
-            print("BLOOP")
-            if  i == 0:
-                gratingImg, gratingArray, diff, threshold, allTest = feedback(
-                    count = i,
-                    plot = True,
-                    initialArray = self.img0
-                )
-            else:
-                gratingImg, gratingArray, diff, threshold, allTest = feedback(
-                    count = i,
-                    plot = True,
-                    threshold = threshold,
-                    initialArray = self.img0
-                )
-            self.SLMdisp = Image.fromarray(gratingArray)
-            self.page.update()
-            time.sleep(1)
-            print("ELOOP")
     
     def runThrough(self):
         # for pol in np.arange(0,360,10):
@@ -212,8 +192,10 @@ class cameraCapture(tk.Frame):
         # print(f"Image saved as testImg.png")
     
     def oneloop(self):
-        # self.camera.StopGrabbing()
-        self.page.pressed = True
+        self.page.loop_pressed = True
+    
+    def nloops(self):
+        self.page.nloop_pressed = True
     
 
 
