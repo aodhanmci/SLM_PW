@@ -27,6 +27,7 @@ class cameraCapture(tk.Frame):
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
+        self.browseImg = Image.open("./calibration/HAMAMATSU/HAMAMATSU_black.png")
         try:
             df = pd.read_csv('prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
@@ -40,11 +41,11 @@ class cameraCapture(tk.Frame):
             if NUM_CAMERAS == 0:
                 raise pylon.RuntimeException("No camera connected")
             else:
-                # print(f'{NUM_CAMERAS} cameras detected:\n')
+                print(f'{NUM_CAMERAS} cameras detected:\n')
                 
-                # for counter, device in enumerate(devices):
-                #     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
-                #     print(f'{counter}) {device.GetFullName()}\n') # return unique code
+                for counter, device in enumerate(devices):
+                    print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+                    print(f'{counter}) {device.GetFullName()}\n') # return unique code
 
                 self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
                 # running=False
@@ -130,11 +131,12 @@ class cameraCapture(tk.Frame):
             self.page.save_button.config(background="red")
     
     def browse(self):
-        global img
+        global browseImg
         try:
             f_types = [('hurry up and pick one', '*.png')]
             filename = filedialog.askopenfilename(filetypes=f_types)
             self.browseImg = Image.open(filename)
+            browseImg = self.browseImg
             # img_width = img.width()
             # img_height = img.height()
             self.browseImgArray = np.asarray(self.browseImg)
@@ -197,7 +199,6 @@ class cameraCapture(tk.Frame):
     def nloops(self):
         self.page.nloop_pressed = True
     
-
 
 
 if __name__ == "__main__":
