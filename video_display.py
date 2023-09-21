@@ -43,7 +43,7 @@ class Page(tk.Frame):
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
         SLMdim = self.SLMdim
-
+        print(SLMdim)
         # Define dimensions for object placement
         SLMwidth = SLMdim[0]
         SLMheight = SLMdim[1]
