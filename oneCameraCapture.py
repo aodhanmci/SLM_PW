@@ -169,6 +169,9 @@ class cameraCapture(tk.Frame):
         self.page.window.destroy()
         self.camera.Close
     
+    def crosshair(self):
+        self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+    
     def testFunc(self):
         self.camera.StartGrabbing()
 
@@ -211,6 +214,9 @@ class cameraCapture(tk.Frame):
     def oneloop(self):
         # self.camera.StopGrabbing()
         self.page.pressed = True
+    
+
+
 
 if __name__ == "__main__":
     testWidget = cameraCapture()

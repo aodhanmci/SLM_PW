@@ -122,7 +122,9 @@ class Page(tk.Frame):
         self.five_loop_button.place(x=3*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
         self.clear_button.place(x=4*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate")
+        self.crosshair_button = tk.Button(window, text="Crosshair", command=self.vid.crosshair)
+        self.crosshair_button.place(x=5*large_button_width, **lower_row_dict)
+        self.calibrate_button = tk.Button(window, text="Calibrate", command=lambda: calibrate())
         self.calibrate_button.place(x=6*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
@@ -211,7 +213,7 @@ class Page(tk.Frame):
 
     def update(self):
         #Get a frame from cameraCapture
-        global photo1, check, threshold
+        global photo1, check, threshold, calibrate
         image2 = self.image2
         # Example arrays (you can replace these with your actual image data)
         # photo1 = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
@@ -222,23 +224,57 @@ class Page(tk.Frame):
 
         # photo1 = np.asarray(Image.open("./calibration/crosshair4.png"))
         # photo1 = np.asarray(self.vid.SLMdisp)
-        maxLoops = 5
+
+        def calibrate():
+            match = False
+            while match == False:
+
+                print("\nPlease enter the following calibration values. Type \"Done\" if done.")
+                xZoom = input("Enter xZoom: ")
+                if xZoom == "Done":
+                    try:
+                        df = pd.DataFrame({'xZoom': [prevxZoom],
+                                            'yZoom': [yZoom],
+                                            'xShift': [xShift],
+                                            'yShift': [yShift],
+                                            'angle': [angle]})
+                        df.to_csv('calVals.csv', index=False)
+                        print("DONE CALIBRATING!")
+                    except:
+                        print("Failed to save values. Ending calibration.")
+                        pass
+                    match = True
+                else:
+                    yZoom = input("Enter yZoom: ")
+                    xShift = input("Enter xShift: ")
+                    yShift = input("Enter yShift: ")
+                    angle = input("Enter angle: ")
+                    prevxZoom = xZoom
+
+                    calImg = calibration(self.vid.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
+                    calImg = Image.fromarray(calImg)
+                    calImg.show()
+                    Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png").show()
+
+
+
+        maxLoops = 10
         if self.pressed == True:
-            print("1 LOOP BUTTON PRESSED")
-            if self.timer != 3:
-                time.sleep(1)
+            # print("1 LOOP BUTTON PRESSED")
+            if self.timer != 10:
+                # time.sleep(1)
                 self.timer += 1
-            if self.timer == 3:
+            if self.timer == 10:
                 if self.count == 0:
                     gratingImg, gratingArray, diff, threshold, allTest = feedback(
                         count = self.count,
-                        plot = True,
+                        # plot = True,
                         initialArray = self.vid.getFrame()
                         )
                 else:
                     gratingImg, gratingArray, diff, threshold, allTest = feedback(
                         count = self.count,
-                        plot = True,
+                        # plot = True,
                         threshold = threshold,
                         initialArray = self.vid.getFrame()
                     )
@@ -255,6 +291,12 @@ class Page(tk.Frame):
         else:
             photo1 = np.asarray(self.vid.SLMdisp)
         # print(image2)
+
+        if len(photo1.shape) == 3:
+            photo1 = photo1[:,:,0]
+        # print(image2.shape)
+        # print(photo1.shape)
+
         if image2[0][0] != None:
             check = np.array_equal(image2, photo1)
             if check != True:
@@ -264,7 +306,7 @@ class Page(tk.Frame):
                 self.photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.photo1))
                 self.SLM_image_widget.photo = self.photo1
                 self.SLM_image_widget.config(image=self.photo1)
-                # print("CHANGED1")
+                # print("CHANGED SLM PREVIEW")
 
         # photo2 = PIL.ImageTk.PhotoImage(image=image2)
         # self.ccd_image_widget.photo = photo2
@@ -275,6 +317,7 @@ class Page(tk.Frame):
         self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
         self.ccd_image_widget.config(image=self.photo)
         self.ccd_image_widget.photo = self.photo
+        # print("CHANGED CCD")
 
         self.window.after(self.delay, self.update)
 
@@ -338,7 +381,7 @@ class window2(tk.Toplevel, Page):
                 # self.another_widget.attributes("-fullscreen", True)
                 # self.another_widget.pack(fill="both")
 
-                # print("CHANGED2")
+                # print("CHANGED SLM")
 
         self.after(self.delay, self.update2)
 

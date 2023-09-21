@@ -14,9 +14,9 @@ import pandas as pd
 
 def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
     lenspaper = Image.fromarray(input)
-    lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
+    # lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
     
-    crosshair4 = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/crosshair4.png')
+    crosshair4 = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
     width, height = crosshair4.size
     
     w, h = lenspaper.size
@@ -27,7 +27,7 @@ def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2
     lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
     lenspaper = lenspaper.rotate(angle)
 
-    # return asarray(lenspaper)
+    return asarray(lenspaper)
 
     display(crosshair4)
     display(lenspaper)
@@ -37,12 +37,12 @@ def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2
 width = 1280
 height = 1024
 
-def zoom_at(img, x, y, zoom):
+def zoom_at(img, x, y, zoom, xzoom, yzoom):
     global w, h
     w, h = img.size
     zoom2 = zoom * 2
     img = img.crop((x - w / zoom2, y - h / zoom2, 
-                    x + w / (zoom2*0.86), y + h / (zoom2*1.1)))
+                    x + w / (zoom2*xzoom), y + h / (zoom2*yzoom)))
     return img.resize((width, height), Image.Resampling.LANCZOS)
 
 
@@ -101,17 +101,21 @@ def center(imageArray):
 
 
 
-def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 10, innerBlur = 15, rangeVal = 5, maxIter = 100, yshift = 4, plot = False):
+def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 5, innerBlur = 15, rangeVal = 5, maxIter = 100, yshift = 4, plot = False):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
+    # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
+    df = pd.read_csv('calVals.csv', usecols=['xZoom', 'yZoom', 'xShift', 'yShift', 'angle'])
+
     #####
     # Open the initial beam image from the "SLM" folder in GDrive. Function input should be a PNG filepath with no extension
     # For implementation: input is in the form of a numpy 2D array (initialArray)
     #####
     
     if initial != None:
-        initialImg = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/" + str(initial) + ".png")
-    
+        # initialImg = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/" + str(initial) + ".png")
+        print("There has been a catastrophic disaster.")
+
     if np.any(initialArray != None):
         initialImg = Image.fromarray(initialArray)
         # print(np.amax(initialArray))
@@ -119,10 +123,10 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     blazed = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
     
-    initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
+    # initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
     
-    initialImg = zoom_at(initialImg, width/2 - 246, height/2 + 10, 1)     # Not final implementation of zoom function
-    initialImg = initialImg.rotate(1.0)     # Image is rotated 2°
+    initialImg = zoom_at(initialImg, width/2 - float(df.xShift[0]), height/2 + float(df.yShift[0]), 1, float(df.xZoom[0]), float(df.yZoom[0]))     # Not final implementation of zoom function
+    initialImg = initialImg.rotate(float(df.angle[0]))
     initialImgArray = asarray(initialImg)
     initialImg = Image.fromarray(initialImgArray)
     initialMap = initialImg.load()
@@ -131,7 +135,6 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     int32max = 2**31
     
     initialArray = asarray(initialImg)     # Turn initial image into 2D array of pixel intensity values    
-    
     
     #####
     # Initial testing to use peak-to-valley to find "threshold image" instead of manually inputting a threshold
