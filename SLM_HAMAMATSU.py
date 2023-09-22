@@ -408,7 +408,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
 
 
 
-    return totalMultImg, totalMultArray, diff, threshold, allTest
+    return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest
     
     #################
 

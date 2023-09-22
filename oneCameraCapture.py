@@ -41,11 +41,11 @@ class cameraCapture(tk.Frame):
             if NUM_CAMERAS == 0:
                 raise pylon.RuntimeException("No camera connected")
             else:
-                print(f'{NUM_CAMERAS} cameras detected:\n')
+                # print(f'{NUM_CAMERAS} cameras detected:\n')
                 
-                for counter, device in enumerate(devices):
-                    print(f'{counter}) {device.GetFriendlyName()}') # return readable name
-                    print(f'{counter}) {device.GetFullName()}\n') # return unique code
+                # for counter, device in enumerate(devices):
+                #     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+                #     print(f'{counter}) {device.GetFullName()}\n') # return unique code
 
                 self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
                 # running=False
@@ -208,9 +208,46 @@ class cameraCapture(tk.Frame):
         except Exception as error:
             print(error)
             self.page.save_SLM_button.config(background="red")
-    
-    def save_lineout(self):
-        print("LINEOUT")
+
+    def calibrate(self):
+        match = False
+        while match == False:
+            print("\nPlease enter the following calibration values. Type \"Done\" if done.")
+            xZoom = input("Enter xZoom: ")
+            if xZoom == "Done":
+                try:
+                    df = pd.DataFrame({'xZoom': [prevxZoom],
+                                        'yZoom': [yZoom],
+                                        'xShift': [xShift],
+                                        'yShift': [yShift],
+                                        'angle': [angle]})
+                    df.to_csv('calVals.csv', index=False)
+                    print("DONE CALIBRATING!")
+                except:
+                    print("Failed to save values. Ending calibration.")
+                    pass
+                match = True
+            else:
+                yZoom = input("Enter yZoom: ")
+                xShift = input("Enter xShift: ")
+                yShift = input("Enter yShift: ")
+                angle = input("Enter angle: ")
+                prevxZoom = xZoom
+
+                calImg = calibration(self.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
+                calImg = Image.fromarray(calImg)
+                calImg.show()
+                Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png").show()
+
+    def saveLineout(self):
+        filename = self.page.save_lineout_entry.get()
+        try:
+            self.page.fig.savefig(filename)
+            print(f"Image saved as {filename}.png")
+            self.page.save_SLM_button.config(background="SystemButtonFace")
+        except Exception as error:
+            print(error)
+            self.page.save_SLM_button.config(background="red")
     
 
 

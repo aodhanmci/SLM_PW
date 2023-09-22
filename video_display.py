@@ -62,8 +62,6 @@ class Page(tk.Frame):
 
         window.geometry(f"{window_width}x{window_height}+{int(mainDim[0]/2-window_width/2)}+{int(mainDim[1]/2-window_height/2-gap/2)}")
 
-        # gap = (window_width - SLMwidth*scale_percent/100 - CCDwidth*scale_percent/100) / 3
-
         small_button_height = 20
         small_button_width = 50
 
@@ -74,7 +72,6 @@ class Page(tk.Frame):
 
         width_scale = int(window_width * scale_percent / 100)
         height_scale = int(window_height * scale_percent / 100)
-        # dim = (width_scale, height_scale)
         first_row_button_height = window_height-2*large_button_height-2*button_gap
         second_row_button_height = window_height-large_button_height-button_gap
 
@@ -86,7 +83,6 @@ class Page(tk.Frame):
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
         self.slm_image_label.place(
-            # x=0.25*window_width, 
             x = SLMwidth*scale_percent/200 + gap,
             y= gap/2,
             anchor=tk.CENTER
@@ -95,7 +91,6 @@ class Page(tk.Frame):
         # Create a label for the CCD image
         self.ccd_image_label = tk.Label(window, text="CCD")
         self.ccd_image_label.place(
-            # x=0.75*window_width, 
             x = window_width - CCDwidth*scale_percent/200 - gap,
             y= gap/2, 
             anchor=tk.CENTER
@@ -103,7 +98,6 @@ class Page(tk.Frame):
         
         self.slm_preview_label = tk.Label(window, text="SLM Preview")
         self.slm_preview_label.place(
-            # x=0.75*window_width, 
             x = SLMwidth*scale_percent/200 + gap,
             y= 3*gap/2 + max(SLMheight, CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
@@ -111,7 +105,6 @@ class Page(tk.Frame):
         
         self.lineout_label = tk.Label(window, text="Center Lineout")
         self.lineout_label.place(
-            # x=0.75*window_width, 
             x = window_width - CCDwidth*scale_percent/200 - gap,
             y= 3*gap/2 + max(SLMheight, CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
@@ -144,7 +137,7 @@ class Page(tk.Frame):
         self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
         self.crosshair_button = tk.Button(window, text="Crosshair", command=self.vid.crosshair)
         self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=lambda: calibrate())
+        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.vid.calibrate)
         self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
         self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection())
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
@@ -156,7 +149,7 @@ class Page(tk.Frame):
         self.gain_button.place(x=window_width-3*large_button_width, **lower_row_dict)
         self.save_button = tk.Button(window, text="Save CCD", command=self.vid.save_image)
         self.save_button.place(x=window_width-2*large_button_width, **lower_row_dict)
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.vid.save_lineout)
+        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.vid.saveLineout)
         self.save_lineout_button.place(x=window_width-large_button_width, **lower_row_dict)
 
         self.exposure_entry = tk.Entry(window)
@@ -228,12 +221,21 @@ class Page(tk.Frame):
 
         self.ax = ax
         self.canvas = canvas
+        self.fig = fig
 
         self.circle_toggle = False
         self.loop_pressed = False
         self.nloop_pressed = False
         self.count = 0
         self.timer = 0
+
+        def circleDetection():
+            if self.circle_toggle:
+                self.circle_toggle = False
+                self.circle_button.config(background="SystemButtonFace")
+            else:
+                self.circle_toggle = True
+                self.circle_button.config(background="white")
 
         self.delay=5
         print("HELLO")
@@ -247,7 +249,7 @@ class Page(tk.Frame):
 
 
     def update(self):
-        global photo1, check, threshold, calibrate, circleDetection
+        global photo1, check, threshold, calibrate, circleDetection, saveLineout, goalArray
         image2 = self.image2
 
         # Example arrays (you can replace these with your actual image data)
@@ -260,63 +262,28 @@ class Page(tk.Frame):
         # photo1 = np.asarray(Image.open("./calibration/crosshair4.png"))
         # photo1 = np.asarray(self.vid.SLMdisp)
 
-        def calibrate():
-            match = False
-            while match == False:
-
-                print("\nPlease enter the following calibration values. Type \"Done\" if done.")
-                xZoom = input("Enter xZoom: ")
-                if xZoom == "Done":
-                    try:
-                        df = pd.DataFrame({'xZoom': [prevxZoom],
-                                            'yZoom': [yZoom],
-                                            'xShift': [xShift],
-                                            'yShift': [yShift],
-                                            'angle': [angle]})
-                        df.to_csv('calVals.csv', index=False)
-                        print("DONE CALIBRATING!")
-                    except:
-                        print("Failed to save values. Ending calibration.")
-                        pass
-                    match = True
-                else:
-                    yZoom = input("Enter yZoom: ")
-                    xShift = input("Enter xShift: ")
-                    yShift = input("Enter yShift: ")
-                    angle = input("Enter angle: ")
-                    prevxZoom = xZoom
-
-                    calImg = calibration(self.vid.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
-                    calImg = Image.fromarray(calImg)
-                    calImg.show()
-                    Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png").show()
-
-
-
-
         if self.nloop_pressed == True or self.loop_pressed == True:
             global beginningIntensity
             currentBeam = self.vid.getFrame()
             if self.count == 0 and self.timer == 0:
                 beginningIntensity = np.sum(currentBeam[currentBeam > 1])
-                print("BEGINNING TOTAL: " + str(beginningIntensity))
+                # print("BEGINNING TOTAL: " + str(beginningIntensity))
             if self.loop_pressed == True:
                 maxLoops = 0
             else:
                 maxLoops = int(self.loop_entry.get())
-            # print("1 LOOP BUTTON PRESSED")
             if self.timer != 5:
                 # time.sleep(0.1)
                 self.timer += 1
             if self.timer == 5:
                 if self.count == 0:
-                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
                         # plot = True,
                         initialArray = self.vid.getFrame()
                         )
                 else:
-                    gratingImg, gratingArray, diff, threshold, allTest = feedback(
+                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
                         # plot = True,
                         threshold = threshold,
@@ -331,10 +298,11 @@ class Page(tk.Frame):
                     self.nloop_pressed = False
                     self.loop_pressed = False
                     self.vid.SLMdisp = Image.fromarray(gratingArray)
+                    goalArray = None
                 else:
                     self.count += 1
                 self.timer = 0
-                print("THROUGHPUT PERCENT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),3)) + "%")
+                print("THROUGHPUT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),2)) + "%")
         else:
             photo1 = np.asarray(self.vid.SLMdisp)
 
@@ -375,22 +343,23 @@ class Page(tk.Frame):
         y = self.ccd_data[int(cy),:]
         x = np.arange(len(y))
 
+
         self.ax.clear()
         self.ax.plot(x,y, color = "dimgrey")
+        # try:
+        #     goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+        #     yGoal = goalArray[int(cy),:]
+        #     self.ax.plot(x,yGoal, color="black")
+        # except Exception as error:
+        #     # print(error)
+        #     pass
         self.ax.set_ylim([0,260])
         self.ax.set_xlabel("Position (x)")
         self.ax.set_ylabel("Pixel Intensity (0-255)")
         self.ax.set_title("Center Horizontal Lineout of CCD")
         self.canvas.draw()
 
-
         # Circle detection
-
-        def circleDetection():
-            if self.circle_toggle:
-                self.circle_toggle = False
-            else:
-                self.circle_toggle = True
 
         if self.circle_toggle:
             try:
