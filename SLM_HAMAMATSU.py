@@ -166,6 +166,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
         
     goalArray = initialArray.copy()
     goalArray[xi,yi] = int(threshold)
+    goalArray = gaussian_filter(goalArray, sigma = 10)
     goalImg = Image.fromarray(goalArray)
     goalMap = goalImg.load()
     
@@ -264,8 +265,10 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     # Since multiple arrays were multiplied together, now must normalize the final grating array to the intended amplitude
     #####
     
-    aboveMultArray = (aboveMultArray * np.amax(aboveBlurredArray) / (np.amax(aboveMultArray))).astype(np.int32) # Normalize multiplied grating to the max of the subtracted image
-    belowMultArray = (belowMultArray * np.amax(belowBlurredArray) / (np.amax(belowMultArray))).astype(np.int32)
+    if np.amax(aboveMultArray) != 0:
+        aboveMultArray = (aboveMultArray * np.amax(aboveBlurredArray) / (np.amax(aboveMultArray))).astype(np.int32) # Normalize multiplied grating to the max of the subtracted image
+    if np.amax(belowMultArray) != 0:
+        belowMultArray = (belowMultArray * np.amax(belowBlurredArray) / (np.amax(belowMultArray))).astype(np.int32)
 
     totalMultArray2 = totalMultArray.astype(np.int32)     # Copy final grating array (totalMultArray) to take average later
 
@@ -320,7 +323,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     # totalMultArray = (totalMultArray2 + diffMult * aboveMultArray - diffMult * belowMultArray).astype(np.int32)
     # totalMultArray = (totalMultArray2 + 0.5 * aboveMultArray - 0.5 * belowMultArray).astype(np.int32)     # Add and subtract 1/2 of the above and below arrays. More conservative application, but slower. Use if encounter positive feedback loop issues.
-    totalMultArray = (totalMultArray2 + aboveMultArray - belowMultArray).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
+    totalMultArray = (totalMultArray2 + aboveMultArray/2 - belowMultArray/2).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
     
     totalMultArray[totalMultArray < 0] = 0     # Sometimes, subtracting belowMultArray leads to negative grating values (overcorrection). This does not work with SLM, so change all negative numbers to zero
 

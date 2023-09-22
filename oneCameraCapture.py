@@ -199,6 +199,19 @@ class cameraCapture(tk.Frame):
     def nloops(self):
         self.page.nloop_pressed = True
     
+    def save_SLM(self):
+        filename = self.page.save_SLM_entry.get()
+        try:
+            cv2.imwrite(f'{filename}.png', asarray(self.SLMdisp))  # Save the captured image to a file
+            print(f"Image saved as {filename}.png")
+            self.page.save_SLM_button.config(background="SystemButtonFace")
+        except Exception as error:
+            print(error)
+            self.page.save_SLM_button.config(background="red")
+    
+    def save_lineout(self):
+        print("LINEOUT")
+    
 
 
 if __name__ == "__main__":
