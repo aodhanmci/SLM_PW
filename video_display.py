@@ -16,7 +16,7 @@ import imageio.v3 as iio
 import laserbeamsize as lbs
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-
+import time
 
 
 class Page(tk.Frame):
@@ -141,6 +141,8 @@ class Page(tk.Frame):
         self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
         self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection())
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
+        self.lineout_button = tk.Button(window, text="Lineout", command=lambda: lineout())
+        self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
         self.exposure_button = tk.Button(window, text="Set Exposure", command=self.vid.exposure_change)
@@ -224,6 +226,8 @@ class Page(tk.Frame):
         self.fig = fig
 
         self.circle_toggle = False
+        self.lineout_toggle = False
+        self.clearCanvas = True
         self.loop_pressed = False
         self.nloop_pressed = False
         self.count = 0
@@ -236,6 +240,14 @@ class Page(tk.Frame):
             else:
                 self.circle_toggle = True
                 self.circle_button.config(background="white")
+
+        def lineout():
+            if self.lineout_toggle:
+                self.lineout_toggle = False
+                self.lineout_button.config(background="SystemButtonFace")
+            else:
+                self.lineout_toggle = True
+                self.lineout_button.config(background="white")
 
         self.delay=5
         print("HELLO")
@@ -251,7 +263,7 @@ class Page(tk.Frame):
     def update(self):
         global photo1, check, threshold, calibrate, circleDetection, saveLineout, goalArray
         image2 = self.image2
-
+        time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
         # photo1 = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
         # image_array2 = np.random.randint(0, 10, size=(width_scale, height_scale), dtype=np.uint8).T
@@ -340,24 +352,34 @@ class Page(tk.Frame):
 
         # Live lineout plotting
 
-        y = self.ccd_data[int(cy),:]
-        x = np.arange(len(y))
+        if self.lineout_toggle:
+            self.clearCanvas = False
+            try:
+                y = self.ccd_data[int(cy),:]
+                x = np.arange(len(y))
 
 
-        self.ax.clear()
-        self.ax.plot(x,y, color = "dimgrey")
-        # try:
-        #     goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-        #     yGoal = goalArray[int(cy),:]
-        #     self.ax.plot(x,yGoal, color="black")
-        # except Exception as error:
-        #     # print(error)
-        #     pass
-        self.ax.set_ylim([0,260])
-        self.ax.set_xlabel("Position (x)")
-        self.ax.set_ylabel("Pixel Intensity (0-255)")
-        self.ax.set_title("Center Horizontal Lineout of CCD")
-        self.canvas.draw()
+                self.ax.clear()
+                self.ax.plot(x,y, color = "dimgrey")
+                try:
+                    goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                    yGoal = goalArray[int(cy),:]
+                    self.ax.plot(x,yGoal, color="black")
+                except Exception as error:
+                    # print(error)
+                    pass
+                self.ax.set_ylim([0,260])
+                self.ax.set_xlabel("Position (x)")
+                self.ax.set_ylabel("Pixel Intensity (0-255)")
+                self.ax.set_title("Center Horizontal Lineout of CCD")
+                self.canvas.draw()
+            except Exception as error:
+                print(error)
+        else:
+            if self.clearCanvas == False:
+                self.ax.clear()
+                self.canvas.draw()
+                self.clearCanvas = True
 
         # Circle detection
 
@@ -373,6 +395,8 @@ class Page(tk.Frame):
         self.ccd_image_widget.photo = self.photo
 
         self.window.after(self.delay, self.update)
+        time2 = time.time()
+        # print(time2-time1)
 
 
 
