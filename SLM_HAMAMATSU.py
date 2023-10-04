@@ -15,6 +15,7 @@ import pandas as pd
 def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
     lenspaper = Image.fromarray(input)
     # lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
+    lenspaper = ImageOps.mirror(lenspaper)
     
     crosshair4 = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
     width, height = crosshair4.size
@@ -51,7 +52,7 @@ def displayt(image, text):
     image2 = image.copy()
     draw = ImageDraw.Draw(image2)
     # mf = ImageFont.truetype('/Users/anthonylu/Documents/LBNL/SLM/Roboto-Medium.ttf', 30)
-    mf = ImageFont.truetype('/Users/loasis/Documents/GitHub/SLM_PW/Roboto-Medium.ttf', 30)
+    mf = ImageFont.truetype('./Roboto-Medium.ttf', 30)
     # text = str(text)
     draw.text((30,30), text, font=mf, fill = 255*255*255)
     display(image2)
@@ -120,11 +121,12 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
         initialImg = Image.fromarray(initialArray)
         # print(np.amax(initialArray))
     
-    blazed = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/HAMAMATSU/HAMAMATSU_2px.png')
+    blazed = Image.open('./calibration/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
     
     # initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
-    
+    initialImg = ImageOps.mirror(initialImg)
+
     initialImg = zoom_at(initialImg, width/2 - float(df.xShift[0]), height/2 + float(df.yShift[0]), 1, float(df.xZoom[0]), float(df.yZoom[0]))     # Not final implementation of zoom function
     initialImg = initialImg.rotate(float(df.angle[0]))
     initialImgArray = asarray(initialImg)

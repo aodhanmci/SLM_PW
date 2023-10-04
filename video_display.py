@@ -37,11 +37,11 @@ class Page(tk.Frame):
         # Detect SLM monitor
         global mainDim, SLMdim
 
-        mainDisplayNum = 1
+        mainDisplayNum = 0
         mainDisplay = screeninfo.get_monitors()[mainDisplayNum]
         mainDim = (int(mainDisplay.width), int(mainDisplay.height))
 
-        self.SLMdisplayNum = 0
+        self.SLMdisplayNum = 1
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
         SLMdim = self.SLMdim
@@ -53,7 +53,7 @@ class Page(tk.Frame):
         CCDwidth = self.vid.getFrame().shape[1] # 1920
         CCDheight = self.vid.getFrame().shape[0] # 1200
 
-        scale_percent = 20 # percent of original size
+        scale_percent = 30 # percent of original size
 
         gap = min(SLMwidth, CCDwidth)*scale_percent/600
 
