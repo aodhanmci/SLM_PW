@@ -64,7 +64,7 @@ class Page(tk.Frame):
 
         small_button_height = 20
         small_button_width = 50
-
+        # just leaving this here
         large_button_height = 30
         large_button_width = 45
 
