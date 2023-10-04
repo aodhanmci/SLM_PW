@@ -37,11 +37,11 @@ class Page(tk.Frame):
         # Detect SLM monitor
         global mainDim, SLMdim
 
-        mainDisplayNum = 0
+        mainDisplayNum = 1
         mainDisplay = screeninfo.get_monitors()[mainDisplayNum]
         mainDim = (int(mainDisplay.width), int(mainDisplay.height))
 
-        self.SLMdisplayNum = 1
+        self.SLMdisplayNum = 0
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
         SLMdim = self.SLMdim
@@ -53,7 +53,7 @@ class Page(tk.Frame):
         CCDwidth = self.vid.getFrame().shape[1] # 1920
         CCDheight = self.vid.getFrame().shape[0] # 1200
 
-        scale_percent = 40 # percent of original size
+        scale_percent = 20 # percent of original size
 
         gap = min(SLMwidth, CCDwidth)*scale_percent/600
 
@@ -66,7 +66,7 @@ class Page(tk.Frame):
         small_button_width = 50
 
         large_button_height = 30
-        large_button_width = 90
+        large_button_width = 45
 
         button_gap = 0
 
@@ -211,19 +211,19 @@ class Page(tk.Frame):
         self.image3 = image2
         image3 = image2
 
-        fig, ax = plt.subplots()
-
-        canvas = FigureCanvasTkAgg(fig, root)
-        canvas.draw()
-        canvas.get_tk_widget().place(
-                                    x = int(window_width - CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
-                                    anchor=tk.CENTER
-        )
-
-        self.ax = ax
-        self.canvas = canvas
-        self.fig = fig
+        # fig, ax = plt.subplots()
+        #
+        # canvas = FigureCanvasTkAgg(fig, root)
+        # canvas.draw()
+        # canvas.get_tk_widget().place(
+        #                             x = int(window_width - CCDwidth*scale_percent/200 - gap),
+        #                             y = int(max(SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
+        #                             anchor=tk.CENTER
+        # )
+        #
+        # self.ax = ax
+        # self.canvas = canvas
+        # self.fig = fig
 
         self.circle_toggle = False
         self.lineout_toggle = False
@@ -352,34 +352,34 @@ class Page(tk.Frame):
 
         # Live lineout plotting
 
-        if self.lineout_toggle:
-            self.clearCanvas = False
-            try:
-                y = self.ccd_data[int(cy),:]
-                x = np.arange(len(y))
-
-
-                self.ax.clear()
-                self.ax.plot(x,y, color = "dimgrey")
-                try:
-                    goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-                    yGoal = goalArray[int(cy),:]
-                    self.ax.plot(x,yGoal, color="black")
-                except Exception as error:
-                    # print(error)
-                    pass
-                self.ax.set_ylim([0,260])
-                self.ax.set_xlabel("Position (x)")
-                self.ax.set_ylabel("Pixel Intensity (0-255)")
-                self.ax.set_title("Center Horizontal Lineout of CCD")
-                self.canvas.draw()
-            except Exception as error:
-                print(error)
-        else:
-            if self.clearCanvas == False:
-                self.ax.clear()
-                self.canvas.draw()
-                self.clearCanvas = True
+        # if self.lineout_toggle:
+        #     self.clearCanvas = False
+        #     try:
+        #         y = self.ccd_data[int(cy),:]
+        #         x = np.arange(len(y))
+        #
+        #
+        #         self.ax.clear()
+        #         self.ax.plot(x,y, color = "dimgrey")
+        #         try:
+        #             goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+        #             yGoal = goalArray[int(cy),:]
+        #             self.ax.plot(x,yGoal, color="black")
+        #         except Exception as error:
+        #             # print(error)
+        #             pass
+        #         self.ax.set_ylim([0,260])
+        #         self.ax.set_xlabel("Position (x)")
+        #         self.ax.set_ylabel("Pixel Intensity (0-255)")
+        #         self.ax.set_title("Center Horizontal Lineout of CCD")
+        #         self.canvas.draw()
+        #     except Exception as error:
+        #         print(error)
+        # else:
+        #     if self.clearCanvas == False:
+        #         self.ax.clear()
+        #         self.canvas.draw()
+        #         self.clearCanvas = True
 
         # Circle detection
 
