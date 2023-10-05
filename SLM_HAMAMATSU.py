@@ -17,7 +17,7 @@ def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2
     # lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
     lenspaper = ImageOps.mirror(lenspaper)
     
-    crosshair4 = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+    crosshair4 = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
     width, height = crosshair4.size
     
     w, h = lenspaper.size

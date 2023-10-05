@@ -175,7 +175,7 @@ class cameraCapture(tk.Frame):
         self.camera.Close
     
     def crosshair(self):
-        self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+        self.SLMdisp = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
     
     def testFunc(self):
         self.camera.StartGrabbing()
