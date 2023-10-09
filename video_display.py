@@ -12,6 +12,7 @@ import time
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+dfsduifhdsiufhsdui
 
 class Page(tk.Frame):
 
