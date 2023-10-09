@@ -232,6 +232,7 @@ class Page(tk.Frame):
         self.nloop_pressed = False
         self.count = 0
         self.timer = 0
+        self.cal_transform = 0
 
         def circleDetection():
             if self.circle_toggle:
@@ -292,14 +293,16 @@ class Page(tk.Frame):
                     gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
                         # plot = True,
-                        initialArray = self.vid.getFrame()
+                        initialArray = self.vid.getFrame(),
+                        image_transform=self.cal_transform
                         )
                 else:
                     gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
                         # plot = True,
                         threshold = threshold,
-                        initialArray = self.vid.getFrame()
+                        initialArray = self.vid.getFrame(),
+                        image_transform=self.cal_transform
                     )
 
                 photo1 = gratingArray

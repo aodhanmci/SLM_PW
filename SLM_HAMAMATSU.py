@@ -6,34 +6,13 @@ from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageFilter
 from numpy import asarray
 import cv2
 from scipy.ndimage import gaussian_filter
-import time
-from os import listdir
-from os.path import isfile, join
+from autoscaling import *
 import pandas as pd
 # from IPython.display import display
 
-def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
-    lenspaper = Image.fromarray(input)
-    # lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
-    lenspaper = ImageOps.mirror(lenspaper)
-    
-    crosshair4 = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
-    width, height = crosshair4.size
-    
-    w, h = lenspaper.size
-    x = width/2 - xShift
-    y = height/2 + yShift
-    lenspaper = lenspaper.crop((x - w / 2, y - h / 2,
-                                x + w / (2 * xZoom), y + h / (2 * yZoom)))
-    lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
-    lenspaper = lenspaper.rotate(angle)
-
-    return asarray(lenspaper)
-
-    display(crosshair4)
-    display(lenspaper)
-    
-    lenspaperArray = asarray(lenspaper)
+def calibration(SLM_data, CCD_data):
+    warp_transform = clickCorners(SLM_data, CCD_data)
+    return warp_transform
 
 width = 1280
 height = 1024
@@ -102,11 +81,11 @@ def center(imageArray):
 
 
 
-def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 2, innerBlur = 15, rangeVal = 5, maxIter = 100, yshift = 4, plot = False):
+def feedback(image_transform, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
-    df = pd.read_csv('calVals.csv', usecols=['xZoom', 'yZoom', 'xShift', 'yShift', 'angle'])
+    # df = pd.read_csv('./calibration/calVals.csv', usecols=['xZoom', 'yZoom', 'xShift', 'yShift', 'angle'])
 
     #####
     # Open the initial beam image from the "SLM" folder in GDrive. Function input should be a PNG filepath with no extension
@@ -123,21 +102,11 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     blazed = Image.open('./calibration/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
-    
-    # initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
-    initialImg = ImageOps.mirror(initialImg)
-
-    initialImg = zoom_at(initialImg, width/2 - float(df.xShift[0]), height/2 + float(df.yShift[0]), 1, float(df.xZoom[0]), float(df.yZoom[0]))     # Not final implementation of zoom function
-    initialImg = initialImg.rotate(float(df.angle[0]))
     initialImgArray = asarray(initialImg)
-    initialImg = Image.fromarray(initialImgArray)
-    initialMap = initialImg.load()
-    
-    # INT32 MAX: 2**31 = 2,147,483,648
-    int32max = 2**31
-    
-    initialArray = asarray(initialImg)     # Turn initial image into 2D array of pixel intensity values    
-    
+    initialArray = cv2.warpPerspective(initialImgArray, image_transform, (np.shape(blazedData)[1], np.shape(blazedData)[0]), flags=cv2.INTER_LINEAR)
+         # Turn initial image into 2D array of pixel intensity values
+    # print(np.shape(initialArray))
+
     #####
     # Initial testing to use peak-to-valley to find "threshold image" instead of manually inputting a threshold
     #####
@@ -182,7 +151,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #####
     
     
-    image1 = np.int32(initialImg)     # Open initial image
+    image1 = np.int32(initialArray)     # Open initial image
     image2 = np.int32(goalImg)     # Open goal image
     diffImgArray = cv2.subtract(image1, image2)     # Take difference between two images. Initial - goal. Positive numbers = too bright, negative = too dim. np.int32 to account for negative numbers -255 to +255
     diffImg = Image.fromarray(diffImgArray)
@@ -244,9 +213,9 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     
     if count == 0:
-        aboveMultArray = np.zeros(initialImgArray.shape)
-        belowMultArray = np.zeros(initialImgArray.shape)
-        totalMultArray = np.zeros(initialImgArray.shape)
+        aboveMultArray = np.zeros(initialArray.shape)
+        belowMultArray = np.zeros(initialArray.shape)
+        totalMultArray = np.zeros(initialArray.shape)
 
     
     aboveMultArray2 = aboveMultArray     # Save previous multArray as multArray2 to take average later

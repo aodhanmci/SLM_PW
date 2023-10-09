@@ -10,14 +10,14 @@ from PIL import Image, ImageTk, ImageOps
 import matplotlib.pyplot as plt
 import cv2, numpy as np
 
-SLMimg = Image.open("/Users/anthonylu/Documents/GitHub/SLM_PW/calibration/HAMAMATSU/crosshairNums.png")
-CCDimg = Image.open("/Users/anthonylu/Documents/GitHub/SLM_PW/crosshairNumsResult.png")
-CCDimg = CCDimg.resize(SLMimg.size, Image.Resampling.LANCZOS)
-CCDwidth, CCDheight = CCDimg.size
-SLMwidth, SLMheight = SLMimg.size
+
+# CCDimg = Image.open("/Users/anthonylu/Documents/GitHub/SLM_PW/crosshairNumsResult.png")
+# CCDimg = CCDimg.resize(SLMimg.size, Image.Resampling.LANCZOS)
+# CCDwidth, CCDheight = CCDimg.size
+# SLMwidth, SLMheight = SLMimg.size
 
 def clickCorners(SLMimg, CCDimg):
-    output_path = '/Users/anthonylu/Documents/GitHub/SLM_PW/CCD_clicks.csv'
+    output_path = './calibration/CCD_clicks.csv'
     
     # Mouse callback function
     global CCD_click_list, SLM_click_list
@@ -58,7 +58,7 @@ def clickCorners(SLMimg, CCDimg):
     
     # Do the same for the crosshairs
     
-    output_path = '/Users/anthonylu/Documents/GitHub/SLM_PW/SLM_clicks.csv'
+    output_path = './calibration/SLM_clicks.csv'
 
     positions, SLM_click_list = [], []
     def callback(event, x, y, flags, param):
@@ -86,7 +86,6 @@ def clickCorners(SLMimg, CCDimg):
             break
     
     # Write data to a spreadsheet
-    import csv
     with open(output_path, 'w') as csvfile:
         fieldnames = ['x_position', 'y_position']
         writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
@@ -98,7 +97,31 @@ def clickCorners(SLMimg, CCDimg):
     CCD_click_list = list(CCD_click_list)
     SLM_click_list = list(SLM_click_list)
 
-clickCorners(SLMimg, CCDimg)
+    p1, p2, p3, p4 = CCD_click_list
+    p1, p2, p3, p4 = list(p1), list(p2), list(p3), list(p4)
+    new_CCD_click_list = [p1, p2, p3, p4]
+
+    img = np.asarray(CCDimg)
+
+    input_pts = np.float32([new_CCD_click_list])
+    output_pts = np.float32([SLM_click_list])
+
+    # Compute the perspective transform M
+    warp_transform = cv2.getPerspectiveTransform(input_pts, output_pts)
+
+    # Apply the perspective transformation to the image
+    out = cv2.warpPerspective(img, warp_transform, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
+
+    # # Display the transformed image
+    # plt.imshow(out)
+    #
+    # dots(np.asarray(SLMimg), SLM_click_list)
+    # dots(np.asarray(CCDimg), new_CCD_click_list)
+    #
+    # Image.fromarray(out).show()
+    return warp_transform
+
+# clickCorners(SLMimg, CCDimg)
 
 
 
@@ -110,8 +133,7 @@ def dots(image, click_list):
 
 # print(CCD_click_list)
 # print(SLM_click_list)
-p1, p2, p3, p4 = CCD_click_list
-p1, p2, p3, p4 = list(p1), list(p2), list(p3), list(p4)
+
 
 
 # # Mirror or flip to correct orientation
@@ -130,26 +152,7 @@ p1, p2, p3, p4 = list(p1), list(p2), list(p3), list(p4)
 #     p3[1] = int(CCDheight/2 - abs(CCDheight/2 - p3[1]))
 #     p4[1] = int(CCDheight/2 + abs(CCDheight/2 - p4[1]))
 
-new_CCD_click_list = [p1, p2, p3, p4]
 
-img = np.asarray(CCDimg)
-
-input_pts = np.float32([new_CCD_click_list])
-output_pts = np.float32([SLM_click_list])
-
-# Compute the perspective transform M
-M = cv2.getPerspectiveTransform(input_pts,output_pts)
-
-# Apply the perspective transformation to the image
-out = cv2.warpPerspective(img,M,(img.shape[1], img.shape[0]),flags=cv2.INTER_LINEAR)
-
-# Display the transformed image
-plt.imshow(out)
-
-dots(np.asarray(SLMimg), SLM_click_list)
-dots(np.asarray(CCDimg), new_CCD_click_list)
-
-Image.fromarray(out).show()
 
 
 
