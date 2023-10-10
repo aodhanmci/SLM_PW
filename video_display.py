@@ -253,13 +253,19 @@ class Page(tk.Frame):
                 if self.count == 0:  # Change this to accommodate 2d threshold
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
                         count=self.count,
-                        initialArray = self.vid.getFrame()
+                        initialArray=self.vid.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLM_dim[0],
+                        SLM_width=self.SLM_dim[1]
                         )
                 else:
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
                         count=self.count,
                         threshold=self.threshold,
-                        initialArray=self.vid.getFrame()
+                        initialArray=self.vid.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLM_dim[0],
+                        SLM_width=self.SLM_dim[1]
                         )
 
                 self.SLM_array = self.gratingArray
