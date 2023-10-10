@@ -20,14 +20,15 @@ import os
 class cameraCapture(tk.Frame):
 
     def __init__(self, page_instance, window2_instance):
-        self.img = np.zeros((800, 800))
+        self.img0 = []
         self.windowName = 'SLM CCD'
         self.page = page_instance
         self.window2 = window2_instance
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
-        self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
-        self.browseImg = Image.open("./calibration/HAMAMATSU/HAMAMATSU_black.png")
+        self.SLMdisp = Image.fromarray(np.zeros((self.page.SLM_dim[0], self.page.SLM_dim[1])))
+        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
+        # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
     def getFrame(self):
         self.img = np.array(Image.open("C:/Users/10903/OneDrive/Python/CGH_test/2D_Gaussian.png").convert('L'))
@@ -87,7 +88,7 @@ class cameraCapture(tk.Frame):
             self.page.display_button.config(background='red')
 
     def clearSLM(self):
-        self.SLMdisp = Image.fromarray(np.zeros((1080, 1920)))
+        self.SLMdisp = Image.fromarray(np.zeros((self.page.SLM_dim[0], self.page.SLM_dim[1])))
 
     def stopGUI(self):
         # self.camera.StopGrabbing()
@@ -101,6 +102,7 @@ class cameraCapture(tk.Frame):
                            'loop': [self.page.loop_entry.get()]})
         df.to_csv('prevVals.csv', index=False)
         self.page.window.destroy()
+        self.camera.Close
 
     def crosshair(self):
         self.SLMdisp = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
@@ -138,35 +140,8 @@ class cameraCapture(tk.Frame):
             self.page.save_SLM_button.config(background="red")
 
     def calibrate(self):
-        match = False
-        while match == False:
-            print("\nPlease enter the following calibration values. Type \"Done\" if done.")
-            xZoom = input("Enter xZoom: ")
-            if xZoom == "Done":
-                try:
-                    df = pd.DataFrame({'xZoom': [prevxZoom],
-                                       'yZoom': [yZoom],
-                                       'xShift': [xShift],
-                                       'yShift': [yShift],
-                                       'angle': [angle]})
-                    df.to_csv('calVals.csv', index=False)
-                    print("DONE CALIBRATING!")
-                except:
-                    print("Failed to save values. Ending calibration.")
-                    pass
-                match = True
-            else:
-                yZoom = input("Enter yZoom: ")
-                xShift = input("Enter xShift: ")
-                yShift = input("Enter yShift: ")
-                angle = input("Enter angle: ")
-                prevxZoom = xZoom
-
-                calImg = calibration(self.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift),
-                                     float(angle))
-                calImg = Image.fromarray(calImg)
-                calImg.show()
-                Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png").show()
+        warp_transform = calibration(self.SLMdisp, self.getFrame())
+        self.page.cal_transform = warp_transform
 
     def saveLineout(self):
         filename = self.page.save_lineout_entry.get()
@@ -177,6 +152,7 @@ class cameraCapture(tk.Frame):
         except Exception as error:
             print(error)
             self.page.save_SLM_button.config(background="red")
+
 
 if __name__ == "__main__":
     testWidget = cameraCapture()

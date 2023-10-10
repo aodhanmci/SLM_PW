@@ -1,6 +1,6 @@
 import tkinter as tk
 import matplotlib.pyplot as plt
-import oneCameraCapture_fake
+import oneCameraCapture
 import SLM_HAMAMATSU
 import numpy as np
 import screeninfo
@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from slmsuite import holography
+import pickle
 
 class Page(tk.Frame):
 
@@ -24,17 +25,25 @@ class Page(tk.Frame):
         self.window = window
         window.title("SLM & CCD Control")
 
-        self.vid = oneCameraCapture_fake.cameraCapture(self, self)
-        df = pd.read_csv('prevVals.csv', usecols=['exposure', 'gain', 'loop'])
+        self.SLM_num = 1
+        self.SLM_info = screeninfo.get_monitors()[self.SLM_num]
+        self.SLM_dim = (int(self.SLM_info.height), int(self.SLM_info.width))
+
+        self.vid = oneCameraCapture.cameraCapture(self, self)
+        df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure', 'gain', 'loop'])
+
+        try:
+            with open('./settings/calibration/warp_transform.pckl', 'rb') as warp_trans_file:
+                self.cal_transform = pickle.load(warp_trans_file)
+        except FileNotFoundError:
+            print('No image transform file found. Pls calibrate.')
+            self.cal_transform = 0
 
         # Get dimensions of user monitor, SLM, and CCD
         self.monitor_num = 0
         self.monitor_info = screeninfo.get_monitors()[self.monitor_num]
         self.monitor_dim = (int(self.monitor_info.height), int(self.monitor_info.width))
         self.monitor_scale = ctypes.windll.shcore.GetScaleFactorForDevice(self.monitor_num) / 100  # scaling of the primary monitor
-        self.SLM_num = 1
-        self.SLM_info = screeninfo.get_monitors()[self.SLM_num]
-        self.SLM_dim = (int(self.SLM_info.height), int(self.SLM_info.width))
         self.Preview_dim = self.SLM_dim
         self.CCD_dim = (int(self.vid.getFrame().shape[0]), int(self.vid.getFrame().shape[1]))
         SLM_dim = self.SLM_dim
@@ -224,6 +233,11 @@ class Page(tk.Frame):
             else:
                 self.lineout_xy_toggle = True
                 self.lineout_iso_toggle = False
+                input_max = np.amax(self.CCD_array)
+                center_y = np.where(self.CCD_array == input_max)[0]
+                center_x = np.where(self.CCD_array == input_max)[1]
+                self.center_x = center_x[int(len(center_x) / 2)]
+                self.center_y = center_y[int(len(center_y) / 2)]
                 self.lineout_iso_button.config(background="SystemButtonFace")
                 self.lineout_xy_button.config(background="white")
                 self.CCD_top_ax.title('X Cross-section')
@@ -309,6 +323,7 @@ class Page(tk.Frame):
             self.Preview_ax.imshow(self.Preview_array, cmap='gray', vmin=0, vmax=255, extent=self.Preview_extent)
             self.Preview_canvas.draw()
 
+        self.CCD_original = self.vid.getFrame()
         self.CCD_array = self.vid.getFrame()
         self.CCD_image = Image.fromarray(self.CCD_array)
         self.CCD_main_ax.clear()
@@ -349,19 +364,14 @@ class Page(tk.Frame):
 
         if self.lineout_xy_toggle:
             try:
-                input_max = np.amax(self.CCD_array)
-                center_y = np.where(self.CCD_array == input_max)[0]
-                center_x = np.where(self.CCD_array == input_max)[1]
-                center_x = center_x[int(len(center_x) / 2)]
-                center_y = center_y[int(len(center_y) / 2)]
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
-                self.CCD_main_ax.axvline(int(center_x-self.CCD_array.shape[1]/2), color='r')
-                self.CCD_main_ax.axhline(int(center_y-self.CCD_array.shape[0]/2), color='g')
+                self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
+                self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_top_ax.set_ylim([0, 255])
-                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
