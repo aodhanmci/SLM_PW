@@ -171,12 +171,12 @@ class cameraCapture(tk.Frame):
         df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
                            'gain': [self.page.gain_entry.get()],
                            'loop': [self.page.loop_entry.get()]})
-        df.to_csv('prevVals.csv', index=False)
+        df.to_csv('./settings/prevVals.csv', index=False)
         self.page.window.destroy()
         self.camera.Close
     
     def crosshair(self):
-        self.SLMdisp = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
+        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
     
     def testFunc(self):
         self.camera.StartGrabbing()
@@ -186,7 +186,7 @@ class cameraCapture(tk.Frame):
         #     for gray in np.arange(0, 260, 10):
         gray=160
         # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
-        self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
         print("Image displayed.")
         
         # self.page.update()
