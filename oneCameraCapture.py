@@ -27,9 +27,9 @@ class cameraCapture(tk.Frame):
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
-        self.browseImg = Image.open("./calibration/HAMAMATSU/HAMAMATSU_black.png")
+        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
         try:
-            df = pd.read_csv('prevVals.csv', usecols=['exposure','gain'])
+            df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
             # maxCamerasToUse = 2
             # get transport layer and all attached devices
@@ -170,12 +170,12 @@ class cameraCapture(tk.Frame):
         df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
                            'gain': [self.page.gain_entry.get()],
                            'loop': [self.page.loop_entry.get()]})
-        df.to_csv('prevVals.csv', index=False)
+        df.to_csv('./settings/prevVals.csv', index=False)
         self.page.window.destroy()
         self.camera.Close
     
     def crosshair(self):
-        self.SLMdisp = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
+        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
     
     def testFunc(self):
         self.camera.StartGrabbing()
@@ -185,7 +185,7 @@ class cameraCapture(tk.Frame):
         #     for gray in np.arange(0, 260, 10):
         gray=160
         # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
-        self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
+        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
         print("Image displayed.")
         
         # self.page.update()
@@ -202,8 +202,8 @@ class cameraCapture(tk.Frame):
     def save_SLM(self):
         filename = self.page.save_SLM_entry.get()
         try:
-            cv2.imwrite(f'{filename}.png', asarray(self.SLMdisp))  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
+            cv2.imwrite(f'./data/{filename}.png', asarray(self.SLMdisp))  # Save the captured image to a file
+            print(f"Image saved as /data/{filename}.png")
             self.page.save_SLM_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
@@ -216,8 +216,8 @@ class cameraCapture(tk.Frame):
     def saveLineout(self):
         filename = self.page.save_lineout_entry.get()
         try:
-            self.page.fig.savefig(filename)
-            print(f"Image saved as {filename}.png")
+            self.page.fig.savefig(f"./data/{filename}")
+            print(f"Image saved as /data/{filename}.png")
             self.page.save_SLM_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)

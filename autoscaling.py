@@ -7,7 +7,7 @@ Created on Fri Oct  6 09:11:20 2023
 """
 
 from PIL import Image, ImageTk, ImageOps
-import matplotlib.pyplot as plt
+import pickle
 import cv2, numpy as np
 
 
@@ -17,7 +17,7 @@ import cv2, numpy as np
 # SLMwidth, SLMheight = SLMimg.size
 
 def clickCorners(SLMimg, CCDimg):
-    output_path = './calibration/CCD_clicks.csv'
+    output_path = './settings/calibration/CCD_clicks.csv'
     
     # Mouse callback function
     global CCD_click_list, SLM_click_list
@@ -58,7 +58,7 @@ def clickCorners(SLMimg, CCDimg):
     
     # Do the same for the crosshairs
     
-    output_path = './calibration/SLM_clicks.csv'
+    output_path = './settings/calibration/SLM_clicks.csv'
 
     positions, SLM_click_list = [], []
     def callback(event, x, y, flags, param):
@@ -110,8 +110,9 @@ def clickCorners(SLMimg, CCDimg):
     warp_transform = cv2.getPerspectiveTransform(input_pts, output_pts)
 
     # Apply the perspective transformation to the image
-    out = cv2.warpPerspective(img, warp_transform, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
-
+    # out = cv2.warpPerspective(img, warp_transform, (img.shape[1], img.shape[0]), flags=cv2.INTER_LINEAR)
+    with open('./settings/calibration/warp_transform.pckl', 'wb') as warp_file:
+        pickle.dump(warp_transform, warp_file)
     # # Display the transformed image
     # plt.imshow(out)
     #

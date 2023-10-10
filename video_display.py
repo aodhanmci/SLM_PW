@@ -78,7 +78,7 @@ class Page(tk.Frame):
         upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
-        df = pd.read_csv('prevVals.csv', usecols=['exposure','gain','loop'])
+        df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
 
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
@@ -164,8 +164,13 @@ class Page(tk.Frame):
         self.save_entry.place(x=window_width-2*large_button_width, **upper_row_dict)
         self.save_lineout_entry = tk.Entry(window)
         self.save_lineout_entry.place(x=window_width-large_button_width, **upper_row_dict)
-        
-
+        # load in the last saved image transformation object
+        try:
+            with open('./settings/calibration/warp_transform.pckl', 'rb') as warp_trans_file:
+                self.cal_transform = pickle.load(warp_trans_file)
+        except FileNotFoundError:
+            print('No image transform file found. Pls calibrate.')
+            self.cal_transform = 0
 
         #Create a canvas that will display what is on the SLM
         self.SLM_image_widget = tk.Label(window, 
@@ -232,7 +237,7 @@ class Page(tk.Frame):
         self.nloop_pressed = False
         self.count = 0
         self.timer = 0
-        self.cal_transform = 0
+
 
         def circleDetection():
             if self.circle_toggle:
@@ -294,7 +299,9 @@ class Page(tk.Frame):
                         count = self.count,
                         # plot = True,
                         initialArray = self.vid.getFrame(),
-                        image_transform=self.cal_transform
+                        image_transform=self.cal_transform,
+                        SLM_height = self.SLMdim[1],
+                        SLM_width = self.SLMdim[0]
                         )
                 else:
                     gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
@@ -302,7 +309,9 @@ class Page(tk.Frame):
                         # plot = True,
                         threshold = threshold,
                         initialArray = self.vid.getFrame(),
-                        image_transform=self.cal_transform
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLMdim[1],
+                        SLM_width=self.SLMdim[0]
                     )
 
                 photo1 = gratingArray

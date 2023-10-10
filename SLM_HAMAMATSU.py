@@ -14,28 +14,6 @@ def calibration(SLM_data, CCD_data):
     warp_transform = clickCorners(SLM_data, CCD_data)
     return warp_transform
 
-width = 1280
-height = 1024
-
-def zoom_at(img, x, y, zoom, xzoom, yzoom):
-    global w, h
-    w, h = img.size
-    zoom2 = zoom * 2
-    img = img.crop((x - w / zoom2, y - h / zoom2, 
-                    x + w / (zoom2*xzoom), y + h / (zoom2*yzoom)))
-    return img.resize((width, height), Image.Resampling.LANCZOS)
-
-
-def displayt(image, text):
-    # print(image)
-    image2 = image.copy()
-    draw = ImageDraw.Draw(image2)
-    # mf = ImageFont.truetype('/Users/anthonylu/Documents/LBNL/SLM/Roboto-Medium.ttf', 30)
-    mf = ImageFont.truetype('./Roboto-Medium.ttf', 30)
-    # text = str(text)
-    draw.text((30,30), text, font=mf, fill = 255*255*255)
-    display(image2)
-
 
 def center(imageArray):
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -81,7 +59,7 @@ def center(imageArray):
 
 
 
-def feedback(image_transform, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0):
+def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
@@ -100,7 +78,7 @@ def feedback(image_transform, count = 0, initial = None, initialArray = None, th
         initialImg = Image.fromarray(initialArray)
         # print(np.amax(initialArray))
     
-    blazed = Image.open('./calibration/HAMAMATSU/HAMAMATSU_2px.png')
+    blazed = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
     initialImgArray = asarray(initialImg)
     initialArray = cv2.warpPerspective(initialImgArray, image_transform, (np.shape(blazedData)[1], np.shape(blazedData)[0]), flags=cv2.INTER_LINEAR)
@@ -332,14 +310,13 @@ def feedback(image_transform, count = 0, initial = None, initialArray = None, th
     aboveMultImg = Image.fromarray(aboveMultArray, "L") # mode = L
     
     totalMultImg = Image.fromarray(totalMultArray, "L") # mode = L
-    
     if count == 0:
-        for i in np.arange(width):
+        for i in np.arange(SLM_width):
             initialImg.putpixel((i, cY), int(255))
         # initialImg.show()
     
-    pd.DataFrame(xi).to_csv('xi.csv')
-    pd.DataFrame(yi).to_csv('yi.csv')
+    # pd.DataFrame(xi).to_csv('xi.csv')
+    # pd.DataFrame(yi).to_csv('yi.csv')
     
     # totalMultImg.save("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/test" + str(testno) + "/" + str(count+1) + "TEST_15AMP_SIMGA20.png")
       
@@ -350,9 +327,9 @@ def feedback(image_transform, count = 0, initial = None, initialArray = None, th
     
     if plot:
         
-        plt.plot(np.arange(width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
-        plt.plot(np.arange(width), initialArray[cY,:], label = "Initial")
-        plt.plot(np.arange(width), goalArray[cY,:], label = "Goal")
+        plt.plot(np.arange(SLM_width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
+        plt.plot(np.arange(SLM_width), initialArray[cY,:], label = "Initial")
+        plt.plot(np.arange(SLM_width), goalArray[cY,:], label = "Goal")
         # plt.plot(np.arange(width), goalArray[int(height/2-15),:], label = "TEST")
         # plt.plot(np.arange(width), aboveArray[int(height/2-15),:], label = "Above")
         # plt.plot(np.arange(width), belowArray[int(height/2-15),:], label = "Below")
@@ -382,37 +359,3 @@ def feedback(image_transform, count = 0, initial = None, initialArray = None, th
     return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest
     
     #################
-
-
-
-
-#####
-
-# When you run this version of the feedback algorithm, you should:
-
-# 1. Calibrate the image (matches CCD image to SLM image)
-#   1.1 Display "crosshair4" on SLM
-#   1.2 Save image (usually as "crosshairImg")
-#   1.3 Run calibration function until properly aligned
-#   1.4 Transfer numbers to zoom_at and feedback functions
-
-# 2. Save initial beam input image as "initial.png"
-#   2.1 This would also be a good time to save wavefront data if applicable
-
-# 3. Once image shows up in GDrive, run "runFeedback" with trial number as input
-#   3.1 If you plan to put the result onto the SLM, instead of running the function for testing, make sure to uncomment the two lines that save the output image and output lineout graph. Otherwise, leave commented out to prevent unwanted images from being saved in folder
-
-# 4. Once output image shows up on GDrive, display on SLM.
-#   4.1 Naming convention: Algorithm will save the first output image as "1.png". Save the resulting beam image as "1Result.png" so algorithm will recognize it
-#   4.2 Also another good time to save wavefront data if applicable
-
-# 5. Repeat to your heart's desire!
-
-# 6. MAKE SURE to note down the trial number and what you changed / any notes for that trial. Will be helpful to look back later
-
-#####
-
-
-
-
-# calibration()
