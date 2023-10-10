@@ -59,7 +59,7 @@ def center(imageArray):
 
 
 
-def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0):
+def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 10, rangeVal=5, testno=0):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM

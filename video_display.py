@@ -50,7 +50,7 @@ class Page(tk.Frame):
         monitor_dim = self.monitor_dim
 
         # Auto set window geometry according to user computer dimensions
-        self.window_scale = 0.95
+        self.window_scale = 0.9
         self.taskbar_height = 60*self.monitor_scale
         window_height = int((self.monitor_dim[0] - self.taskbar_height) * self.window_scale - 45)  # 45 is the height of the window title
         window_hgap = int((self.monitor_dim[0] - self.taskbar_height) * (1 - self.window_scale) / 2)  # 90 is the width of default windows taskbar
@@ -416,7 +416,7 @@ class Window2(tk.Toplevel, Page):
 if __name__ == "__main__":
     root = tk.Tk()
     testWidget = Page(root, root)
-    # window2 = Window2(root)
+    window2 = Window2(root)
 
     root.protocol("WM_DELETE_WINDOW", onClose)
     root.mainloop()
