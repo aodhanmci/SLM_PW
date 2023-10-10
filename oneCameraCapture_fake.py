@@ -20,7 +20,7 @@ import os
 class cameraCapture(tk.Frame):
 
     def __init__(self, page_instance, window2_instance):
-        self.img0 = []
+        self.img = np.zeros((800, 800))
         self.windowName = 'SLM CCD'
         self.page = page_instance
         self.window2 = window2_instance
@@ -28,81 +28,10 @@ class cameraCapture(tk.Frame):
 
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
         self.browseImg = Image.open("./calibration/HAMAMATSU/HAMAMATSU_black.png")
-        try:
-            df = pd.read_csv('prevVals.csv', usecols=['exposure','gain'])
-            # Create an instant camera object with the camera device found first.
-            # maxCamerasToUse = 2
-            # get transport layer and all attached devices
-            tlf = pylon.TlFactory.GetInstance()
-            devices = tlf.EnumerateDevices()
-            NUM_CAMERAS = len(devices)
-            os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
-            exitCode = 0
-            if NUM_CAMERAS == 0:
-                raise pylon.RuntimeException("No camera connected")
-            else:
-                # print(f'{NUM_CAMERAS} cameras detected:\n')
-                
-                # for counter, device in enumerate(devices):
-                #     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
-                #     print(f'{counter}) {device.GetFullName()}\n') # return unique code
-
-                self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
-                # running=False
-                # Print the model name of the camera.
-                print("Using device ", self.camera.GetDeviceInfo().GetModelName())
-
-            # self.camera.PixelFormat = "Mono8"
-            self.camera.Open()  #Need to open camera before can use camera.ExposureTime
-            # self.camera.PixelFormat = "Mono8"
-            self.camera.ExposureTimeRaw = int(df.exposure[0])
-            self.camera.GainRaw = int(df.gain[0])
-
-            # Print the model name of the camera.
-            # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
-            # print("Exposure time ", self.camera.ExposureTime.GetValue())
-
-            # According to their default configuration, the cameras are
-            # set up for free-running continuous acquisition.
-            #Grabbing continuously (video) with minimal delay
-            self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
-
-            # converting to opencv bgr format
-            self.converter = pylon.ImageFormatConverter()
-            self.converter.OutputPixelFormat = pylon.PixelType_Mono8
-            self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
-
-        # except genicam.GenericException as e:
-        #     # Error handling
-        #     print("An exception occurred.", e.GetDescription())
-        #     exitCode = 1
-
-        except Exception as error:
-            print(error)
-            pass
 
     def getFrame(self):
-        try:
-            self.grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
-
-            if self.grabResult.GrabSucceeded():
-                image = self.converter.Convert(self.grabResult) # Access the openCV image data
-                self.img0 = image.GetArray()
-
-            else:
-                print("Error: ", self.grabResult.ErrorCode)
-    
-            self.grabResult.Release()
-            #time.sleep(0.01)
-
-            return self.img0
-            
-        # except genicam.GenericException as e:
-        #     # Error handling
-        #     print("An exception occurred.", e.GetDescription())
-        #     exitCode = 1
-        except Exception as error:
-            print(error)
+        self.img = np.array(Image.open("C:/Users/10903/OneDrive/Python/CGH_test/2D_Gaussian.png").convert('L'))
+        return self.img
 
     def exposure_change(self):
         try:
@@ -129,7 +58,7 @@ class cameraCapture(tk.Frame):
         except Exception as error:
             print(error)
             self.page.save_button.config(background="red")
-    
+
     def browse(self):
         global browseImg
         try:
@@ -158,7 +87,7 @@ class cameraCapture(tk.Frame):
             self.page.display_button.config(background='red')
 
     def clearSLM(self):
-        self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
+        self.SLMdisp = Image.fromarray(np.zeros((1080, 1920)))
 
     def stopGUI(self):
         # self.camera.StopGrabbing()
@@ -172,33 +101,32 @@ class cameraCapture(tk.Frame):
                            'loop': [self.page.loop_entry.get()]})
         df.to_csv('prevVals.csv', index=False)
         self.page.window.destroy()
-        self.camera.Close
-    
+
     def crosshair(self):
         self.SLMdisp = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
-    
+
     def testFunc(self):
         self.camera.StartGrabbing()
-    
+
     def runThrough(self):
         # for pol in np.arange(0,360,10):
         #     for gray in np.arange(0, 260, 10):
-        gray=160
+        gray = 160
         # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
         self.SLMdisp = Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
         print("Image displayed.")
-        
+
         # self.page.update()
         # input("Press enter to continue....")
         # cv2.imwrite(f'./HMPolTests/testImg.png', self.img0)  # Save the captured image to a file
         # print(f"Image saved as testImg.png")
-    
+
     def oneloop(self):
         self.page.loop_pressed = True
-    
+
     def nloops(self):
         self.page.nloop_pressed = True
-    
+
     def save_SLM(self):
         filename = self.page.save_SLM_entry.get()
         try:
@@ -217,10 +145,10 @@ class cameraCapture(tk.Frame):
             if xZoom == "Done":
                 try:
                     df = pd.DataFrame({'xZoom': [prevxZoom],
-                                        'yZoom': [yZoom],
-                                        'xShift': [xShift],
-                                        'yShift': [yShift],
-                                        'angle': [angle]})
+                                       'yZoom': [yZoom],
+                                       'xShift': [xShift],
+                                       'yShift': [yShift],
+                                       'angle': [angle]})
                     df.to_csv('calVals.csv', index=False)
                     print("DONE CALIBRATING!")
                 except:
@@ -234,7 +162,8 @@ class cameraCapture(tk.Frame):
                 angle = input("Enter angle: ")
                 prevxZoom = xZoom
 
-                calImg = calibration(self.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift), float(angle))
+                calImg = calibration(self.getFrame(), float(xZoom), float(yZoom), float(xShift), float(yShift),
+                                     float(angle))
                 calImg = Image.fromarray(calImg)
                 calImg.show()
                 Image.open("./calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png").show()
@@ -248,11 +177,9 @@ class cameraCapture(tk.Frame):
         except Exception as error:
             print(error)
             self.page.save_SLM_button.config(background="red")
-    
-
 
 if __name__ == "__main__":
     testWidget = cameraCapture()
     while testWidget.camera.IsGrabbing():
-        #input("Press Enter to continue...")
+        # input("Press Enter to continue...")
         testWidget.getFrame()

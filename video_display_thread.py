@@ -1,6 +1,7 @@
+import threading
 import tkinter as tk
 import matplotlib.pyplot as plt
-import oneCameraCapture_fake
+import oneCameraCapture
 import SLM_HAMAMATSU
 import numpy as np
 import screeninfo
@@ -12,7 +13,6 @@ import time
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from slmsuite import holography
 
 class Page(tk.Frame):
 
@@ -24,7 +24,7 @@ class Page(tk.Frame):
         self.window = window
         window.title("SLM & CCD Control")
 
-        self.vid = oneCameraCapture_fake.cameraCapture(self, self)
+        self.vid = oneCameraCapture.cameraCapture(self, self)
         df = pd.read_csv('prevVals.csv', usecols=['exposure', 'gain', 'loop'])
 
         # Get dimensions of user monitor, SLM, and CCD
@@ -214,8 +214,6 @@ class Page(tk.Frame):
                 self.lineout_xy_toggle = False
                 self.lineout_xy_button.config(background="SystemButtonFace")
                 self.lineout_iso_button.config(background="white")
-                self.CCD_top_ax.title('Major Axis')
-                self.CCD_right_ax.title('Minor Axis')
 
         def lineout_xy():
             if self.lineout_xy_toggle:
@@ -226,13 +224,73 @@ class Page(tk.Frame):
                 self.lineout_iso_toggle = False
                 self.lineout_iso_button.config(background="SystemButtonFace")
                 self.lineout_xy_button.config(background="white")
-                self.CCD_top_ax.title('X Cross-section')
-                self.CCD_right_ax.title('Y Cross-section')
 
         self.delay = 5
         self.update()
 
         onClose = self.vid.exitGUI
+
+    def plot_xy_CCD(self):
+        try:
+            input_max = np.amax(self.CCD_array)
+            center_y = np.where(self.CCD_array == input_max)[0]
+            center_x = np.where(self.CCD_array == input_max)[1]
+            center_x = center_x[int(len(center_x) / 2)]
+            center_y = center_y[int(len(center_y) / 2)]
+            self.CCD_top_ax.clear()
+            self.CCD_right_ax.clear()
+            self.CCD_main_ax.clear()
+            self.CCD_main_ax.axvline(int(center_x - self.CCD_array.shape[1] / 2), color='r')
+            self.CCD_main_ax.axhline(int(center_y - self.CCD_array.shape[0] / 2), color='g')
+            self.CCD_right_ax.set_xlim([0, 255])
+            self.CCD_top_ax.set_ylim([0, 255])
+            self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]),
+                                 self.CCD_array[center_y, :], 'g-')
+            self.CCD_right_ax.plot(self.CCD_array[:, center_x],
+                                   np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+            self.just_CCD()
+        except Exception as error:
+            print(error)
+
+    def plot_iso_CCD(self):
+        try:
+            self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
+            self.CCD_array_major = lbs.major_axis_arrays(self.CCD_array, self.cx, self.cy, self.dx, self.dy,
+                                                         self.phi)
+            self.CCD_array_minor = lbs.minor_axis_arrays(self.CCD_array, self.cx, self.cy, self.dx, self.dy,
+                                                         self.phi)
+            self.CCD_top_ax.clear()
+            self.CCD_right_ax.clear()
+            self.CCD_main_ax.clear()
+            self.CCD_right_ax.set_xlim([0, 255])
+            self.CCD_top_ax.set_ylim([0, 255])
+            self.CCD_top_ax.plot(self.CCD_array_major[3], self.CCD_array_major[2])
+            self.CCD_right_ax.plot(self.CCD_array_minor[3], self.CCD_array_minor[2])
+            self.just_CCD()
+        except Exception as error:
+            print(error)
+
+    def just_CCD(self):
+        tic2 = time.perf_counter()
+        self.CCD_array = self.vid.getFrame()
+        self.CCD_image = Image.fromarray(self.CCD_array)
+        self.CCD_extent = [-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2),
+                           -int(self.CCD_array.shape[0] / 2), int(self.CCD_array.shape[0] / 2)]
+        self.CCD_main_ax.imshow(self.CCD_array, cmap='gray', vmin=0, vmax=255, extent=self.CCD_extent)
+        if self.circle_toggle:
+            try:
+                self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
+                self.axes_arrayx, self.axes_arrayy = lbs.axes_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
+                self.ellipse_arrayx, self.ellipse_arrayy = lbs.ellipse_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
+                self.CCD_main_ax.plot(self.axes_arrayx-self.CCD_array.shape[1]/2, self.axes_arrayy-self.CCD_array.shape[0]/2)
+                self.CCD_main_ax.plot(self.ellipse_arrayx-self.CCD_array.shape[1]/2, self.ellipse_arrayy-self.CCD_array.shape[0]/2)
+                self.CCD_main_ax.set_xlim([-self.CCD_array.shape[1]/2, self.CCD_array.shape[1]/2])
+                self.CCD_main_ax.set_ylim([-self.CCD_array.shape[0] / 2, self.CCD_array.shape[0] / 2])
+            except Exception as error:
+                print(error)
+        self.CCD_canvas.draw()
+        toc2 = time.perf_counter()
+        print(toc2-tic2)
 
     def update(self):
         global SLM_image, SLM_check
@@ -303,65 +361,22 @@ class Page(tk.Frame):
             self.Preview_ax.imshow(self.Preview_array, cmap='gray', vmin=0, vmax=255, extent=self.Preview_extent)
             self.Preview_canvas.draw()
 
-        self.CCD_array = self.vid.getFrame()
-        self.CCD_image = Image.fromarray(self.CCD_array)
-        self.CCD_main_ax.clear()
-        if self.circle_toggle:
-            try:
-                self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
-                self.axes_arrayx, self.axes_arrayy = lbs.axes_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
-                self.ellipse_arrayx, self.ellipse_arrayy = lbs.ellipse_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
-                self.CCD_main_ax.plot(self.axes_arrayx-self.CCD_array.shape[1]/2, self.axes_arrayy-self.CCD_array.shape[0]/2)
-                self.CCD_main_ax.plot(self.ellipse_arrayx-self.CCD_array.shape[1]/2, self.ellipse_arrayy-self.CCD_array.shape[0]/2)
-                self.CCD_main_ax.set_xlim([-self.CCD_array.shape[1] / 2, self.CCD_array.shape[1] / 2])
-                self.CCD_main_ax.set_ylim([-self.CCD_array.shape[0] / 2, self.CCD_array.shape[0] / 2])
-            except Exception as error:
-                print(error)
-        self.CCD_extent = [-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2),
-                           -int(self.CCD_array.shape[0] / 2), int(self.CCD_array.shape[0] / 2)]
-        self.CCD_main_ax.imshow(self.CCD_array, cmap='gray', vmin=0, vmax=255, extent=self.CCD_extent)
-        self.CCD_canvas.draw()
+        if not self.lineout_xy_toggle and not self.lineout_iso_toggle:
+            self.CCD_main_ax.clear()
+            time.sleep(.08)
+            self.t1 = threading.Thread(target=self.just_CCD, name='t1')
+            self.t1.start()
 
         if self.lineout_iso_toggle:
-            try:
-                self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
-                self.CCD_array_major = lbs.major_axis_arrays(self.CCD_array, self.cx, self.cy, self.dx, self.dy,
-                                                             self.phi)
-                self.CCD_array_minor = lbs.minor_axis_arrays(self.CCD_array, self.cx, self.cy, self.dx, self.dy,
-                                                             self.phi)
-                self.CCD_top_ax.clear()
-                self.CCD_right_ax.clear()
-                self.CCD_right_ax.set_xlim([0, 255])
-                self.CCD_right_ax.set_ylim([-int(self.CCD_array.shape[0] / 2), int(self.CCD_array.shape[0] / 2)])
-                self.CCD_top_ax.set_ylim([0, 255])
-                self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
-                self.CCD_top_ax.plot(self.CCD_array_major[3], self.CCD_array_major[2])
-                self.CCD_right_ax.plot(self.CCD_array_minor[2], self.CCD_array_minor[3])
-                self.CCD_canvas.draw()
-            except Exception as error:
-                print(error)
+            self.t2 = threading.Thread(target=self.plot_iso_CCD, name='t2')
+            self.t2.start()
 
         if self.lineout_xy_toggle:
-            try:
-                input_max = np.amax(self.CCD_array)
-                center_y = np.where(self.CCD_array == input_max)[0]
-                center_x = np.where(self.CCD_array == input_max)[1]
-                center_x = center_x[int(len(center_x) / 2)]
-                center_y = center_y[int(len(center_y) / 2)]
-                self.CCD_top_ax.clear()
-                self.CCD_right_ax.clear()
-                self.CCD_main_ax.axvline(int(center_x-self.CCD_array.shape[1]/2), color='r')
-                self.CCD_main_ax.axhline(int(center_y-self.CCD_array.shape[0]/2), color='g')
-                self.CCD_right_ax.set_xlim([0, 255])
-                self.CCD_top_ax.set_ylim([0, 255])
-                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
-                self.CCD_canvas.draw()
-            except Exception as error:
-                print(error)
+            self.t3 = threading.Thread(target=self.plot_xy_CCD, name='t3')
+            self.t3.start()
 
         toc = time.perf_counter()
-        print(toc-tic)
+        # print(toc-tic)
         self.window.after(self.delay, self.update)
 
 
