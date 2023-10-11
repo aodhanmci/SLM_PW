@@ -58,7 +58,9 @@ class cameraCapture(tk.Frame):
             self.camera.ExposureTimeRaw = int(df.exposure[0])
             self.camera.GainRaw = int(df.gain[0])
             self.camera.TriggerSource.SetValue("Line1")
+            self.camera.AcquisitionMode.SetValue("Continuous")
             # self.camera.TriggerMode.SetValue("On")
+            # self.camera.TriggerMode.GetValue()
             # Print the model name of the camera.
             # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
             # print("Exposure time ", self.camera.ExposureTime.GetValue())
@@ -85,12 +87,10 @@ class cameraCapture(tk.Frame):
 
     def getFrame(self):
         try:
-            self.grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
-
+            self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
             if self.grabResult.GrabSucceeded():
                 image = self.converter.Convert(self.grabResult) # Access the openCV image data
                 self.img0 = image.GetArray()
-
             else:
                 print("Error: ", self.grabResult.ErrorCode)
     
@@ -104,7 +104,26 @@ class cameraCapture(tk.Frame):
         #     print("An exception occurred.", e.GetDescription())
         #     exitCode = 1
         except Exception as error:
-            print(error)
+            if self.camera.TriggerMode.GetValue() == "On":
+                self.camera.StopGrabbing()
+                self.camera.TriggerMode.SetValue("Off")
+                self.camera.StartGrabbing()
+                self.page.trigger_button.config(background="SystemButtonFace")
+                print("TRIGGER NOT CONNECTED")
+
+                self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
+                if self.grabResult.GrabSucceeded():
+                    image = self.converter.Convert(self.grabResult)  # Access the openCV image data
+                    self.img0 = image.GetArray()
+                else:
+                    print("Error: ", self.grabResult.ErrorCode)
+
+                self.grabResult.Release()
+                # time.sleep(0.01)
+
+                return self.img0
+            else:
+                print(error)
 
     def exposure_change(self):
         try:

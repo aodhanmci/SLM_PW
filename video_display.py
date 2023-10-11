@@ -235,7 +235,7 @@ class Page(tk.Frame):
 
         self.circle_toggle = False
         self.lineout_toggle = False
-        self.trigger_toggle = False
+        # self.trigger_toggle = False
         self.clearCanvas = True
         self.loop_pressed = False
         self.nloop_pressed = False
@@ -260,12 +260,29 @@ class Page(tk.Frame):
                 self.lineout_button.config(background="white")
 
         def trigger():
-            if self.trigger_toggle:
-                self.trigger_toggle = False
-                self.trigger_button.config(background="SystemButtonFace")
+            if self.vid.camera.TriggerMode.GetValue() == "On":
+                try:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("Off")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="SystemButtonFace")
+                    # print("TRIGGER OFF")
+                except Exception as error:
+                    print(error)
             else:
-                self.trigger_toggle = True
-                self.trigger_button.config(background="white")
+                try:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("On")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="white")
+                    # print("TRIGGER ON")
+                except Exception as error:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("Off")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="SystemButtonFace")
+                    # print("TRIGGER OFF")
+                    print(error)
 
         self.delay=3
         print("HELLO")
@@ -279,7 +296,7 @@ class Page(tk.Frame):
 
 
     def update(self):
-        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity
+        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger
         SLMimage = self.SLMimage
         time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
@@ -413,20 +430,30 @@ class Page(tk.Frame):
             except Exception as error:
                 print(error)
 
-        if self.trigger_toggle:
-            try:
-                self.vid.camera.StopGrabbing()
-                self.vid.camera.TriggerMode.SetValue("On")
-                self.vid.camera.StartGrabbing()
-            except Exception as error:
-                print(error)
-        else:
-            try:
-                self.vid.camera.StopGrabbing()
-                self.vid.camera.TriggerMode.SetValue("Off")
-                self.vid.camera.StartGrabbing()
-            except Exception as error:
-                print(error)
+        # if self.trigger_toggle:
+        #     try:
+        #         self.vid.camera.StopGrabbing()
+        #         self.vid.camera.TriggerMode.SetValue("On")
+        #         self.vid.camera.StartGrabbing()
+        # else:
+        #     try:
+        #         self.vid.camera.StopGrabbing()
+        #         self.vid.camera.TriggerMode.SetValue("Off")
+        #         self.vid.camera.StartGrabbing()
+        #     except Exception as error:
+        #         print(error)
+
+        # def trigger():
+        #     if self.vid.camera.TriggerMode.GetValue == "On":
+        #         self.vid.camera.StopGrabbing()
+        #         self.vid.camera.TriggerMode.SetValue("Off")
+        #         self.vid.camera.StartGrabbing()
+        #         self.trigger_button.config(background="SystemButtonFace")
+        #     else:
+        #         self.vid.camera.StopGrabbing()
+        #         self.vid.camera.TriggerMode.SetValue("On")
+        #         self.vid.camera.StartGrabbing()
+        #         self.trigger_button.config(background="white")
 
         self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
         self.ccd_image_widget.config(image=self.photo)
