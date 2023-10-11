@@ -58,7 +58,7 @@ class cameraCapture(tk.Frame):
             self.camera.ExposureTimeRaw = int(df.exposure[0])
             self.camera.GainRaw = int(df.gain[0])
             self.camera.TriggerSource.SetValue("Line1")
-            self.camera.TriggerMode.SetValue("On")
+            # self.camera.TriggerMode.SetValue("On")
             # Print the model name of the camera.
             # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
             # print("Exposure time ", self.camera.ExposureTime.GetValue())
@@ -72,6 +72,7 @@ class cameraCapture(tk.Frame):
             self.converter = pylon.ImageFormatConverter()
             self.converter.OutputPixelFormat = pylon.PixelType_Mono8
             self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+
 
         # except genicam.GenericException as e:
         #     # Error handling

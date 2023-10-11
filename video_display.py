@@ -144,6 +144,8 @@ class Page(tk.Frame):
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
         self.lineout_button = tk.Button(window, text="Lineout", command=lambda: lineout())
         self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
+        self.trigger_button = tk.Button(window, text="Trigger", command=lambda: trigger())
+        self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
         self.exposure_button = tk.Button(window, text="Set Exposure", command=self.vid.exposure_change)
@@ -233,6 +235,7 @@ class Page(tk.Frame):
 
         self.circle_toggle = False
         self.lineout_toggle = False
+        self.trigger_toggle = False
         self.clearCanvas = True
         self.loop_pressed = False
         self.nloop_pressed = False
@@ -256,7 +259,15 @@ class Page(tk.Frame):
                 self.lineout_toggle = True
                 self.lineout_button.config(background="white")
 
-        self.delay=5
+        def trigger():
+            if self.trigger_toggle:
+                self.trigger_toggle = False
+                self.trigger_button.config(background="SystemButtonFace")
+            else:
+                self.trigger_toggle = True
+                self.trigger_button.config(background="white")
+
+        self.delay=3
         print("HELLO")
         self.update()
         
@@ -399,6 +410,21 @@ class Page(tk.Frame):
             try:
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), detected_circle[2], 255, 1)
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), 1, 255, 2)
+            except Exception as error:
+                print(error)
+
+        if self.trigger_toggle:
+            try:
+                self.vid.camera.StopGrabbing()
+                self.vid.camera.TriggerMode.SetValue("On")
+                self.vid.camera.StartGrabbing()
+            except Exception as error:
+                print(error)
+        else:
+            try:
+                self.vid.camera.StopGrabbing()
+                self.vid.camera.TriggerMode.SetValue("Off")
+                self.vid.camera.StartGrabbing()
             except Exception as error:
                 print(error)
 
