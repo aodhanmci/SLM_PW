@@ -12,26 +12,21 @@ from os.path import isfile, join
 # from IPython.display import display
 
 def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
-    lenspaper = Image.fromarray(input)
-    lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
+    calimage = Image.fromarray(input)
+    calimage = ImageOps.flip(ImageOps.mirror(calimage))
     
     crosshair4 = Image.open('/Users/loasis/Documents/GitHub/SLM_PW/calibration/crosshair4.png')
     width, height = crosshair4.size
     
-    w, h = lenspaper.size
+    w, h = calimage.size
     x = width/2 - xShift
     y = height/2 + yShift
-    lenspaper = lenspaper.crop((x - w / 2, y - h / 2,
+    calimage = calimage.crop((x - w / 2, y - h / 2,
                                 x + w / (2 * xZoom), y + h / (2 * yZoom)))
-    lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
-    lenspaper = lenspaper.rotate(angle)
+    calimage = calimage.resize((width, height), Image.Resampling.LANCZOS)
+    calimage = calimage.rotate(angle)
 
-    return asarray(lenspaper)
-
-    display(crosshair4)
-    display(lenspaper)
-    
-    lenspaperArray = asarray(lenspaper)
+    return asarray(calimage)
 
 width = 1920
 height = 1080
@@ -124,9 +119,6 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     initialImgArray = asarray(initialImg)
     initialImg = Image.fromarray(initialImgArray)
     initialMap = initialImg.load()
-    
-    # INT32 MAX: 2**31 = 2,147,483,648
-    int32max = 2**31
     
     initialArray = asarray(initialImg)     # Turn initial image into 2D array of pixel intensity values    
     

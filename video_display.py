@@ -210,12 +210,12 @@ class Page(tk.Frame):
                                     )
 
 
-        global image2, image3
-        self.image2 = np.zeros((SLMdim[0], SLMdim[1]))
-        self.image2[0][0] = None
-        image2 = self.image2
-        self.image3 = image2
-        image3 = image2
+        global SLMimage, SLMpreview
+        self.SLMimage = np.zeros((SLMdim[0], SLMdim[1]))
+        self.SLMimage[0][0] = None
+        SLMimage = self.SLMimage
+        self.SLMpreview = SLMimage
+        SLMpreview = SLMimage
 
         fig, ax = plt.subplots(figsize=(4.5,3.5))
 
@@ -268,21 +268,20 @@ class Page(tk.Frame):
 
 
     def update(self):
-        global photo1, check, threshold, calibrate, circleDetection, saveLineout, goalArray
-        image2 = self.image2
+        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity
+        SLMimage = self.SLMimage
         time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
-        # photo1 = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
+        # SLMgrating = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
         # image_array2 = np.random.randint(0, 10, size=(width_scale, height_scale), dtype=np.uint8).T
         # Convert NumPy arrays to Pillow Images
         # image1 = Image.fromarray(image_array1)
-        # image2 = Image.fromarray(image_array2)
+        # SLMimage = Image.fromarray(image_array2)
 
-        # photo1 = np.asarray(Image.open("./calibration/crosshair4.png"))
-        # photo1 = np.asarray(self.vid.SLMdisp)
+        # SLMgrating = np.asarray(Image.open("./calibration/crosshair4.png"))
+        # SLMgrating = np.asarray(self.vid.SLMdisp)
 
         if self.nloop_pressed == True or self.loop_pressed == True:
-            global beginningIntensity
             currentBeam = self.vid.getFrame()
             if self.count == 0 and self.timer == 0:
                 beginningIntensity = np.sum(currentBeam[currentBeam > 1])
@@ -315,7 +314,7 @@ class Page(tk.Frame):
                         SLM_width=self.SLMdim[0]
                     )
 
-                photo1 = gratingArray
+                SLMgrating = gratingArray
 
 
                 if self.count == maxLoops:
@@ -329,30 +328,30 @@ class Page(tk.Frame):
                 self.timer = 0
                 print("THROUGHPUT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),2)) + "%")
         else:
-            photo1 = np.asarray(self.vid.SLMdisp)
+            SLMgrating = np.asarray(self.vid.SLMdisp)
 
-        if len(photo1.shape) == 3:
-            photo1 = photo1[:,:,0]
+        if len(SLMgrating.shape) == 3:
+            SLMgrating = SLMgrating[:,:,0]
 
-        photo2 = np.asarray(self.vid.browseImg)
+        SLMbrowse = np.asarray(self.vid.browseImg)
 
-        if image2[0][0] != None:
-            check = np.array_equal(image2, photo1)
+        if SLMimage[0][0] != None:
+            check = np.array_equal(SLMimage, SLMgrating)
             if check != True:
-                self.image2 = photo1
+                self.SLMimage = SLMgrating
 
-                self.photo1 = cv2.resize(photo1, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
-                self.photo1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.photo1))
-                self.SLM_image_widget.photo = self.photo1
-                self.SLM_image_widget.config(image=self.photo1)
+                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
+                self.SLMgrating = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMgrating))
+                self.SLM_image_widget.photo = self.SLMgrating
+                self.SLM_image_widget.config(image=self.SLMgrating)
         
-        if image3[0][0] != None:
-            check2 = np.array_equal(image3, photo2)
+        if SLMpreview[0][0] != None:
+            check2 = np.array_equal(SLMpreview, SLMbrowse)
             if check2 != True:
-                self.photo2 = cv2.resize(photo2, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
-                self.photo2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.photo2))
-                self.SLM_preview_widget.photo = self.photo2
-                self.SLM_preview_widget.config(image=self.photo2)
+                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
+                self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
+                self.SLM_preview_widget.photo = self.SLMbrowse
+                self.SLM_preview_widget.config(image=self.SLMbrowse)
 
 
         self.ccd_data = self.vid.getFrame() #This is an array
@@ -415,7 +414,7 @@ class Page(tk.Frame):
 
 class window2(tk.Toplevel, Page):
     def __init__(self, parent):
-        global image2
+        global SLMimage
 
         self.SLMdims = SLMdim
 
@@ -439,23 +438,23 @@ class window2(tk.Toplevel, Page):
         self.update2()
 
     def update2(self):
-        global image2
+        global SLMimage
 
         self.SLMdims = SLMdim
 
-        # Only change image on SLM if the variable "photo1" from oneCameraCapture (created from Upload to SLM button) is different from current display on SLM
+        # Only change image on SLM if the variable "SLMgrating" from oneCameraCapture (created from Upload to SLM button) is different from current display on SLM
 
-        if image2[0][0] != None:
+        if SLMimage[0][0] != None:
             if check != True:
-                image2 = photo1
-                image2 = ImageOps.fit(Image.fromarray(image2), (int(self.SLMdims[0]), int(self.SLMdims[1])))
-                image2 = np.asarray(image2)
-                self.image3 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(image2))
-                # self.image3 = PIL.ImageTk.PhotoImage(image=image2)
-                # self.image3 = image2
-                self.another_widget.photo = self.image3
-                # self.another_widget.image = self.image3
-                self.another_widget.config(image=self.image3)
+                SLMimage = SLMgrating
+                SLMimage = ImageOps.fit(Image.fromarray(SLMimage), (int(self.SLMdims[0]), int(self.SLMdims[1])))
+                SLMimage = np.asarray(SLMimage)
+                self.SLMpreview = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(SLMimage))
+                # self.SLMpreview = PIL.ImageTk.PhotoImage(image=SLMimage)
+                # self.SLMpreview = SLMimage
+                self.another_widget.photo = self.SLMpreview
+                # self.another_widget.image = self.SLMpreview
+                self.another_widget.config(image=self.SLMpreview)
                 # self.another_widget.attributes("-fullscreen", True)
                 # self.another_widget.pack(fill="both")
 

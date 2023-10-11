@@ -38,7 +38,7 @@ def center(imageArray):
 
 # testno: Test number, with all images stored in separate numbered folder. Just used for testing. Will not be part of final implementation
 
-# count: Also just an index used for testing. Lazy way to simulate feedback loop. Will improve before implementation.
+# count: Index used for feedback loop.
 
 # threshold: Pixel intensity value (0-255) to flatten beam to. All pixels above this threshold create the "hotspot area"
 
@@ -330,21 +330,6 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
         plt.plot(np.arange(SLM_width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
         plt.plot(np.arange(SLM_width), initialArray[cY,:], label = "Initial")
         plt.plot(np.arange(SLM_width), goalArray[cY,:], label = "Goal")
-        # plt.plot(np.arange(width), goalArray[int(height/2-15),:], label = "TEST")
-        # plt.plot(np.arange(width), aboveArray[int(height/2-15),:], label = "Above")
-        # plt.plot(np.arange(width), belowArray[int(height/2-15),:], label = "Below")
-        # plt.plot(np.arange(width), aboveMaxArray[int(height/2-15),:], label = "AboveMax")
-        # plt.plot(np.arange(width), belowMaxArray[int(height/2-15),:], label = "BelowMax")
-        # plt.plot(np.arange(width), aboveMaxBlurredArray[int(height/2-15),:], label = "AboveMaxBlurred")
-        # plt.plot(np.arange(width), belowMaxBlurredArray[int(height/2-15),:], label = "BelowMaxBlurred")
-        # plt.plot(np.arange(width), belowBlurredArray[int(height/2-15),:], label = "BelowBlurred")
-        # plt.plot(np.arange(width), aboveMultArray[int(height/2-15),:], label = "AboveMult")
-        # plt.plot(np.arange(width), belowMultArray[int(height/2-15),:], label = "BelowMult")
-        # plt.plot(np.arange(width), totalMultArray[int(height/2-15),:], label = "TotalMult", color = "yellow")
-        # plt.plot(np.arange(width), diffImgArray[int(height/2-15),:], label = "DiffImg", color = "yellow")
-        # plt.plot(np.arange(width), aboveBlurredArray[int(height/2-15),:], label = "AboveBlurred")
-        # plt.plot(np.arange(width), yshiftArray[int(height/2-15),:], label = "YShift", color = "red")
-        # plt.plot(np.arange(width), goalArrayBlurred[int(height/2-15),:], label = "GoalBlurred")
 
         
         plt.legend()
