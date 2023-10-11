@@ -12,7 +12,6 @@ import time
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from slmsuite import holography
 import pickle
 
 class Page(tk.Frame):
@@ -93,44 +92,47 @@ class Page(tk.Frame):
         self.display_button = tk.Button(self.button_frame, text="Display to SLM", font=('Arial, 16'), command=self.vid.displayToSLM).grid(row=1, column=1, sticky="nesw")
         self.exit_button = tk.Button(self.button_frame, text="Exit", font=('Arial, 16'), command=self.vid.exitGUI).grid(row=2, column=0, sticky="nesw")
         self.clear_button = tk.Button(self.button_frame, text="Clear", font=('Arial, 16'), command=self.vid.clearSLM).grid(row=2, column=1, sticky="nesw")
+        self.calibrate_button = tk.Button(self.button_frame, text="Calibrate", font=('Arial, 16'), command=self.vid.calibrate).grid(row=3, column=0, sticky="nesw")
         self.crosshair_button = tk.Button(self.button_frame, text="Crosshair", font=('Arial, 16'), command=self.vid.crosshair).grid(row=3, column=1, sticky="nesw")
-        self.circle_button = tk.Button(self.button_frame, text="Circle", font=('Arial, 16'), command=lambda: circleDetection())
-        self.circle_button.grid(row=3, column=0, sticky="nesw")
-        self.calibrate_button = tk.Button(self.button_frame, text="Calibrate", font=('Arial, 16'), command=self.vid.calibrate).grid(row=4, column=1, sticky="nesw")
-        self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop).grid(row=5, column=1, sticky="nesw")
+
+        self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop).grid(row=4, column=1, sticky="nesw")
 
         # Create all the entries and their buttons
         self.loop_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
-        self.loop_entry.grid(row=6, column=0, sticky="nesw")
+        self.loop_entry.grid(row=5, column=0, sticky="nesw")
         self.loop_entry.insert(0, str(df.loop[0]))
-        self.five_loop_button = tk.Button(self.button_frame, text="n loop", font=('Arial, 16'), command=self.vid.nloops).grid(row=6, column=1, sticky="nesw")
+        self.five_loop_button = tk.Button(self.button_frame, text="n loop", font=('Arial, 16'), command=self.vid.nloops).grid(row=5, column=1, sticky="nesw")
 
         self.exposure_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
-        self.exposure_entry.grid(row=7, column=0, sticky="nesw")
+        self.exposure_entry.grid(row=6, column=0, sticky="nesw")
         self.exposure_entry.insert(0, str(df.exposure[0]))
-        self.exposure_button = tk.Button(self.button_frame, text="Set Exposure", font=('Arial, 16'), command=self.vid.exposure_change).grid(row=7, column=1, sticky="nesw")
+        self.exposure_button = tk.Button(self.button_frame, text="Set Exposure", font=('Arial, 16'), command=self.vid.exposure_change).grid(row=6, column=1, sticky="nesw")
 
         self.gain_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
-        self.gain_entry.grid(row=8, column=0, sticky="nesw")
+        self.gain_entry.grid(row=7, column=0, sticky="nesw")
         self.gain_entry.insert(0, str(df.gain[0]))
-        self.gain_button = tk.Button(self.button_frame, text="Set Gain", font=('Arial, 16'), command=self.vid.gain_change).grid(row=8, column=1, sticky="nesw")
+        self.gain_button = tk.Button(self.button_frame, text="Set Gain", font=('Arial, 16'), command=self.vid.gain_change).grid(row=7, column=1, sticky="nesw")
 
         self.save_SLM_entry = (tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER))
-        self.save_SLM_entry.grid(row=9, column=0, sticky="nesw")
-        self.save_SLM_button = tk.Button(self.button_frame, text="Save SLM", font=('Arial, 16'), command=self.vid.save_SLM).grid(row=9, column=1, sticky="nesw")
+        self.save_SLM_entry.grid(row=8, column=0, sticky="nesw")
+        self.save_SLM_button = tk.Button(self.button_frame, text="Save SLM", font=('Arial, 16'), command=self.vid.save_SLM).grid(row=8, column=1, sticky="nesw")
 
         self.save_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)  # save CCD entry
-        self.save_entry.grid(row=10, column=0, sticky="nesw")
-        self.save_button = tk.Button(self.button_frame, text="Save CCD", font=('Arial, 16'), command=self.vid.save_image).grid(row=10, column=1, sticky="nesw")
+        self.save_entry.grid(row=9, column=0, sticky="nesw")
+        self.save_button = tk.Button(self.button_frame, text="Save CCD", font=('Arial, 16'), command=self.vid.save_image).grid(row=9, column=1, sticky="nesw")
 
         self.save_lineout_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
-        self.save_lineout_entry.grid(row=11, column=0, sticky="nesw")
-        self.save_lineout_button = tk.Button(self.button_frame, text="Save Lineout", font=('Arial, 16'), command=self.vid.saveLineout).grid(row=11, column=1, sticky="nesw")
+        self.save_lineout_entry.grid(row=10, column=0, sticky="nesw")
+        self.save_lineout_button = tk.Button(self.button_frame, text="Save Lineout", font=('Arial, 16'), command=self.vid.saveLineout).grid(row=10, column=1, sticky="nesw")
 
         self.lineout_iso_button = tk.Button(self.button_frame, text="Lineout ISO", font=('Arial, 16'), command=lambda: lineout_iso())
-        self.lineout_iso_button.grid(row=12, column=0, sticky="nesw")
+        self.lineout_iso_button.grid(row=11, column=0, sticky="nesw")
         self.lineout_xy_button = tk.Button(self.button_frame, text="Lineout XY", font=('Arial, 16'), command=lambda: lineout_xy())
-        self.lineout_xy_button.grid(row=12, column=1, sticky="nesw")
+        self.lineout_xy_button.grid(row=11, column=1, sticky="nesw")
+        self.circle_button = tk.Button(self.button_frame, text="Circle", font=('Arial, 16'), command=lambda: circleDetection())
+        self.circle_button.grid(row=12, column=0, sticky="nesw")
+        self.cgh_button = tk.Button(self.button_frame, text="CGH", font=('Arial, 16'), command=self.vid.cgh)
+        self.cgh_button.grid(row=12, column=1, sticky="nesw")
 
 
         # Make every canvas an individual frame, might slow the GUI
@@ -155,9 +157,9 @@ class Page(tk.Frame):
 
         # Set up Gap holders
         for i in range(3):
-            exec(f"gap1 = tk.Label(window)")
-            exec(f"gap1.grid(row=0, column=1 + 2 * {i}, rowspan=5, sticky='nesw')")
-            exec(f"gap1.grid_propagate(0)")
+            exec(f"gap{i} = tk.Label(window)")
+            exec(f"gap{i}.grid(row=0, column=1 + 2 * {i}, rowspan=5, sticky='nesw')")
+            exec(f"gap{i}.grid_propagate(0)")
 
         self.CCD_frame = tk.Frame(window, background='white')
         self.CCD_frame.grid(row=1, column=4, rowspan=3, sticky='nesw')
@@ -416,7 +418,7 @@ class Window2(tk.Toplevel, Page):
 if __name__ == "__main__":
     root = tk.Tk()
     testWidget = Page(root, root)
-    window2 = Window2(root)
+    # window2 = Window2(root)
 
     root.protocol("WM_DELETE_WINDOW", onClose)
     root.mainloop()
