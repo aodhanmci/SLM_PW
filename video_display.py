@@ -86,16 +86,25 @@ class Page(tk.Frame):
             self.button_frame.rowconfigure(i, weight=1)
 
         # Create all the buttons
-        self.start_button = tk.Button(self.button_frame, text="Start", font=('Arial, 16'), command=self.vid.testFunc).grid(row=0, column=0, sticky="nesw")
-        self.browse_button = tk.Button(self.button_frame, text="Browse", font=('Arial, 16'), command=self.vid.browse).grid(row=0, column=1, sticky="nesw")
-        self.stop_button = tk.Button(self.button_frame, text="Stop", font=('Arial, 16'), command=self.vid.stopGUI).grid(row=1, column=0, sticky="nesw")
-        self.display_button = tk.Button(self.button_frame, text="Display to SLM", font=('Arial, 16'), command=self.vid.displayToSLM).grid(row=1, column=1, sticky="nesw")
-        self.exit_button = tk.Button(self.button_frame, text="Exit", font=('Arial, 16'), command=self.vid.exitGUI).grid(row=2, column=0, sticky="nesw")
-        self.clear_button = tk.Button(self.button_frame, text="Clear", font=('Arial, 16'), command=self.vid.clearSLM).grid(row=2, column=1, sticky="nesw")
-        self.calibrate_button = tk.Button(self.button_frame, text="Calibrate", font=('Arial, 16'), command=self.vid.calibrate).grid(row=3, column=0, sticky="nesw")
-        self.crosshair_button = tk.Button(self.button_frame, text="Crosshair", font=('Arial, 16'), command=self.vid.crosshair).grid(row=3, column=1, sticky="nesw")
+        self.start_button = tk.Button(self.button_frame, text="Start", font=('Arial, 16'), command=self.vid.testFunc)
+        self.start_button.grid(row=0, column=0, sticky="nesw")
+        self.browse_button = tk.Button(self.button_frame, text="Browse", font=('Arial, 16'), command=self.vid.browse)
+        self.browse_button.grid(row=0, column=1, sticky="nesw")
+        self.stop_button = tk.Button(self.button_frame, text="Stop", font=('Arial, 16'), command=self.vid.stopGUI)
+        self.stop_button.grid(row=1, column=0, sticky="nesw")
+        self.display_button = tk.Button(self.button_frame, text="Display to SLM", font=('Arial, 16'), command=self.vid.displayToSLM)
+        self.display_button.grid(row=1, column=1, sticky="nesw")
+        self.exit_button = tk.Button(self.button_frame, text="Exit", font=('Arial, 16'), command=self.vid.exitGUI)
+        self.exit_button.grid(row=2, column=0, sticky="nesw")
+        self.clear_button = tk.Button(self.button_frame, text="Clear", font=('Arial, 16'), command=self.vid.clearSLM)
+        self.clear_button.grid(row=2, column=1, sticky="nesw")
+        self.calibrate_button = tk.Button(self.button_frame, text="Calibrate", font=('Arial, 16'), command=self.vid.calibrate)
+        self.calibrate_button.grid(row=3, column=0, sticky="nesw")
+        self.crosshair_button = tk.Button(self.button_frame, text="Crosshair", font=('Arial, 16'), command=self.vid.crosshair)
+        self.crosshair_button.grid(row=3, column=1, sticky="nesw")
 
-        self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop).grid(row=4, column=1, sticky="nesw")
+        self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop)
+        self.one_loop_button.grid(row=4, column=1, sticky="nesw")
 
         # Create all the entries and their buttons
         self.loop_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
@@ -379,7 +388,7 @@ class Page(tk.Frame):
                 print(error)
 
         toc = time.perf_counter()
-        print(toc-tic)
+        # print(toc-tic)
         self.window.after(self.delay, self.update)
 
 
@@ -418,7 +427,7 @@ class Window2(tk.Toplevel, Page):
 if __name__ == "__main__":
     root = tk.Tk()
     testWidget = Page(root, root)
-    # window2 = Window2(root)
+    window2 = Window2(root)
 
     root.protocol("WM_DELETE_WINDOW", onClose)
     root.mainloop()

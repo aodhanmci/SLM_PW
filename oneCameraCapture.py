@@ -16,7 +16,8 @@ from PIL import Image, ImageTk
 import pandas as pd
 from SLM_HAMAMATSU import *
 import os
-from slmsuite import holography as holo
+from slmsuite.holography.algorithms import Hologram
+from slmsuite.holography import toolbox
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 
@@ -26,6 +27,7 @@ class cameraCapture(tk.Frame):
         self.img0 = []
         self.windowName = 'SLM CCD'
         self.page = page_instance
+        self.target = np.zeros(self.page.SLM_dim)
         self.window2 = window2_instance
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
@@ -228,6 +230,7 @@ class cameraCapture(tk.Frame):
             self.page.save_SLM_button.config(background="red")
 
     def cgh(self):
+        self.df = pd.read_csv('./settings/cghVals.csv', usecols=['sigma', 'A', 'filepath', 'iterations'])
         self.cgh_window = tk.Toplevel(self.page.window)
         self.cgh_window.title("CGH Configuration")
         small_scale = 0.5
@@ -254,7 +257,7 @@ class cameraCapture(tk.Frame):
         n_button_col = 2
         for i in range(n_button_col):
             self.button_frame.columnconfigure(i, weight=1)
-        n_button_row = 5
+        n_button_row = 6
         for i in range(n_button_row):
             self.button_frame.rowconfigure(i, weight=1)
         self.button_frame.grid_propagate(0)
@@ -263,14 +266,23 @@ class cameraCapture(tk.Frame):
         self.A_label = tk.Label(self.button_frame, text='A(0, 1)', font=('Arial, 10')).grid(row=1, column=1, sticky='nesw')
         self.sigma_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.sigma_entry.grid(row=2, column=0, sticky='nesw')
+        self.sigma_entry.insert(0, str(df.sigma[0]))
         self.A_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.A_entry.grid(row=2, column=1, sticky='nesw')
+        self.A_entry.insert(0, str(df.A[0]))
         self.round_button = tk.Button(self.button_frame, text='Round', font=('Arial, 10'), command=self.round_super)
         self.round_button.grid(row=3, column=0, sticky='nesw')
         self.square_button = tk.Button(self.button_frame, text='Square', font=('Arial, 10'), command=self.square_super)
         self.square_button.grid(row=3, column=1, sticky='nesw')
+        self.browse_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
+        self.browse_entry.insert(0, str(df.filepath[0]))
+        self.browse_entry.grid(row=4, column=0, sticky='nesw')
         self.browse_button = tk.Button(self.button_frame, text='Browse', font=('Arial, 10'), command=self.cgh_browse)
-        self.browse_button.grid(row=4, column=0, columnspan=2, sticky='nesw')
+        self.browse_button.grid(row=4, column=1, sticky='nesw')
+        self.iteration_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
+        self.iteration_entry.insert(0, str(df.iterations[0]))
+        self.iteration_entry.grid(row=5, column=0, sticky='nesw')
+        self.iteration_label = tk.Label(self.button_frame, text='Iterations', font=('Arial, 10')).grid(row=5, column=1, sticky='nesw')
 
         for i in range(3):
             exec(f"gap{i} = tk.Label(self.cgh_window)")
@@ -301,12 +313,19 @@ class cameraCapture(tk.Frame):
             exec(f"self.{i}_label_title.grid_propagate(0)")
             count_canvas += 1
 
+        self.calculate_button = tk.Button(self.cgh_window, text='Calculate', font=('Arial, 10'), command=self.calculate)
+        self.calculate_button.grid(row=3, column=2, sticky='nesw')
+        self.apply_button = tk.Button(self.cgh_window, text='Apply', font=('Arial, 10'), command=self.apply)
+        self.apply_button.grid(row=3, column=4, sticky='nesw')
+
     def round_super(self):
         sigma = float(self.sigma_entry.get())
         A = float(self.A_entry.get())
         kernel_size = self.CCD_cal.shape
         x, y = np.meshgrid(np.linspace(-1, 1, kernel_size[1]), np.linspace(-1, 1, kernel_size[0]))
         gauss = np.exp(-((x ** 2 / (2.0 * sigma ** 2)) + (y ** 2 / (2.0 * sigma ** 2))) ** 5) * A
+        gauss = toolbox.pad(gauss, self.page.SLM_dim)
+        self.target = gauss
         self.Target_ax.clear()
         self.target_extent = [-int(gauss.shape[1] / 2), int(gauss.shape[1] / 2),
                            -int(gauss.shape[0] / 2), int(gauss.shape[0] / 2)]
@@ -319,6 +338,8 @@ class cameraCapture(tk.Frame):
         kernel_size = self.CCD_cal.shape
         x, y = np.meshgrid(np.linspace(-1, 1, kernel_size[1]), np.linspace(-1, 1, kernel_size[0]))
         gauss = np.exp(-((x ** 2 / (2.0 * sigma ** 2)) ** 5 + (y ** 2 / (2.0 * sigma ** 2)) ** 5)) * A
+        gauss = toolbox.pad(gauss, self.page.SLM_dim)
+        self.target = gauss
         self.Target_ax.clear()
         self.target_extent = [-int(gauss.shape[1] / 2), int(gauss.shape[1] / 2),
                               -int(gauss.shape[0] / 2), int(gauss.shape[0] / 2)]
@@ -326,20 +347,41 @@ class cameraCapture(tk.Frame):
         self.Target_canvas.draw()
 
     def cgh_browse(self):
-        try:
-            f_types = [('hurry up and pick one', '*.png')]
-            filename = filedialog.askopenfilename(filetypes=f_types)
-            target_image = Image.open(filename).convert('L')
-            target = np.array(self.target_image)
-            self.Target_ax.clear()
-            self.target_extent = [-int(target.shape[1] / 2), int(target.shape[1] / 2),
-                                  -int(target.shape[0] / 2), int(target.shape[0] / 2)]
-            self.Target_ax.imshow(target, cmap='gray', vmin=0, vmax=255, extent=self.target_extent)
-            self.Target_canvas.draw()
-            self.browse_button.config(background='SystemButtonFace')
-        except Exception as error:
-            self.browse_button.config(background='red')
-            print(error)
+        # filename = C:\Users\10903\OneDrive\Python\SLM_GIT\star.png
+        filename = self.browse_entry.get()
+        target_image = Image.open(filename).convert('L')
+        target = np.array(target_image)
+        target = toolbox.pad(target, self.page.SLM_dim)
+        self.target = target
+        self.Target_ax.clear()
+        self.target_extent = [-int(target.shape[1] / 2), int(target.shape[1] / 2),
+                              -int(target.shape[0] / 2), int(target.shape[0] / 2)]
+        self.Target_ax.imshow(target, cmap='gray', vmin=0, vmax=255, extent=self.target_extent)
+        self.Target_canvas.draw()
+
+    def calculate(self):
+        phase = np.zeros(self.page.SLM_dim)
+        phase = toolbox.pad(phase, 2**(np.log2(phase.shape)+1).astype(int))
+        source = toolbox.pad(self.CCD_cal, self.page.SLM_dim)
+        source = toolbox.pad(source, 2**(np.log2(source.shape)+1).astype(int))
+        target = toolbox.pad(self.target, 2**(np.log2(self.target.shape)+1).astype(int))
+        holo = Hologram(target=target, amp=source, phase=phase, slm_shape=target.shape)
+        holo.optimize(method="WGS-Kim", maxiter=int(self.iteration_entry.get())+1)
+        phase_mask = holo.extract_phase()
+        self.phase_mask = phase_mask / 2 / np.pi * 255
+        self.phase_mask[0:100, 0:100] = 255
+        self.phase_mask[-1:-100, -1:-100] = 255
+        self.CGH_Preview_ax.imshow(self.phase_mask, cmap='gray', vmin=0, vmax=255)
+        self.CGH_Preview_canvas.draw()
+
+    def apply(self):
+        self.SLMdisp = self.phase_mask
+        self.df = pd.DataFrame({'sigma': [self.sigma_entry.get()],
+                               'A': [self.A_entry.get()],
+                               'filepath': [self.browse_entry.get()],
+                               'iterations': [self.iteration_entry.get()]})
+        self.df.to_csv('./settings/cghVals.csv', index=False)
+        self.cgh_window.destroy()
     
 
 if __name__ == "__main__":
