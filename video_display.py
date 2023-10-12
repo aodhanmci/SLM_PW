@@ -103,6 +103,8 @@ class Page(tk.Frame):
         self.crosshair_button = tk.Button(self.button_frame, text="Crosshair", font=('Arial, 16'), command=self.vid.crosshair)
         self.crosshair_button.grid(row=3, column=1, sticky="nesw")
 
+        self.trigger_button = tk.Button(self.button_frame, text="Trigger", font=('Arial, 16'), command=lambda: trigger())
+        self.trigger_button.grid(row=4, column=0, sticky='nesw')
         self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop)
         self.one_loop_button.grid(row=4, column=1, sticky="nesw")
 
@@ -234,8 +236,8 @@ class Page(tk.Frame):
                 self.lineout_xy_toggle = False
                 self.lineout_xy_button.config(background="SystemButtonFace")
                 self.lineout_iso_button.config(background="white")
-                self.CCD_top_ax.title('Major Axis')
-                self.CCD_right_ax.title('Minor Axis')
+                self.CCD_top_ax.set_title('Major Axis')
+                self.CCD_right_ax.set_title('Minor Axis')
 
         def lineout_xy():
             if self.lineout_xy_toggle:
@@ -251,8 +253,33 @@ class Page(tk.Frame):
                 self.center_y = center_y[int(len(center_y) / 2)]
                 self.lineout_iso_button.config(background="SystemButtonFace")
                 self.lineout_xy_button.config(background="white")
-                self.CCD_top_ax.title('X Cross-section')
-                self.CCD_right_ax.title('Y Cross-section')
+                self.CCD_top_ax.set_title('X Cross-section')
+                self.CCD_right_ax.set_title('Y Cross-section')
+
+        def trigger():
+            if self.vid.camera.TriggerMode.GetValue() == "On":
+                try:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("Off")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="SystemButtonFace")
+                    # print("TRIGGER OFF")
+                except Exception as error:
+                    print(error)
+            else:
+                try:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("On")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="white")
+                    # print("TRIGGER ON")
+                except Exception as error:
+                    self.vid.camera.StopGrabbing()
+                    self.vid.camera.TriggerMode.SetValue("Off")
+                    self.vid.camera.StartGrabbing()
+                    self.trigger_button.config(background="SystemButtonFace")
+                    # print("TRIGGER OFF")
+                    print(error)
 
         self.delay = 5
         self.update()
