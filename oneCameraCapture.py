@@ -229,6 +229,21 @@ class cameraCapture(tk.Frame):
             print(error)
             self.page.save_SLM_button.config(background="red")
 
+    def size_adjust(self, arr, target_shape):
+        arr_h, arr_w = arr.shape
+        tar_h, tar_w = target_shape[0], target_shape[1]
+        if arr_h <= tar_h:
+            arr = toolbox.pad(arr, (tar_h, arr_w))
+        else:
+            arr = arr[int((arr_h - tar_h) / 2):int((arr_h + tar_h) / 2), :]
+        arr_h = arr.shape[0]
+        if arr_w <= tar_w:
+            arr = toolbox.pad(arr, (arr_h, tar_w))
+        else:
+            arr = arr[:, int((arr_w - tar_w) / 2):int((arr_w + tar_w) / 2)]
+
+        return arr
+
     def cgh(self):
         self.df = pd.read_csv('./settings/cghVals.csv', usecols=['sigma', 'A', 'filepath', 'iterations'])
         self.cgh_window = tk.Toplevel(self.page.window)
@@ -362,9 +377,8 @@ class cameraCapture(tk.Frame):
     def calculate(self):
         phase = np.zeros(self.page.SLM_dim)
         phase = toolbox.pad(phase, 2**(np.log2(phase.shape)+1).astype(int))
-        source = toolbox.pad(self.CCD_cal, self.page.SLM_dim)
-        source = toolbox.pad(source, 2**(np.log2(source.shape)+1).astype(int))
-        target = toolbox.pad(self.target, 2**(np.log2(self.target.shape)+1).astype(int))
+        source = self.size_adjust(self.CCD_cal, phase.shape)
+        target = self.size_adjust(self.target, phase.shape)
         holo = Hologram(target=target, amp=source, phase=phase, slm_shape=target.shape)
         holo.optimize(method="WGS-Kim", maxiter=int(self.iteration_entry.get())+1)
         phase_mask = holo.extract_phase()

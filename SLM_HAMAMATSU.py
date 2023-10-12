@@ -14,7 +14,6 @@ def calibration(SLM_data, CCD_data):
     warp_transform = clickCorners(SLM_data, CCD_data)
     return warp_transform
 
-
 def center(imageArray):
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_image = np.uint8(imageArray)
@@ -27,6 +26,40 @@ def center(imageArray):
     # display(newImage)
     
     return cX, cY
+
+
+def gauss2D(X, x0, Y, y0, sig, A):
+    return A * np.exp(-(2 * np.square(X - x0) / sig ** 2 + 2 * np.square(Y - y0) / sig ** 2))
+
+
+def max_gauss_array(inputArray, cameraWmm, cameraHmm):
+    input_max = np.amax(inputArray)
+    center_y = np.where(inputArray == input_max)[0]
+    center_x = np.where(inputArray == input_max)[1]
+    center_x = center_x[int(len(center_x) / 2)]
+    center_y = center_y[int(len(center_y) / 2)]
+    h, w = inputArray.shape
+    x = np.linspace(0, w - 1, w)
+    y = np.linspace(0, h - 1, h)
+    X, Y = np.meshgrid(x, y)
+    sig = w * 3.25 / cameraWmm
+
+    guess = gauss2D(X, center_x, Y, center_y, sig, input_max)
+    flag = True
+    scale_f = input_max
+    increment = 1  # increment of gaussian scale steps
+    tolerance = 0.1  # tolerance of how much guess gaussian is allowed to be over the input
+    while flag:
+        diff = guess - inputArray
+        diff = diff[int(center_y - sig):int(center_y + sig), int(center_x - sig):int(center_x + sig)]
+        index_over = np.where(diff > input_max * tolerance)
+        if len(index_over[0]) == 0:
+            flag = False
+        else:
+            scale_f -= increment
+            guess = gauss2D(X, center_x, Y, center_y, sig, scale_f)
+
+    return guess
 
 
 #####
@@ -56,10 +89,7 @@ def center(imageArray):
 
 #####
 
-
-
-
-def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 10, rangeVal=5, testno=0):
+def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 10, rangeVal=5, testno=0, gauss=False):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
@@ -90,13 +120,14 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     #####
     
     cX, cY = center(initialArray)
-    
-    
-    if count == 0:
+
+    if count == 0 and not gauss:
         threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.75
+        threshold = np.ones(initialArray.shape)*threshold
+    elif count ==0 and gauss:
+        threshold = max_gauss_array(initialArray, cameraWmm=5.4, cameraHmm=7.2)
     else:
         threshold = threshold
-    
     
     #####
     # Creating "goal" or "target" image (turn every pixel above the threshold to the threshold). What the final beam should look like.
@@ -104,18 +135,18 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     #####
     
     if count == 0:
-        xi, yi = (initialArray >= int(threshold-5)).nonzero()
+        xi, yi = np.where(initialArray >= threshold-5)
         stacked = np.stack((xi, yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array
     else:
-        x, y = (initialArray >= int(threshold-10)).nonzero()
-        stacked2 = np.stack((x, y), axis = -1)
+        x, y = np.where(initialArray >= threshold-10)
+        stacked2 = np.stack((x, y), axis=-1)
         unique = np.unique(np.concatenate((stacked, stacked2)),axis=0)
         unstacked = np.stack(unique, axis=1)
         xi, yi = unstacked[0], unstacked[1]
         
     goalArray = initialArray.copy()
-    goalArray[xi,yi] = int(threshold)
-    goalArray = gaussian_filter(goalArray, sigma = 10)
+    goalArray[xi, yi] = threshold[xi, yi]
+    goalArray = gaussian_filter(goalArray, sigma=10)
     goalImg = Image.fromarray(goalArray)
     goalMap = goalImg.load()
     
@@ -232,11 +263,12 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     initialMax = np.amax(initialVals)
     initialMin = np.amin(initialVals)
     initialAvg = np.mean(initialVals[0])
-    diff = np.abs(initialAvg - threshold)
+    thresholdmean = np.mean(threshold[[xi], [yi]][0])
+    diff = np.abs(initialAvg - thresholdmean)
     pv = np.abs(initialMax - initialMin)
     diffMult = diff/100*2
-    maxDiff = np.abs(initialMax - threshold)
-    minDiff = np.abs(initialMin - threshold)
+    maxDiff = np.abs(initialMax - thresholdmean)
+    minDiff = np.abs(initialMin - thresholdmean)
 
     
     #####
