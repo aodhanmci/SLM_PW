@@ -59,7 +59,7 @@ def center(imageArray):
 
 
 
-def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0):
+def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 15, rangeVal=5, testno=0, lastloop = False):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
@@ -82,7 +82,7 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     blazedData = asarray(blazed)
     initialImgArray = asarray(initialImg)
     initialArray = cv2.warpPerspective(initialImgArray, image_transform, (np.shape(blazedData)[1], np.shape(blazedData)[0]), flags=cv2.INTER_LINEAR)
-         # Turn initial image into 2D array of pixel intensity values
+     # Turn initial image into 2D array of pixel intensity values
     # print(np.shape(initialArray))
 
     #####
@@ -281,28 +281,29 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     #####
     # WAVEFRONT CORRECTION TEST
     #####
-    
-    
-    # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
-    yshiftArray = np.ones(shape = totalMultArray.shape)     # Initialize yshift array
-    # print(yshiftArray[0][0])
-    # yshiftArray = yshiftArray * 70
-    # print(yshiftArray[0][0])
-    # yshiftArray = yshiftArray
-    # print(yshiftArray[0][0])
-    
-    # yshiftArray[xi,yi] = totalMultArray[xi,yi]     # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
-    # yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
-    # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
-    # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.
 
+    if lastloop == True:
+        print("LAST LOOP")
+        # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
+        yshiftArray = np.ones(shape = totalMultArray.shape)     # Initialize yshift array
+        # print(yshiftArray[0][0])
+        # yshiftArray = yshiftArray * 70
+        # print(yshiftArray[0][0])
+        # yshiftArray = yshiftArray
+        # print(yshiftArray[0][0])
+        
+        # yshiftArray[xi,yi] = totalMultArray[xi,yi]     # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
+        yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
+        # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
+        # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.
     
-    yshiftArray = gaussian_filter(yshiftArray, sigma = 15)     # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
-    # totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
-    totalMultArray = totalMultArray
-    
-    
-    
+        
+        yshiftArray = gaussian_filter(yshiftArray, sigma = 3)     # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
+        totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
+        # totalMultArray = totalMultArray
+
+
+
     ######
     
     totalMultArray = totalMultArray.astype(np.uint8)

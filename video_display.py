@@ -50,6 +50,8 @@ class Page(tk.Frame):
         # Define dimensions for object placement
         SLMwidth = SLMdim[0]
         SLMheight = SLMdim[1]
+        self.SLMwidth = SLMwidth
+        self.SLMheight = SLMheight
 
         CCDwidth = self.vid.getFrame().shape[1] # 1920
         CCDheight = self.vid.getFrame().shape[0] # 1200
@@ -146,6 +148,8 @@ class Page(tk.Frame):
         self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
         self.trigger_button = tk.Button(window, text="Trigger", command=lambda: trigger())
         self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
+        self.wf_button = tk.Button(window, text="WF", command=lambda: wf())
+        self.wf_button.place(x=11*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
         self.exposure_button = tk.Button(window, text="Set Exposure", command=self.vid.exposure_change)
@@ -284,6 +288,27 @@ class Page(tk.Frame):
                     # print("TRIGGER OFF")
                     print(error)
 
+        def wf():
+            # gratingArray = Image.fromarray(gratingArray).show()
+
+            # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
+            yshiftArray = np.ones(shape=gratingArray.shape)  # Initialize yshift array
+            # print(yshiftArray[0][0])
+            # yshiftArray = yshiftArray * 70
+            # print(yshiftArray[0][0])
+            # yshiftArray = yshiftArray
+            # print(yshiftArray[0][0])
+
+            # yshiftArray[xi,yi] = totalMultArray[xi,yi]     # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
+            # yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
+            # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
+            # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.
+
+            yshiftArray = gaussian_filter(yshiftArray,
+                                          sigma=15)  # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
+            # totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
+            totalMultArray = totalMultArray
+
         self.delay=3
         print("HELLO")
         self.update()
@@ -296,7 +321,7 @@ class Page(tk.Frame):
 
 
     def update(self):
-        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger
+        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger, gratingArray
         SLMimage = self.SLMimage
         time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
@@ -330,7 +355,18 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height = self.SLMdim[1],
                         SLM_width = self.SLMdim[0]
-                        )
+                    )
+                if self.count == maxLoops:
+                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        lastloop = True,
+                        # plot = True,
+                        threshold = threshold,
+                        initialArray = self.vid.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLMdim[1],
+                        SLM_width=self.SLMdim[0]
+                    )
                 else:
                     gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
@@ -401,12 +437,22 @@ class Page(tk.Frame):
 
                 self.ax.clear()
                 self.ax.plot(x,y, color = "dimgrey")
+
+                try:
+                    gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                    SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
+                    ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
+                    # ySLM = gratingArray[int(self.SLMheight/2),:]
+                    self.ax.plot(x,ySLM, color="red")
+                except Exception as error:
+                    # print(error)
+                    pass
+
                 try:
                     goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                     yGoal = goalArray[int(cy),:]
                     self.ax.plot(x,yGoal, color="black")
                 except Exception as error:
-                    # print(error)
                     pass
                 self.ax.set_ylim([0,260])
                 self.ax.set_xlabel("Position (x)")
