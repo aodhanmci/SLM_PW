@@ -299,8 +299,8 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     
         
         yshiftArray = gaussian_filter(yshiftArray, sigma = 3)     # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
-        totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
-        # totalMultArray = totalMultArray
+        # totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
+        totalMultArray = totalMultArray
 
 
 

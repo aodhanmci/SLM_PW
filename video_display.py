@@ -243,6 +243,7 @@ class Page(tk.Frame):
         self.clearCanvas = True
         self.loop_pressed = False
         self.nloop_pressed = False
+        self.clearSLM = False
         self.count = 0
         self.timer = 0
 
@@ -439,13 +440,18 @@ class Page(tk.Frame):
                 self.ax.plot(x,y, color = "dimgrey")
 
                 try:
-                    gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-                    SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
-                    ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
-                    # ySLM = gratingArray[int(self.SLMheight/2),:]
-                    self.ax.plot(x,ySLM, color="red")
+                    if np.amax(self.SLMimage) != 0.0:
+                        gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                        SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
+                        ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
+                        # ySLM = gratingArray[int(self.SLMheight/2),:]
+                        self.ax.plot(x,ySLM, color="red")
+                    else:
+                        # if self.clearCanvas != False:
+                        self.clearCanvas = False
+
                 except Exception as error:
-                    # print(error)
+                    print(error)
                     pass
 
                 try:
@@ -465,6 +471,7 @@ class Page(tk.Frame):
             if self.clearCanvas == False:
                 self.ax.clear()
                 self.canvas.draw()
+                print("CLEAR")
                 self.clearCanvas = True
 
         # Circle detection

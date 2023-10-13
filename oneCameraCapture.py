@@ -154,7 +154,7 @@ class cameraCapture(tk.Frame):
     def browse(self):
         global browseImg
         try:
-            f_types = [('hurry up and pick one', '*.png')]
+            f_types = [('hurry up and pick one', '*.*')]
             filename = filedialog.askopenfilename(filetypes=f_types)
             self.browseImg = Image.open(filename)
             browseImg = self.browseImg
@@ -180,6 +180,7 @@ class cameraCapture(tk.Frame):
 
     def clearSLM(self):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
+        self.page.clearSLM = True
 
     def stopGUI(self):
         # self.camera.StopGrabbing()
