@@ -309,7 +309,7 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=True
+                        gauss=False
                         )
                 else:
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
@@ -319,7 +319,7 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=True
+                        gauss=False
                         )
 
                 self.SLM_array = self.gratingArray
@@ -367,9 +367,12 @@ class Page(tk.Frame):
         self.CCD_array = self.vid.getFrame()
         self.CCD_image = Image.fromarray(self.CCD_array)
         self.CCD_main_ax.clear()
+
         if self.circle_toggle:
             try:
                 self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
+                print('Major diameter is: {}mm'.format(self.dx))
+                print('Minor diameter is: {}mm'.format(self.dy))
                 self.axes_arrayx, self.axes_arrayy = lbs.axes_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
                 self.ellipse_arrayx, self.ellipse_arrayy = lbs.ellipse_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
                 self.CCD_main_ax.plot(self.axes_arrayx-self.CCD_array.shape[1]/2, self.axes_arrayy-self.CCD_array.shape[0]/2)

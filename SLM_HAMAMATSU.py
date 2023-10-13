@@ -124,7 +124,7 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     if count == 0 and not gauss:
         threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.6
         threshold = np.ones(initialArray.shape)*threshold
-    elif count ==0 and gauss:
+    elif count == 0 and gauss:
         threshold = max_gauss_array(initialArray, cameraWmm=5.4, cameraHmm=7.2)
     else:
         threshold = threshold
