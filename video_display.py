@@ -184,8 +184,8 @@ class Page(tk.Frame):
         self.CCD_canvas = FigureCanvasTkAgg(self.CCD_fig, master=self.CCD_frame)
         self.CCD_canvas.get_tk_widget().grid(sticky='nesw')
         self.CCD_divider = make_axes_locatable(self.CCD_main_ax)
-        self.CCD_top_ax = self.CCD_divider.append_axes("top", 1.05, pad=0.1, sharex=self.CCD_main_ax)
-        self.CCD_right_ax = self.CCD_divider.append_axes("right", 1.05, pad=0.1, sharey=self.CCD_main_ax)
+        self.CCD_top_ax = self.CCD_divider.append_axes("top", 1.05, pad=0.25, sharex=self.CCD_main_ax)
+        self.CCD_right_ax = self.CCD_divider.append_axes("right", 1.05, pad=0.25, sharey=self.CCD_main_ax)
         self.CCD_top_ax.xaxis.set_tick_params(labelbottom=False)
         self.CCD_right_ax.yaxis.set_tick_params(labelleft=False)
         self.CCD_main_ax.autoscale(enable=False)
@@ -249,8 +249,8 @@ class Page(tk.Frame):
                 input_max = np.amax(self.CCD_array)
                 center_y = np.where(self.CCD_array == input_max)[0]
                 center_x = np.where(self.CCD_array == input_max)[1]
-                self.center_x = center_x[int(len(center_x) / 2)]
-                self.center_y = center_y[int(len(center_y) / 2)]
+                self.center_x = int(np.mean(center_x))
+                self.center_y = int(np.mean(center_y))
                 self.lineout_iso_button.config(background="SystemButtonFace")
                 self.lineout_xy_button.config(background="white")
                 self.CCD_top_ax.set_title('X Cross-section')
@@ -308,7 +308,8 @@ class Page(tk.Frame):
                         initialArray=self.vid.getFrame(),
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
-                        SLM_width=self.SLM_dim[1]
+                        SLM_width=self.SLM_dim[1],
+                        gauss=False
                         )
                 else:
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
@@ -317,7 +318,8 @@ class Page(tk.Frame):
                         initialArray=self.vid.getFrame(),
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
-                        SLM_width=self.SLM_dim[1]
+                        SLM_width=self.SLM_dim[1],
+                        gauss=False
                         )
 
                 self.SLM_array = self.gratingArray
@@ -365,9 +367,12 @@ class Page(tk.Frame):
         self.CCD_array = self.vid.getFrame()
         self.CCD_image = Image.fromarray(self.CCD_array)
         self.CCD_main_ax.clear()
+
         if self.circle_toggle:
             try:
                 self.cx, self.cy, self.dx, self.dy, self.phi = lbs.beam_size(self.CCD_array)
+                print('Major diameter is: {}mm'.format(self.dx))
+                print('Minor diameter is: {}mm'.format(self.dy))
                 self.axes_arrayx, self.axes_arrayy = lbs.axes_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
                 self.ellipse_arrayx, self.ellipse_arrayy = lbs.ellipse_arrays(self.cx, self.cy, self.dx, self.dy, self.phi)
                 self.CCD_main_ax.plot(self.axes_arrayx-self.CCD_array.shape[1]/2, self.axes_arrayy-self.CCD_array.shape[0]/2)
@@ -377,7 +382,7 @@ class Page(tk.Frame):
             except Exception as error:
                 print(error)
         self.CCD_extent = [-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2),
-                           -int(self.CCD_array.shape[0] / 2), int(self.CCD_array.shape[0] / 2)]
+                           int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)]
         self.CCD_main_ax.imshow(self.CCD_array, cmap='gray', vmin=0, vmax=255, extent=self.CCD_extent)
         self.CCD_canvas.draw()
 
