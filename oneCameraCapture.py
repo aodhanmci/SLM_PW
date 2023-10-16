@@ -128,8 +128,9 @@ class cameraCapture(tk.Frame):
 
     def save_image(self):
         filename = self.page.save_entry.get()
+        filename = './Tests/Diode/'+filename+'.png'
         try:
-            cv2.imwrite(f'{filename}.png', self.img0)  # Save the captured image to a file
+            self.page.CCD_fig.savefig(filename)  # Save the captured image to a file
             print(f"Image saved as {filename}.png")
             self.page.save_button.config(background="SystemButtonFace")
         except Exception as error:
@@ -219,15 +220,17 @@ class cameraCapture(tk.Frame):
         warp_transform = calibration(self.SLMdisp, self.getFrame())
         self.page.cal_transform = warp_transform
 
-    def saveLineout(self):
-        filename = self.page.save_lineout_entry.get()
+    def save_CCD(self):
+        filename = self.page.save_CCD_entry.get()
+        filename = './Tests/Diode/' + filename + '.png'
         try:
-            self.page.fig.savefig(filename)
+            im = Image.fromarray(self.img0)
+            im.save(filename)  # Save the captured image to a file
             print(f"Image saved as {filename}.png")
-            self.page.save_SLM_button.config(background="SystemButtonFace")
+            self.page.save_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
-            self.page.save_SLM_button.config(background="red")
+            self.page.save_button.config(background="red")
 
     def size_adjust(self, arr, target_shape):
         arr_h, arr_w = arr.shape
@@ -265,7 +268,10 @@ class cameraCapture(tk.Frame):
         self.cgh_window.rowconfigure(2, weight=1)
         self.cgh_window.rowconfigure(3, weight=int(0.2 / self.page.gap_ratio))
         self.cgh_window.rowconfigure(4, weight=1)
-        self.cgh_window.grid_propagate(0)
+        self.cgh_window.grid_propagate(False)
+
+        # self.form = np.zeros((self.page.SLM_dim))
+        # self.form = toolbox.pad(self.form, 2 ** (np.log2(self.form.shape) + 1).astype(int))
 
         self.button_frame = tk.Frame(self.cgh_window)
         self.button_frame.grid(row=0, column=0, rowspan=5, sticky='nesw')
@@ -281,21 +287,21 @@ class cameraCapture(tk.Frame):
         self.A_label = tk.Label(self.button_frame, text='A(0, 1)', font=('Arial, 10')).grid(row=1, column=1, sticky='nesw')
         self.sigma_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.sigma_entry.grid(row=2, column=0, sticky='nesw')
-        self.sigma_entry.insert(0, str(df.sigma[0]))
+        self.sigma_entry.insert(0, str(self.df.sigma[0]))
         self.A_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.A_entry.grid(row=2, column=1, sticky='nesw')
-        self.A_entry.insert(0, str(df.A[0]))
+        self.A_entry.insert(0, str(self.df.A[0]))
         self.round_button = tk.Button(self.button_frame, text='Round', font=('Arial, 10'), command=self.round_super)
         self.round_button.grid(row=3, column=0, sticky='nesw')
         self.square_button = tk.Button(self.button_frame, text='Square', font=('Arial, 10'), command=self.square_super)
         self.square_button.grid(row=3, column=1, sticky='nesw')
         self.browse_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
-        self.browse_entry.insert(0, str(df.filepath[0]))
+        self.browse_entry.insert(0, str(self.df.filepath[0]))
         self.browse_entry.grid(row=4, column=0, sticky='nesw')
         self.browse_button = tk.Button(self.button_frame, text='Browse', font=('Arial, 10'), command=self.cgh_browse)
         self.browse_button.grid(row=4, column=1, sticky='nesw')
         self.iteration_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
-        self.iteration_entry.insert(0, str(df.iterations[0]))
+        self.iteration_entry.insert(0, str(self.df.iterations[0]))
         self.iteration_entry.grid(row=5, column=0, sticky='nesw')
         self.iteration_label = tk.Label(self.button_frame, text='Iterations', font=('Arial, 10')).grid(row=5, column=1, sticky='nesw')
 
@@ -339,7 +345,6 @@ class cameraCapture(tk.Frame):
         kernel_size = self.CCD_cal.shape
         x, y = np.meshgrid(np.linspace(-1, 1, kernel_size[1]), np.linspace(-1, 1, kernel_size[0]))
         gauss = np.exp(-((x ** 2 / (2.0 * sigma ** 2)) + (y ** 2 / (2.0 * sigma ** 2))) ** 5) * A
-        gauss = toolbox.pad(gauss, self.page.SLM_dim)
         self.target = gauss
         self.Target_ax.clear()
         self.target_extent = [-int(gauss.shape[1] / 2), int(gauss.shape[1] / 2),
@@ -353,7 +358,6 @@ class cameraCapture(tk.Frame):
         kernel_size = self.CCD_cal.shape
         x, y = np.meshgrid(np.linspace(-1, 1, kernel_size[1]), np.linspace(-1, 1, kernel_size[0]))
         gauss = np.exp(-((x ** 2 / (2.0 * sigma ** 2)) ** 5 + (y ** 2 / (2.0 * sigma ** 2)) ** 5)) * A
-        gauss = toolbox.pad(gauss, self.page.SLM_dim)
         self.target = gauss
         self.Target_ax.clear()
         self.target_extent = [-int(gauss.shape[1] / 2), int(gauss.shape[1] / 2),
@@ -377,14 +381,14 @@ class cameraCapture(tk.Frame):
     def calculate(self):
         phase = np.zeros(self.page.SLM_dim)
         phase = toolbox.pad(phase, 2**(np.log2(phase.shape)+1).astype(int))
-        source = self.size_adjust(self.CCD_cal, phase.shape)
+        source = Image.open('./Tests/Diode/Raw_Beam.png').convert('L')
+        source = np.array(source)
+        source = self.size_adjust(source, phase.shape)
         target = self.size_adjust(self.target, phase.shape)
         holo = Hologram(target=target, amp=source, phase=phase, slm_shape=target.shape)
         holo.optimize(method="WGS-Kim", maxiter=int(self.iteration_entry.get())+1)
         phase_mask = holo.extract_phase()
         self.phase_mask = phase_mask / 2 / np.pi * 255
-        self.phase_mask[0:100, 0:100] = 255
-        self.phase_mask[-1:-100, -1:-100] = 255
         self.CGH_Preview_ax.imshow(self.phase_mask, cmap='gray', vmin=0, vmax=255)
         self.CGH_Preview_canvas.draw()
 
