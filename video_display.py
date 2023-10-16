@@ -81,7 +81,7 @@ class Page(tk.Frame):
         n_button_col = 2
         for i in range(n_button_col):
             self.button_frame.columnconfigure(i, weight=1)
-        n_button_row = 13
+        n_button_row = 14
         for i in range(n_button_row):
             self.button_frame.rowconfigure(i, weight=1)
 
@@ -130,20 +130,24 @@ class Page(tk.Frame):
 
         self.save_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)  # save CCD entry
         self.save_entry.grid(row=9, column=0, sticky="nesw")
-        self.save_button = tk.Button(self.button_frame, text="Save CCD", font=('Arial, 16'), command=self.vid.save_image).grid(row=9, column=1, sticky="nesw")
+        self.save_button = tk.Button(self.button_frame, text="Save Figure", font=('Arial, 16'), command=self.vid.save_image)
+        self.save_button.grid(row=9, column=1, sticky="nesw")
 
-        self.save_lineout_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
-        self.save_lineout_entry.grid(row=10, column=0, sticky="nesw")
-        self.save_lineout_button = tk.Button(self.button_frame, text="Save Lineout", font=('Arial, 16'), command=self.vid.saveLineout).grid(row=10, column=1, sticky="nesw")
+        self.save_CCD_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
+        self.save_CCD_entry.grid(row=10, column=0, sticky="nesw")
+        self.save_CCD_button = tk.Button(self.button_frame, text="Save CCD", font=('Arial, 16'), command=self.vid.save_CCD)
+        self.save_CCD_button.grid(row=10, column=1, sticky="nesw")
 
         self.lineout_iso_button = tk.Button(self.button_frame, text="Lineout ISO", font=('Arial, 16'), command=lambda: lineout_iso())
         self.lineout_iso_button.grid(row=11, column=0, sticky="nesw")
         self.lineout_xy_button = tk.Button(self.button_frame, text="Lineout XY", font=('Arial, 16'), command=lambda: lineout_xy())
         self.lineout_xy_button.grid(row=11, column=1, sticky="nesw")
+        self.cross_button = tk.Button(self.button_frame, text="Cross-Section", font=('Arial, 16'), command=lambda: cross())
+        self.cross_button.grid(row=12, column=0, sticky="nesw")
         self.circle_button = tk.Button(self.button_frame, text="Circle", font=('Arial, 16'), command=lambda: circleDetection())
-        self.circle_button.grid(row=12, column=0, sticky="nesw")
+        self.circle_button.grid(row=13, column=0, sticky="nesw")
         self.cgh_button = tk.Button(self.button_frame, text="CGH", font=('Arial, 16'), command=self.vid.cgh)
-        self.cgh_button.grid(row=12, column=1, sticky="nesw")
+        self.cgh_button.grid(row=13, column=1, sticky="nesw")
 
 
         # Make every canvas an individual frame, might slow the GUI
@@ -196,6 +200,7 @@ class Page(tk.Frame):
         self.circle_toggle = False
         self.lineout_iso_toggle = False
         self.lineout_xy_toggle = False
+        self.cross_toggle = False
         self.clearCanvas = True
         self.loop_pressed = False
         self.nloop_pressed = False
@@ -256,6 +261,16 @@ class Page(tk.Frame):
                 self.CCD_top_ax.set_title('X Cross-section')
                 self.CCD_right_ax.set_title('Y Cross-section')
 
+        def cross():
+            if self.cross_toggle:
+                self.cross_toggle = False
+                self.cross_button.config(background="SystemButtonFace")
+            else:
+                self.cross_toggle = True
+                self.cross_button.config(background="white")
+                self.center_x = int(self.CCD_array.shape[1]/2)
+                self.center_y = int(self.CCD_array.shape[0]/2)
+
         def trigger():
             if self.vid.camera.TriggerMode.GetValue() == "On":
                 try:
@@ -291,7 +306,6 @@ class Page(tk.Frame):
 
         tic = time.perf_counter()
         if self.nloop_pressed or self.loop_pressed:
-            print("If is triggered")
             self.currentBeam = self.CCD_array
             if self.count == 0 and self.timer == 0:
                 self.beginningIntensity = np.sum(self.currentBeam[self.currentBeam > 1])
@@ -309,7 +323,7 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=False
+                        gauss=True
                         )
                 else:
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
@@ -319,7 +333,7 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=False
+                        gauss=True
                         )
 
                 self.SLM_array = self.gratingArray
@@ -378,7 +392,7 @@ class Page(tk.Frame):
                 self.CCD_main_ax.plot(self.axes_arrayx-self.CCD_array.shape[1]/2, self.axes_arrayy-self.CCD_array.shape[0]/2)
                 self.CCD_main_ax.plot(self.ellipse_arrayx-self.CCD_array.shape[1]/2, self.ellipse_arrayy-self.CCD_array.shape[0]/2)
                 self.CCD_main_ax.set_xlim([-self.CCD_array.shape[1] / 2, self.CCD_array.shape[1] / 2])
-                self.CCD_main_ax.set_ylim([-self.CCD_array.shape[0] / 2, self.CCD_array.shape[0] / 2])
+                self.CCD_main_ax.set_ylim([self.CCD_array.shape[0] / 2, -self.CCD_array.shape[0] / 2])
             except Exception as error:
                 print(error)
         self.CCD_extent = [-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2),
@@ -396,16 +410,34 @@ class Page(tk.Frame):
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
                 self.CCD_right_ax.set_xlim([0, 255])
-                self.CCD_right_ax.set_ylim([-int(self.CCD_array.shape[0] / 2), int(self.CCD_array.shape[0] / 2)])
+                self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
                 self.CCD_top_ax.plot(self.CCD_array_major[3], self.CCD_array_major[2])
                 self.CCD_right_ax.plot(self.CCD_array_minor[2], self.CCD_array_minor[3])
+                self.CCD_top_ax.set_title('Major-Axis Cross-section')
+                self.CCD_right_ax.set_title('Minor-Axis Cross-section')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
 
         if self.lineout_xy_toggle:
+            try:
+                self.CCD_top_ax.clear()
+                self.CCD_right_ax.clear()
+                self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
+                self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
+                self.CCD_right_ax.set_xlim([0, 255])
+                self.CCD_top_ax.set_ylim([0, 255])
+                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_top_ax.set_title('X Cross-section')
+                self.CCD_right_ax.set_title('Y Cross-section')
+                self.CCD_canvas.draw()
+            except Exception as error:
+                print(error)
+
+        if self.cross_toggle:
             try:
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
