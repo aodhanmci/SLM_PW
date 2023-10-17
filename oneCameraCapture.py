@@ -179,7 +179,7 @@ class cameraCapture(tk.Frame):
                            'loop': [self.page.loop_entry.get()]})
         df.to_csv('./settings/prevVals.csv', index=False)
         self.page.window.destroy()
-        self.camera.Close
+        self.camera.Close()
     
     def crosshair(self):
         self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
@@ -200,11 +200,54 @@ class cameraCapture(tk.Frame):
         # cv2.imwrite(f'./HMPolTests/testImg.png', self.img0)  # Save the captured image to a file
         # print(f"Image saved as testImg.png")
     
-    def oneloop(self):
-        self.page.loop_pressed = True
-    
     def nloops(self):
+        self.loop_df = pd.read_csv('./settings/loopVals.csv', usecols=['Threshold', 'Tolerance'])
+        self.loop_window = tk.Toplevel(self.page.window)
+        self.loop_window.title("Loop Configuration")
+        small_scale = 0.3
+        window_height = int((self.page.monitor_dim[0] - self.page.taskbar_height) * small_scale - 45)  # 45 is the height of the window title
+        window_hgap = int((self.page.monitor_dim[0] - self.page.taskbar_height) * (1 - small_scale) / 2)
+        window_width = int(self.page.monitor_dim[1] * small_scale)
+        window_wgap = int(self.page.monitor_dim[1] * (1 - small_scale) / 2)
+        self.loop_window.geometry(f"{window_width}x{window_height}+{window_wgap}+{window_hgap}")
+        self.loop_window.columnconfigure(0, weight=1)
+        self.loop_window.columnconfigure(1, weight=1)
+        self.loop_window.rowconfigure(0, weight=1)
+        self.loop_window.rowconfigure(1, weight=1)
+        self.loop_window.rowconfigure(2, weight=1)
+        self.loop_window.grid_propagate(False)
+
+        self.threshold_label = tk.Label(self.loop_window, text='Threshold(0-1)', font=('Arial, 14')).grid(row=0, column=0, sticky='nesw')
+        self.tolerance_label = tk.Label(self.loop_window, text='Tolerance(0-1)', font=('Arial, 14')).grid(row=0, column=1, sticky='nesw')
+        self.threshold_entry = tk.Entry(self.loop_window, font=('Arial, 18'), justify=tk.CENTER)
+        self.threshold_entry.insert(0, str(self.loop_df.Threshold[0]))
+        self.threshold_entry.grid(row=1, column=0, sticky='nesw')
+        self.tolerance_entry = tk.Entry(self.loop_window, font=('Arial, 18'), justify=tk.CENTER)
+        self.tolerance_entry.insert(0, str(self.loop_df.Tolerance[0]))
+        self.tolerance_entry.grid(row=1, column=1, sticky='nesw')
+        self.uniform_button = tk.Button(self.loop_window, text='Uniform', font=('Arial, 14'), command=self.uniform)
+        self.uniform_button.grid(row=2, column=0, sticky='nesw')
+        self.gaussian_button = tk.Button(self.loop_window, text='Gaussian', font=('Arial, 14'), command=self.gaussian)
+        self.gaussian_button.grid(row=2, column=1, sticky='nesw')
+
+    def uniform(self):
         self.page.nloop_pressed = True
+        self.page.gauss = False
+        self.page.uniform_index = float(self.threshold_entry.get())
+        self.loop_df = pd.DataFrame({'Threshold': [self.threshold_entry.get()],
+                                    'Tolerance': [self.tolerance_entry.get()]})
+        self.loop_df.to_csv('./settings/loopVals.csv', index=False)
+        self.loop_window.destroy()
+
+    def gaussian(self):
+        self.page.nloop_pressed = True
+        self.page.gauss = True
+        self.page.gauss_index = float(self.tolerance_entry.get())
+        self.loop_df = pd.DataFrame({'Threshold': [self.threshold_entry.get()],
+                                     'Tolerance': [self.tolerance_entry.get()]})
+        self.loop_df.to_csv('./settings/loopVals.csv', index=False)
+        self.loop_window.destroy()
+
     
     def save_SLM(self):
         filename = self.page.save_SLM_entry.get()
@@ -248,7 +291,7 @@ class cameraCapture(tk.Frame):
         return arr
 
     def cgh(self):
-        self.df = pd.read_csv('./settings/cghVals.csv', usecols=['sigma', 'A', 'filepath', 'iterations'])
+        self.cgh_df = pd.read_csv('./settings/cghVals.csv', usecols=['sigma', 'A', 'filepath', 'iterations'])
         self.cgh_window = tk.Toplevel(self.page.window)
         self.cgh_window.title("CGH Configuration")
         small_scale = 0.5
@@ -287,21 +330,21 @@ class cameraCapture(tk.Frame):
         self.A_label = tk.Label(self.button_frame, text='A(0, 1)', font=('Arial, 10')).grid(row=1, column=1, sticky='nesw')
         self.sigma_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.sigma_entry.grid(row=2, column=0, sticky='nesw')
-        self.sigma_entry.insert(0, str(self.df.sigma[0]))
+        self.sigma_entry.insert(0, str(self.cgh_df.sigma[0]))
         self.A_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
         self.A_entry.grid(row=2, column=1, sticky='nesw')
-        self.A_entry.insert(0, str(self.df.A[0]))
+        self.A_entry.insert(0, str(self.cgh_df.A[0]))
         self.round_button = tk.Button(self.button_frame, text='Round', font=('Arial, 10'), command=self.round_super)
         self.round_button.grid(row=3, column=0, sticky='nesw')
         self.square_button = tk.Button(self.button_frame, text='Square', font=('Arial, 10'), command=self.square_super)
         self.square_button.grid(row=3, column=1, sticky='nesw')
         self.browse_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
-        self.browse_entry.insert(0, str(self.df.filepath[0]))
+        self.browse_entry.insert(0, str(self.cgh_df.filepath[0]))
         self.browse_entry.grid(row=4, column=0, sticky='nesw')
         self.browse_button = tk.Button(self.button_frame, text='Browse', font=('Arial, 10'), command=self.cgh_browse)
         self.browse_button.grid(row=4, column=1, sticky='nesw')
         self.iteration_entry = tk.Entry(self.button_frame, font=('Arial, 18'), justify=tk.CENTER)
-        self.iteration_entry.insert(0, str(self.df.iterations[0]))
+        self.iteration_entry.insert(0, str(self.cgh_df.iterations[0]))
         self.iteration_entry.grid(row=5, column=0, sticky='nesw')
         self.iteration_label = tk.Label(self.button_frame, text='Iterations', font=('Arial, 10')).grid(row=5, column=1, sticky='nesw')
 
@@ -355,7 +398,8 @@ class cameraCapture(tk.Frame):
     def square_super(self):
         sigma = float(self.sigma_entry.get())
         A = float(self.A_entry.get())
-        kernel_size = self.CCD_cal.shape
+        # kernel_size = self.CCD_cal.shape
+        kernel_size = (1400, 1600)
         x, y = np.meshgrid(np.linspace(-1, 1, kernel_size[1]), np.linspace(-1, 1, kernel_size[0]))
         gauss = np.exp(-((x ** 2 / (2.0 * sigma ** 2)) ** 5 + (y ** 2 / (2.0 * sigma ** 2)) ** 5)) * A
         self.target = gauss
@@ -394,11 +438,11 @@ class cameraCapture(tk.Frame):
 
     def apply(self):
         self.SLMdisp = self.phase_mask
-        self.df = pd.DataFrame({'sigma': [self.sigma_entry.get()],
+        self.cgh_df = pd.DataFrame({'sigma': [self.sigma_entry.get()],
                                'A': [self.A_entry.get()],
                                'filepath': [self.browse_entry.get()],
                                'iterations': [self.iteration_entry.get()]})
-        self.df.to_csv('./settings/cghVals.csv', index=False)
+        self.cgh_df.to_csv('./settings/cghVals.csv', index=False)
         self.cgh_window.destroy()
     
 

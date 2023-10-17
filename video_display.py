@@ -27,6 +27,7 @@ class Page(tk.Frame):
         self.SLM_num = 1
         self.SLM_info = screeninfo.get_monitors()[self.SLM_num]
         self.SLM_dim = (int(self.SLM_info.height), int(self.SLM_info.width))
+        # self.SLM_dim = (1024, 1280)
 
         self.vid = oneCameraCapture.cameraCapture(self, self)
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure', 'gain', 'loop'])
@@ -81,7 +82,7 @@ class Page(tk.Frame):
         n_button_col = 2
         for i in range(n_button_col):
             self.button_frame.columnconfigure(i, weight=1)
-        n_button_row = 14
+        n_button_row = 13
         for i in range(n_button_row):
             self.button_frame.rowconfigure(i, weight=1)
 
@@ -105,8 +106,8 @@ class Page(tk.Frame):
 
         self.trigger_button = tk.Button(self.button_frame, text="Trigger", font=('Arial, 16'), command=lambda: trigger())
         self.trigger_button.grid(row=4, column=0, sticky='nesw')
-        self.one_loop_button = tk.Button(self.button_frame, text="1 loop", font=('Arial, 16'), command=self.vid.oneloop)
-        self.one_loop_button.grid(row=4, column=1, sticky="nesw")
+        self.cgh_button = tk.Button(self.button_frame, text="CGH", font=('Arial, 16'), command=self.vid.cgh)
+        self.cgh_button.grid(row=4, column=1, sticky="nesw")
 
         # Create all the entries and their buttons
         self.loop_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)
@@ -145,9 +146,7 @@ class Page(tk.Frame):
         self.cross_button = tk.Button(self.button_frame, text="Cross-Section", font=('Arial, 16'), command=lambda: cross())
         self.cross_button.grid(row=12, column=0, sticky="nesw")
         self.circle_button = tk.Button(self.button_frame, text="Circle", font=('Arial, 16'), command=lambda: circleDetection())
-        self.circle_button.grid(row=13, column=0, sticky="nesw")
-        self.cgh_button = tk.Button(self.button_frame, text="CGH", font=('Arial, 16'), command=self.vid.cgh)
-        self.cgh_button.grid(row=13, column=1, sticky="nesw")
+        self.circle_button.grid(row=12, column=1, sticky="nesw")
 
 
         # Make every canvas an individual frame, might slow the GUI
@@ -202,8 +201,10 @@ class Page(tk.Frame):
         self.lineout_xy_toggle = False
         self.cross_toggle = False
         self.clearCanvas = True
-        self.loop_pressed = False
         self.nloop_pressed = False
+        self.gauss = False
+        self.uniform_index = 0.6
+        self.gauss_index = 0.1
         self.count = 0
         self.timer = 0
 
@@ -305,14 +306,11 @@ class Page(tk.Frame):
         global SLM_image, SLM_check
 
         tic = time.perf_counter()
-        if self.nloop_pressed or self.loop_pressed:
+        if self.nloop_pressed:
             self.currentBeam = self.CCD_array
             if self.count == 0 and self.timer == 0:
                 self.beginningIntensity = np.sum(self.currentBeam[self.currentBeam > 1])
-            if self.loop_pressed:
-                self.maxLoops = 0
-            else:
-                self.maxLoops = int(self.loop_entry.get())
+            self.maxLoops = int(self.loop_entry.get())
             if self.timer != 5:
                 self.timer += 1
             if self.timer == 5:
@@ -323,7 +321,9 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=True
+                        gauss=self.gauss,
+                        uniform_index=self.uniform_index,
+                        gauss_index=self.gauss_index
                         )
                 else:
                     self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
@@ -333,7 +333,9 @@ class Page(tk.Frame):
                         image_transform=self.cal_transform,
                         SLM_height=self.SLM_dim[0],
                         SLM_width=self.SLM_dim[1],
-                        gauss=True
+                        gauss=self.gauss,
+                        uniform_index=self.uniform_index,
+                        gauss_index=self.gauss_index
                         )
 
                 self.SLM_array = self.gratingArray
@@ -341,7 +343,6 @@ class Page(tk.Frame):
                 if self.count == self.maxLoops:
                     self.count = 0
                     self.nloop_pressed = False
-                    self.loop_pressed = False
                     self.vid.SLMdisp = Image.fromarray(self.gratingArray)
                     self.goalArray = None
                 else:
@@ -365,7 +366,7 @@ class Page(tk.Frame):
             SLM_image = self.SLM_image
             self.SLM_ax.clear()
             self.SLM_extent = [-int(self.SLM_array.shape[1] / 2), int(self.SLM_array.shape[1] / 2),
-                               -int(self.SLM_array.shape[0] / 2), int(self.SLM_array.shape[0] / 2)]
+                               int(self.SLM_array.shape[0] / 2), -int(self.SLM_array.shape[0] / 2)]
             self.SLM_ax.imshow(self.SLM_array, cmap='gray', vmin=0, vmax=255, extent=self.SLM_extent)
             self.SLM_canvas.draw()
 
@@ -373,7 +374,7 @@ class Page(tk.Frame):
             self.Preview_image = Image.fromarray(self.Preview_array)
             self.Preview_ax.clear()
             self.Preview_extent = [-int(self.Preview_array.shape[1] / 2), int(self.Preview_array.shape[1] / 2),
-                                   -int(self.Preview_array.shape[0] / 2), int(self.Preview_array.shape[0] / 2)]
+                                   int(self.Preview_array.shape[0] / 2), -int(self.Preview_array.shape[0] / 2)]
             self.Preview_ax.imshow(self.Preview_array, cmap='gray', vmin=0, vmax=255, extent=self.Preview_extent)
             self.Preview_canvas.draw()
 

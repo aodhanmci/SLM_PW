@@ -32,7 +32,7 @@ def gauss2D(X, x0, Y, y0, sig, A):
     return A * np.exp(-(2 * np.square(X - x0) / sig ** 2 + 2 * np.square(Y - y0) / sig ** 2))
 
 
-def max_gauss_array(inputArray, cameraWmm, cameraHmm):
+def max_gauss_array(inputArray, tolerance, cameraWmm, cameraHmm):
     input_max = np.amax(inputArray)
     center_y = np.where(inputArray == input_max)[0]
     center_x = np.where(inputArray == input_max)[1]
@@ -48,7 +48,6 @@ def max_gauss_array(inputArray, cameraWmm, cameraHmm):
     flag = True
     scale_f = input_max
     increment = 1  # increment of gaussian scale steps
-    tolerance = 0.1  # tolerance of how much guess gaussian is allowed to be over the input
     while flag:
         diff = guess - inputArray
         diff = diff[int(center_y - sig):int(center_y + sig), int(center_x - sig):int(center_x + sig)]
@@ -89,7 +88,7 @@ def max_gauss_array(inputArray, cameraWmm, cameraHmm):
 
 #####
 
-def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, initialArray = None, threshold = 75, plot = False, innerBlur = 15, blur = 10, rangeVal=5, testno=0, gauss=False):
+def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=15, blur=10, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
@@ -122,10 +121,10 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
     cX, cY = center(initialArray)
 
     if count == 0 and not gauss:
-        threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.5
+        threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * uniform_index
         threshold = np.ones(initialArray.shape)*threshold
     elif count == 0 and gauss:
-        threshold = max_gauss_array(initialArray, cameraWmm=5.4, cameraHmm=7.2)
+        threshold = max_gauss_array(initialArray, gauss_index, cameraWmm=5.4, cameraHmm=7.2)
     else:
         threshold = threshold
     
