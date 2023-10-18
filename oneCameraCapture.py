@@ -62,6 +62,8 @@ class cameraCapture(tk.Frame):
             # self.camera.PixelFormat = "Mono8"
             self.camera.ExposureTimeRaw = int(df.exposure[0])
             self.camera.GainRaw = int(df.gain[0])
+            self.camera.TriggerSource.SetValue("Line1")
+            self.camera.AcquisitionMode.SetValue("Continuous")
 
             # Print the model name of the camera.
             # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
