@@ -88,7 +88,7 @@ def max_gauss_array(inputArray, tolerance, cameraWmm, cameraHmm):
 
 #####
 
-def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=15, blur=10, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
+def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=15, blur=1, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
@@ -124,7 +124,7 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
         threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * uniform_index
         threshold = np.ones(initialArray.shape)*threshold
     elif count == 0 and gauss:
-        threshold = max_gauss_array(initialArray, gauss_index, cameraWmm=5.4, cameraHmm=7.2)
+        threshold = max_gauss_array(initialArray, gauss_index, cameraWmm=11.25, cameraHmm=7.03)
     else:
         threshold = threshold
     
