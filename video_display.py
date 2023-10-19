@@ -82,7 +82,7 @@ class Page(tk.Frame):
         n_button_col = 2
         for i in range(n_button_col):
             self.button_frame.columnconfigure(i, weight=1)
-        n_button_row = 13
+        n_button_row = 14
         for i in range(n_button_row):
             self.button_frame.rowconfigure(i, weight=1)
 
@@ -127,7 +127,8 @@ class Page(tk.Frame):
 
         self.save_SLM_entry = (tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER))
         self.save_SLM_entry.grid(row=8, column=0, sticky="nesw")
-        self.save_SLM_button = tk.Button(self.button_frame, text="Save SLM", font=('Arial, 16'), command=self.vid.save_SLM).grid(row=8, column=1, sticky="nesw")
+        self.save_SLM_button = tk.Button(self.button_frame, text="Save SLM", font=('Arial, 16'), command=self.vid.save_SLM)
+        self.save_SLM_button.grid(row=8, column=1, sticky="nesw")
 
         self.save_entry = tk.Entry(self.button_frame, font=('Arial, 13'), justify=tk.CENTER)  # save CCD entry
         self.save_entry.grid(row=9, column=0, sticky="nesw")
@@ -147,6 +148,8 @@ class Page(tk.Frame):
         self.cross_button.grid(row=12, column=0, sticky="nesw")
         self.circle_button = tk.Button(self.button_frame, text="Circle", font=('Arial, 16'), command=lambda: circleDetection())
         self.circle_button.grid(row=12, column=1, sticky="nesw")
+        self.threshold_button = tk.Button(self.button_frame, text="Threshold", font=('Arial, 16'), command=lambda: thres())
+        self.threshold_button.grid(row=13, column=0, sticky="nesw")
 
 
         # Make every canvas an individual frame, might slow the GUI
@@ -203,6 +206,7 @@ class Page(tk.Frame):
         self.clearCanvas = True
         self.nloop_pressed = False
         self.gauss = False
+        self.threshold_toggle = False
         self.threshold_plot = None
         self.uniform_index = 0.6
         self.gauss_index = 0.1
@@ -276,6 +280,14 @@ class Page(tk.Frame):
                 self.center_x = int(self.CCD_array.shape[1]/2)
                 self.center_y = int(self.CCD_array.shape[0]/2)
 
+        def thres():
+            if self.threshold_toggle:
+                self.threshold_toggle = False
+                self.threshold_button.config(background="SystemButtonFace")
+            else:
+                self.threshold_toggle = True
+                self.threshold_button.config(background="white")
+
         def trigger():
             if self.vid.camera.TriggerMode.GetValue() == "On":
                 try:
@@ -330,7 +342,7 @@ class Page(tk.Frame):
                         gauss_index=self.gauss_index
                         )
                 else:
-                    self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
+                    self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest, dummy = SLM_HAMAMATSU.feedback(
                         count=self.count,
                         threshold=self.threshold,
                         initialArray=self.vid.getFrame(),
@@ -438,12 +450,11 @@ class Page(tk.Frame):
                 self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
                 self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
+                self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
+                self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
                 self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
-                if self.threshold_plot is not None:
-                    self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.threshold_plot[self.center_y, :], 'g-')
-                    self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
                 self.CCD_top_ax.set_title('X Cross-section')
                 self.CCD_right_ax.set_title('Y Cross-section')
                 self.CCD_canvas.draw()
@@ -457,12 +468,21 @@ class Page(tk.Frame):
                 self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
                 self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
+                self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
+                self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
                 self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
-                if self.threshold_plot is not None:
-                    self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.threshold_plot[self.center_y, :], 'g-')
-                    self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_canvas.draw()
+            except Exception as error:
+                print(error)
+
+        if self.threshold_toggle and self.threshold_plot is not None:
+            try:
+                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]),
+                                     self.threshold_plot[self.center_y, :], 'r-')
+                self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x],
+                                       np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'g-')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)

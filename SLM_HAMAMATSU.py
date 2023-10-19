@@ -9,6 +9,7 @@ from scipy.ndimage import gaussian_filter
 from autoscaling import *
 import pandas as pd
 # from IPython.display import display
+import laserbeamsize as lbs
 
 def calibration(SLM_data, CCD_data):
     warp_transform = clickCorners(SLM_data, CCD_data)
@@ -60,14 +61,17 @@ def max_gauss_array(inputArray, tolerance, cameraWmm, cameraHmm):
 
     return guess
 
+
 def uniform_bound(array, uniform_index):
     cx, cy, dx, dy, phi = lbs.beam_size(array)
-    max = np.amax(array)
+    dx, dy = dx*0.9, dy*0.9
+    array_max = np.amax(array)
     threshold = np.zeros(array.shape)
-    for i in threshold.shape[1]:
-        if j in threshold.shape[0]:
-            if j <= np.abs(dy / 2 * np.sqrt(1 - i ** 2 / (dx / 2) ** 2)):
-                threshold[j, i] = max*uniform_index
+    for i in range(threshold.shape[1]):
+        for j in range(threshold.shape[0]):
+            if (i-cx)**2/(dx/2)**2 <= 1:
+                if np.abs(j-cy) <= dy / 2 * np.sqrt(1 - (i-cx) ** 2 / (dx / 2) ** 2):
+                    threshold[j, i] = array_max * uniform_index
 
     return threshold
 
@@ -99,7 +103,7 @@ def uniform_bound(array, uniform_index):
 
 #####
 
-def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=15, blur=1, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
+def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=15, blur=0, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM

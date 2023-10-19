@@ -130,10 +130,10 @@ class cameraCapture(tk.Frame):
 
     def save_image(self):
         filename = self.page.save_entry.get()
-        filename = './Tests/Diode/'+filename+'.png'
+        filename = './Tests/Diode/' + filename + '.png'
         try:
             self.page.CCD_fig.savefig(filename)  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
+            print(f"Image saved as {filename}")
             self.page.save_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
@@ -253,9 +253,11 @@ class cameraCapture(tk.Frame):
     
     def save_SLM(self):
         filename = self.page.save_SLM_entry.get()
+        filename = './Tests/Diode/' + filename + '.png'
         try:
-            cv2.imwrite(f'{filename}.png', asarray(self.SLMdisp))  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
+            im = Image.fromarray(self.page.SLM_array)
+            im.save(filename)  # Save the captured image to a file
+            print(f"Image saved as {filename}")
             self.page.save_SLM_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
@@ -271,11 +273,11 @@ class cameraCapture(tk.Frame):
         try:
             im = Image.fromarray(self.img0)
             im.save(filename)  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
-            self.page.save_button.config(background="SystemButtonFace")
+            print(f"Image saved as {filename}")
+            self.page.save_CCD_button.config(background="SystemButtonFace")
         except Exception as error:
             print(error)
-            self.page.save_button.config(background="red")
+            self.page.save_CCD_button.config(background="red")
 
     def size_adjust(self, arr, target_shape):
         arr_h, arr_w = arr.shape
