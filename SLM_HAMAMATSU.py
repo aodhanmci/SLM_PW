@@ -60,6 +60,17 @@ def max_gauss_array(inputArray, tolerance, cameraWmm, cameraHmm):
 
     return guess
 
+def uniform_bound(array, uniform_index):
+    cx, cy, dx, dy, phi = lbs.beam_size(array)
+    max = np.amax(array)
+    threshold = np.zeros(array.shape)
+    for i in threshold.shape[1]:
+        if j in threshold.shape[0]:
+            if j <= np.abs(dy / 2 * np.sqrt(1 - i ** 2 / (dx / 2) ** 2)):
+                threshold[j, i] = max*uniform_index
+
+    return threshold
+
 
 #####
 
@@ -98,6 +109,7 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
     # Open the initial beam image from the "SLM" folder in GDrive. Function input should be a PNG filepath with no extension
     # For implementation: input is in the form of a numpy 2D array (initialArray)
     #####
+    threshold2 = None
     
     if initial != None:
         # initialImg = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/" + str(initial) + ".png")
@@ -106,6 +118,12 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
     if np.any(initialArray != None):
         initialImg = Image.fromarray(initialArray)
         # print(np.amax(initialArray))
+
+    # threshold2 is used for plotting in video_display
+    if count == 0 and not gauss:
+        threshold2 = uniform_bound(initialArray, uniform_index)
+    elif count == 0 and gauss:
+        threshold2 = max_gauss_array(initialArray, gauss_index, cameraWmm=11.25, cameraHmm=7.03)
     
     blazed = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_2px.png')
     blazedData = asarray(blazed)
@@ -121,8 +139,7 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
     cX, cY = center(initialArray)
 
     if count == 0 and not gauss:
-        threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * uniform_index
-        threshold = np.ones(initialArray.shape)*threshold
+        threshold = uniform_bound(initialArray, uniform_index)
     elif count == 0 and gauss:
         threshold = max_gauss_array(initialArray, gauss_index, cameraWmm=11.25, cameraHmm=7.03)
     else:
@@ -183,11 +200,11 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
     #####
     
     aboveImgGray = ImageOps.grayscale(aboveImg.copy())
-    aboveImgBlurred = aboveImgGray.filter(ImageFilter.GaussianBlur(radius = innerBlur))
+    aboveImgBlurred = aboveImgGray.filter(ImageFilter.GaussianBlur(radius=innerBlur))
     aboveBlurredArray = asarray(aboveImgBlurred, dtype=np.int32)
     
     belowImgGray = ImageOps.grayscale(belowImg.copy())
-    belowImgBlurred = belowImgGray.filter(ImageFilter.GaussianBlur(radius = innerBlur))
+    belowImgBlurred = belowImgGray.filter(ImageFilter.GaussianBlur(radius=innerBlur))
     belowBlurredArray = asarray(belowImgBlurred, dtype=np.int32)
     
     #####
@@ -387,6 +404,6 @@ def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, init
 
 
 
-    return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest
+    return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest, threshold2
     
     #################

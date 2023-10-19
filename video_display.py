@@ -203,6 +203,7 @@ class Page(tk.Frame):
         self.clearCanvas = True
         self.nloop_pressed = False
         self.gauss = False
+        self.threshold_plot = None
         self.uniform_index = 0.6
         self.gauss_index = 0.1
         self.count = 0
@@ -240,7 +241,9 @@ class Page(tk.Frame):
             else:
                 self.lineout_iso_toggle = True
                 self.lineout_xy_toggle = False
+                self.cross_toggle = False
                 self.lineout_xy_button.config(background="SystemButtonFace")
+                self.cross_button.config(background="SystemButtonFace")
                 self.lineout_iso_button.config(background="white")
                 self.CCD_top_ax.set_title('Major Axis')
                 self.CCD_right_ax.set_title('Minor Axis')
@@ -252,12 +255,9 @@ class Page(tk.Frame):
             else:
                 self.lineout_xy_toggle = True
                 self.lineout_iso_toggle = False
-                input_max = np.amax(self.CCD_array)
-                center_y = np.where(self.CCD_array == input_max)[0]
-                center_x = np.where(self.CCD_array == input_max)[1]
-                self.center_x = int(np.mean(center_x))
-                self.center_y = int(np.mean(center_y))
+                self.cross_toggle = False
                 self.lineout_iso_button.config(background="SystemButtonFace")
+                self.cross_button.config(background="SystemButtonFace")
                 self.lineout_xy_button.config(background="white")
                 self.CCD_top_ax.set_title('X Cross-section')
                 self.CCD_right_ax.set_title('Y Cross-section')
@@ -268,6 +268,10 @@ class Page(tk.Frame):
                 self.cross_button.config(background="SystemButtonFace")
             else:
                 self.cross_toggle = True
+                self.lineout_xy_toggle = False
+                self.lineout_iso_toggle = False
+                self.lineout_iso_button.config(background="SystemButtonFace")
+                self.lineout_xy_button.config(background="SystemButtonFace")
                 self.cross_button.config(background="white")
                 self.center_x = int(self.CCD_array.shape[1]/2)
                 self.center_y = int(self.CCD_array.shape[0]/2)
@@ -315,7 +319,7 @@ class Page(tk.Frame):
                 self.timer += 1
             if self.timer == 5:
                 if self.count == 0:  # Change this to accommodate 2d threshold
-                    self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest = SLM_HAMAMATSU.feedback(
+                    self.gratingImg, self.gratingArray, self.goalArray, self.diff, self.threshold, self.allTest, self.threshold_plot = SLM_HAMAMATSU.feedback(
                         count=self.count,
                         initialArray=self.vid.getFrame(),
                         image_transform=self.cal_transform,
@@ -426,12 +430,20 @@ class Page(tk.Frame):
             try:
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
+                input_max = np.amax(self.CCD_array)
+                center_y = np.where(self.CCD_array == input_max)[0]
+                center_x = np.where(self.CCD_array == input_max)[1]
+                self.center_x = int(np.mean(center_x))
+                self.center_y = int(np.mean(center_y))
                 self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
                 self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
                 self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                if self.threshold_plot is not None:
+                    self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.threshold_plot[self.center_y, :], 'g-')
+                    self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
                 self.CCD_top_ax.set_title('X Cross-section')
                 self.CCD_right_ax.set_title('Y Cross-section')
                 self.CCD_canvas.draw()
@@ -448,6 +460,9 @@ class Page(tk.Frame):
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
                 self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                if self.threshold_plot is not None:
+                    self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.threshold_plot[self.center_y, :], 'g-')
+                    self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x], np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
