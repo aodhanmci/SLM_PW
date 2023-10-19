@@ -66,12 +66,13 @@ def uniform_bound(array, uniform_index):
     cx, cy, dx, dy, phi = lbs.beam_size(array)
     dx, dy = dx*0.9, dy*0.9
     array_max = np.amax(array)
-    threshold = np.zeros(array.shape)
-    for i in range(threshold.shape[1]):
-        for j in range(threshold.shape[0]):
-            if (i-cx)**2/(dx/2)**2 <= 1:
-                if np.abs(j-cy) <= dy / 2 * np.sqrt(1 - (i-cx) ** 2 / (dx / 2) ** 2):
-                    threshold[j, i] = array_max * uniform_index
+    threshold = np.ones(array.shape) * uniform_index * array_max
+    # threshold = np.zeros(array.shape)
+    # for i in range(threshold.shape[1]):
+    #     for j in range(threshold.shape[0]):
+    #         if (i-cx)**2/(dx/2)**2 <= 1:
+    #             if np.abs(j-cy) <= dy / 2 * np.sqrt(1 - (i-cx) ** 2 / (dx / 2) ** 2):
+    #                 threshold[j, i] = array_max * uniform_index
 
     return threshold
 
