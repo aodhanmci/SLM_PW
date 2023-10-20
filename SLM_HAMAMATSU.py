@@ -292,8 +292,9 @@ def feedback(image_transform, SLM_height, SLM_width, count = 0, initial = None, 
         # yshiftArray = yshiftArray
         # print(yshiftArray[0][0])
         totalMultArray[totalMultArray < 0] = 0
-        
-        yshiftArray[xi,yi] = totalMultArray[xi,yi] + 50    # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
+
+        yshiftArray[xi,yi] = totalMultArray[xi,yi]
+        # yshiftArray[xi,yi] = totalMultArray[xi,yi] + 50    # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
         # yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
         # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
         # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.

@@ -451,7 +451,7 @@ class Page(tk.Frame):
                         self.clearCanvas = False
 
                 except Exception as error:
-                    print(error)
+                    # print(error)
                     pass
 
                 try:
@@ -471,7 +471,7 @@ class Page(tk.Frame):
             if self.clearCanvas == False:
                 self.ax.clear()
                 self.canvas.draw()
-                print("CLEAR")
+                # print("CLEAR")
                 self.clearCanvas = True
 
         # Circle detection
