@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pickle
+from matplotlib.lines import Line2D
 
 class Page(tk.Frame):
 
@@ -197,6 +198,10 @@ class Page(tk.Frame):
         self.CCD_main_ax.autoscale(enable=False)
         self.CCD_right_ax.autoscale(enable=False)
         self.CCD_top_ax.autoscale(enable=False)
+        linestyle = ['-', '--']
+        lines = [Line2D([0], [0], color='black', linewidth=3, linestyle=l) for l in linestyle]
+        labels = ['cross-section', 'target']
+        self.CCD_fig.legend(lines, labels, loc=1, bbox_to_anchor=(0.95, 0.695))
         self.CCD_canvas.draw()
 
         self.circle_toggle = False
@@ -241,6 +246,8 @@ class Page(tk.Frame):
         def lineout_iso():
             if self.lineout_iso_toggle:
                 self.lineout_iso_toggle = False
+                self.CCD_right_ax.clear()
+                self.CCD_top_ax.clear()
                 self.lineout_iso_button.config(background="SystemButtonFace")
             else:
                 self.lineout_iso_toggle = True
@@ -255,6 +262,8 @@ class Page(tk.Frame):
         def lineout_xy():
             if self.lineout_xy_toggle:
                 self.lineout_xy_toggle = False
+                self.CCD_right_ax.clear()
+                self.CCD_top_ax.clear()
                 self.lineout_xy_button.config(background="SystemButtonFace")
             else:
                 self.lineout_xy_toggle = True
@@ -269,6 +278,8 @@ class Page(tk.Frame):
         def cross():
             if self.cross_toggle:
                 self.cross_toggle = False
+                self.CCD_right_ax.clear()
+                self.CCD_top_ax.clear()
                 self.cross_button.config(background="SystemButtonFace")
             else:
                 self.cross_toggle = True
@@ -282,6 +293,8 @@ class Page(tk.Frame):
 
         def thres():
             if self.threshold_toggle:
+                self.CCD_right_ax.clear()
+                self.CCD_top_ax.clear()
                 self.threshold_toggle = False
                 self.threshold_button.config(background="SystemButtonFace")
             else:
@@ -415,6 +428,8 @@ class Page(tk.Frame):
         self.CCD_extent = [-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2),
                            int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)]
         self.CCD_main_ax.imshow(self.CCD_array, cmap='gray', vmin=0, vmax=255, extent=self.CCD_extent)
+        self.CCD_main_ax.set_xlabel('Pixels')
+        self.CCD_main_ax.set_ylabel('Pixels')
         self.CCD_canvas.draw()
 
         if self.lineout_iso_toggle:
@@ -426,6 +441,8 @@ class Page(tk.Frame):
                                                              self.phi)
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
+                self.CCD_top_ax.set_ylabel('Intensity (arb. unit)')
+                self.CCD_right_ax.set_xlabel('Intensity (arb. unit)')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
@@ -442,6 +459,8 @@ class Page(tk.Frame):
             try:
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
+                self.CCD_top_ax.set_ylabel('Intensity (arb. unit)')
+                self.CCD_right_ax.set_xlabel('Intensity (arb. unit)')
                 input_max = np.amax(self.CCD_array)
                 center_y = np.where(self.CCD_array == input_max)[0]
                 center_x = np.where(self.CCD_array == input_max)[1]
@@ -465,14 +484,16 @@ class Page(tk.Frame):
             try:
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
+                self.CCD_top_ax.set_ylabel('Intensity (arb. unit)')
+                self.CCD_right_ax.set_xlabel('Intensity (arb. unit)')
                 self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
                 self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
-                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-', label='cross-section')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-', label='cross-section')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
@@ -480,9 +501,9 @@ class Page(tk.Frame):
         if self.threshold_toggle and self.threshold_plot is not None:
             try:
                 self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]),
-                                     self.threshold_plot[self.center_y, :], 'r-')
+                                     self.threshold_plot[self.center_y, :], 'r--', label='target')
                 self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x],
-                                       np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'g-')
+                                       np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'g--', label='target')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
