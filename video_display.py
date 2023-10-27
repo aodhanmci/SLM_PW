@@ -201,7 +201,7 @@ class Page(tk.Frame):
         linestyle = ['-', '--']
         lines = [Line2D([0], [0], color='black', linewidth=3, linestyle=l) for l in linestyle]
         labels = ['cross-section', 'target']
-        self.CCD_fig.legend(lines, labels, loc=1, bbox_to_anchor=(0.95, 0.695))
+        self.CCD_fig.legend(lines, labels, loc=1, bbox_to_anchor=(0.95, 0.73))
         self.CCD_canvas.draw()
 
         self.circle_toggle = False
@@ -505,6 +505,17 @@ class Page(tk.Frame):
                 self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x],
                                        np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'g--', label='target')
                 self.CCD_canvas.draw()
+            except Exception as error:
+                print(error)
+
+        if self.nloop_pressed:
+            filenamefig = './Tests/Diode/Loop/' + str(self.count) + '_loop_fig.png'
+            filenamedata = './Tests/Diode/Loop/' + str(self.count) + '_loop_data.png'
+            try:
+                self.CCD_fig.savefig(filenamefig)  # Save the captured image to a file
+                print(f"Image saved as {filenamefig}")
+                im = Image.fromarray(self.CCD_array)
+                im.save(filenamedata)
             except Exception as error:
                 print(error)
 
