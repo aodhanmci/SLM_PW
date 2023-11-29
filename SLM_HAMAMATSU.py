@@ -6,57 +6,14 @@ from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageFilter
 from numpy import asarray
 import cv2
 from scipy.ndimage import gaussian_filter
-import time
-from os import listdir
-from os.path import isfile, join
+from autoscaling import *
 import pandas as pd
 # from IPython.display import display
+import laserbeamsize as lbs
 
-def calibration(input, xZoom = 1, yZoom = 1, xShift = 0, yShift = 0 ,angle = 1.2):
-    lenspaper = Image.fromarray(input)
-    # lenspaper = ImageOps.flip(ImageOps.mirror(lenspaper))
-    lenspaper = ImageOps.mirror(lenspaper)
-    
-    crosshair4 = Image.open("./calibration/HAMAMATSU/crosshairNums.png")
-    width, height = crosshair4.size
-    
-    w, h = lenspaper.size
-    x = width/2 - xShift
-    y = height/2 + yShift
-    lenspaper = lenspaper.crop((x - w / 2, y - h / 2,
-                                x + w / (2 * xZoom), y + h / (2 * yZoom)))
-    lenspaper = lenspaper.resize((width, height), Image.Resampling.LANCZOS)
-    lenspaper = lenspaper.rotate(angle)
-
-    return asarray(lenspaper)
-
-    display(crosshair4)
-    display(lenspaper)
-    
-    lenspaperArray = asarray(lenspaper)
-
-width = 1280
-height = 1024
-
-def zoom_at(img, x, y, zoom, xzoom, yzoom):
-    global w, h
-    w, h = img.size
-    zoom2 = zoom * 2
-    img = img.crop((x - w / zoom2, y - h / zoom2, 
-                    x + w / (zoom2*xzoom), y + h / (zoom2*yzoom)))
-    return img.resize((width, height), Image.Resampling.LANCZOS)
-
-
-def displayt(image, text):
-    # print(image)
-    image2 = image.copy()
-    draw = ImageDraw.Draw(image2)
-    # mf = ImageFont.truetype('/Users/anthonylu/Documents/LBNL/SLM/Roboto-Medium.ttf', 30)
-    mf = ImageFont.truetype('./Roboto-Medium.ttf', 30)
-    # text = str(text)
-    draw.text((30,30), text, font=mf, fill = 255*255*255)
-    display(image2)
-
+def calibration(SLM_data, CCD_data):
+    warp_transform = clickCorners(SLM_data, CCD_data)
+    return warp_transform
 
 def center(imageArray):
     # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -70,6 +27,54 @@ def center(imageArray):
     # display(newImage)
     
     return cX, cY
+
+
+def gauss2D(X, x0, Y, y0, sig, A):
+    return A * np.exp(-(2 * np.square(X - x0) / sig ** 2 + 2 * np.square(Y - y0) / sig ** 2))
+
+
+def max_gauss_array(inputArray, tolerance, cameraWmm, cameraHmm):
+    input_max = np.amax(inputArray)
+    center_y = np.where(inputArray == input_max)[0]
+    center_x = np.where(inputArray == input_max)[1]
+    center_x = center_x[int(len(center_x) / 2)]
+    center_y = center_y[int(len(center_y) / 2)]
+    h, w = inputArray.shape
+    x = np.linspace(0, w - 1, w)
+    y = np.linspace(0, h - 1, h)
+    X, Y = np.meshgrid(x, y)
+    sig = w * 3.25 / cameraWmm
+
+    guess = gauss2D(X, center_x, Y, center_y, sig, input_max)
+    flag = True
+    scale_f = input_max
+    increment = 1  # increment of gaussian scale steps
+    while flag:
+        diff = guess - inputArray
+        diff = diff[int(center_y - sig):int(center_y + sig), int(center_x - sig):int(center_x + sig)]
+        index_over = np.where(diff > input_max * tolerance)
+        if len(index_over[0]) == 0:
+            flag = False
+        else:
+            scale_f -= increment
+            guess = gauss2D(X, center_x, Y, center_y, sig, scale_f)
+
+    return guess
+
+
+def uniform_bound(array, uniform_index):
+    cx, cy, dx, dy, phi = lbs.beam_size(array)
+    dx, dy = dx*0.8, dy*0.8
+    array_max = np.amax(array)
+    threshold = np.ones(array.shape) * uniform_index * array_max
+    # threshold = np.zeros(array.shape)
+    # for i in range(threshold.shape[1]):
+    #     for j in range(threshold.shape[0]):
+    #         if (i-cx)**2/(dx/2)**2 <= 1:
+    #             if np.abs(j-cy) <= dy / 2 * np.sqrt(1 - (i-cx) ** 2 / (dx / 2) ** 2):
+    #                 threshold[j, i] = array_max * uniform_index
+
+    return threshold
 
 
 #####
@@ -99,19 +104,17 @@ def center(imageArray):
 
 #####
 
-
-
-
-def feedback(testno = 0, count = 0, initial = None, initialArray = None, threshold = 90, blur = 2, innerBlur = 15, rangeVal = 5, maxIter = 100, yshift = 4, plot = False):
+def feedback(image_transform, SLM_height, SLM_width, count=0, initial=None, initialArray=None, threshold = 75, plot = False, innerBlur=10, blur=5, rangeVal=5, testno=0, gauss=False, uniform_index=0.6, gauss_index=0.1):
     global aboveMultArray, belowMultArray, totalMultArray, totalMultImg, xi, yi, goalImg, goalArray, stacked, stacked2, x, y
     
     # Open calVals.csv, which houses the 5 values for SLM-CCD calibration. Use these values to rescale/reposition "initialImg" to match SLM
-    df = pd.read_csv('calVals.csv', usecols=['xZoom', 'yZoom', 'xShift', 'yShift', 'angle'])
+    # df = pd.read_csv('./calibration/calVals.csv', usecols=['xZoom', 'yZoom', 'xShift', 'yShift', 'angle'])
 
     #####
     # Open the initial beam image from the "SLM" folder in GDrive. Function input should be a PNG filepath with no extension
     # For implementation: input is in the form of a numpy 2D array (initialArray)
     #####
+    threshold2 = None
     
     if initial != None:
         # initialImg = Image.open("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/" + str(initial) + ".png")
@@ -120,36 +123,32 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     if np.any(initialArray != None):
         initialImg = Image.fromarray(initialArray)
         # print(np.amax(initialArray))
-    
-    blazed = Image.open('./calibration/HAMAMATSU/HAMAMATSU_2px.png')
-    blazedData = asarray(blazed)
-    
-    # initialImg = ImageOps.flip(ImageOps.mirror(initialImg))     # With current setup, beam gets rotated 180° between the SLM and the CCD. Must align CCD image to match SLM screen before calculating grating
-    initialImg = ImageOps.mirror(initialImg)
 
-    initialImg = zoom_at(initialImg, width/2 - float(df.xShift[0]), height/2 + float(df.yShift[0]), 1, float(df.xZoom[0]), float(df.yZoom[0]))     # Not final implementation of zoom function
-    initialImg = initialImg.rotate(float(df.angle[0]))
+    # threshold2 is used for plotting in video_display
+    if count == 0 and not gauss:
+        threshold2 = uniform_bound(initialArray, uniform_index)
+    elif count == 0 and gauss:
+        threshold2 = max_gauss_array(initialArray, gauss_index, cameraWmm=11.25, cameraHmm=7.03)
+    
+    blazed = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_2px.png')
+    blazedData = asarray(blazed)
     initialImgArray = asarray(initialImg)
-    initialImg = Image.fromarray(initialImgArray)
-    initialMap = initialImg.load()
-    
-    # INT32 MAX: 2**31 = 2,147,483,648
-    int32max = 2**31
-    
-    initialArray = asarray(initialImg)     # Turn initial image into 2D array of pixel intensity values    
-    
+    initialArray = cv2.warpPerspective(initialImgArray, image_transform, (np.shape(blazedData)[1], np.shape(blazedData)[0]), flags=cv2.INTER_LINEAR)
+         # Turn initial image into 2D array of pixel intensity values
+    # print(np.shape(initialArray))
+
     #####
     # Initial testing to use peak-to-valley to find "threshold image" instead of manually inputting a threshold
     #####
     
     cX, cY = center(initialArray)
-    
-    
-    if count == 0:
-        threshold = np.mean(sorted(initialArray.flatten(), reverse=True)[50]) * 0.75
+
+    if count == 0 and not gauss:
+        threshold = uniform_bound(initialArray, uniform_index)
+    elif count == 0 and gauss:
+        threshold = max_gauss_array(initialArray, gauss_index, cameraWmm=11.25, cameraHmm=7.03)
     else:
         threshold = threshold
-    
     
     #####
     # Creating "goal" or "target" image (turn every pixel above the threshold to the threshold). What the final beam should look like.
@@ -157,18 +156,18 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #####
     
     if count == 0:
-        xi, yi = (initialArray >= int(threshold-5)).nonzero()
+        xi, yi = np.where(initialArray >= threshold-5)
         stacked = np.stack((xi, yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array
     else:
-        x, y = (initialArray >= int(threshold-10)).nonzero()
-        stacked2 = np.stack((x, y), axis = -1)
+        x, y = np.where(initialArray >= threshold-10)
+        stacked2 = np.stack((x, y), axis=-1)
         unique = np.unique(np.concatenate((stacked, stacked2)),axis=0)
         unstacked = np.stack(unique, axis=1)
         xi, yi = unstacked[0], unstacked[1]
         
     goalArray = initialArray.copy()
-    goalArray[xi,yi] = int(threshold)
-    goalArray = gaussian_filter(goalArray, sigma = 10)
+    goalArray[xi, yi] = threshold[xi, yi]
+    goalArray = gaussian_filter(goalArray, sigma=10)
     goalImg = Image.fromarray(goalArray)
     goalMap = goalImg.load()
     
@@ -182,7 +181,7 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #####
     
     
-    image1 = np.int32(initialImg)     # Open initial image
+    image1 = np.int32(initialArray)     # Open initial image
     image2 = np.int32(goalImg)     # Open goal image
     diffImgArray = cv2.subtract(image1, image2)     # Take difference between two images. Initial - goal. Positive numbers = too bright, negative = too dim. np.int32 to account for negative numbers -255 to +255
     diffImg = Image.fromarray(diffImgArray)
@@ -206,11 +205,11 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     #####
     
     aboveImgGray = ImageOps.grayscale(aboveImg.copy())
-    aboveImgBlurred = aboveImgGray.filter(ImageFilter.GaussianBlur(radius = innerBlur))
+    aboveImgBlurred = aboveImgGray.filter(ImageFilter.GaussianBlur(radius=innerBlur))
     aboveBlurredArray = asarray(aboveImgBlurred, dtype=np.int32)
     
     belowImgGray = ImageOps.grayscale(belowImg.copy())
-    belowImgBlurred = belowImgGray.filter(ImageFilter.GaussianBlur(radius = innerBlur))
+    belowImgBlurred = belowImgGray.filter(ImageFilter.GaussianBlur(radius=innerBlur))
     belowBlurredArray = asarray(belowImgBlurred, dtype=np.int32)
     
     #####
@@ -244,9 +243,9 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     
     if count == 0:
-        aboveMultArray = np.zeros(initialImgArray.shape)
-        belowMultArray = np.zeros(initialImgArray.shape)
-        totalMultArray = np.zeros(initialImgArray.shape)
+        aboveMultArray = np.zeros(initialArray.shape)
+        belowMultArray = np.zeros(initialArray.shape)
+        totalMultArray = np.zeros(initialArray.shape)
 
     
     aboveMultArray2 = aboveMultArray     # Save previous multArray as multArray2 to take average later
@@ -285,11 +284,12 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     initialMax = np.amax(initialVals)
     initialMin = np.amin(initialVals)
     initialAvg = np.mean(initialVals[0])
-    diff = np.abs(initialAvg - threshold)
+    thresholdmean = np.mean(threshold[[xi], [yi]][0])
+    diff = np.abs(initialAvg - thresholdmean)
     pv = np.abs(initialMax - initialMin)
     diffMult = diff/100*2
-    maxDiff = np.abs(initialMax - threshold)
-    minDiff = np.abs(initialMin - threshold)
+    maxDiff = np.abs(initialMax - thresholdmean)
+    minDiff = np.abs(initialMin - thresholdmean)
 
     
     #####
@@ -363,14 +363,13 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     aboveMultImg = Image.fromarray(aboveMultArray, "L") # mode = L
     
     totalMultImg = Image.fromarray(totalMultArray, "L") # mode = L
-    
     if count == 0:
-        for i in np.arange(width):
+        for i in np.arange(SLM_width):
             initialImg.putpixel((i, cY), int(255))
         # initialImg.show()
     
-    pd.DataFrame(xi).to_csv('xi.csv')
-    pd.DataFrame(yi).to_csv('yi.csv')
+    # pd.DataFrame(xi).to_csv('xi.csv')
+    # pd.DataFrame(yi).to_csv('yi.csv')
     
     # totalMultImg.save("/Users/anthonylu/Library/CloudStorage/GoogleDrive-AnthonyLu@lbl.gov/.shortcut-targets-by-id/1VJBVeRRN_5zVF1Gqm0fEKW9dfVeRScci/SLM/feedbackAlgorithm/test" + str(testno) + "/" + str(count+1) + "TEST_15AMP_SIMGA20.png")
       
@@ -381,9 +380,9 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
     
     if plot:
         
-        plt.plot(np.arange(width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
-        plt.plot(np.arange(width), initialArray[cY,:], label = "Initial")
-        plt.plot(np.arange(width), goalArray[cY,:], label = "Goal")
+        plt.plot(np.arange(SLM_width), totalMultArray[cY,:], label = "SLM Grating", color = "C2")
+        plt.plot(np.arange(SLM_width), initialArray[cY,:], label = "Initial")
+        plt.plot(np.arange(SLM_width), goalArray[cY,:], label = "Goal")
         # plt.plot(np.arange(width), goalArray[int(height/2-15),:], label = "TEST")
         # plt.plot(np.arange(width), aboveArray[int(height/2-15),:], label = "Above")
         # plt.plot(np.arange(width), belowArray[int(height/2-15),:], label = "Below")
@@ -410,40 +409,6 @@ def feedback(testno = 0, count = 0, initial = None, initialArray = None, thresho
 
 
 
-    return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest
+    return totalMultImg, totalMultArray, goalArray, diff, threshold, allTest, threshold2
     
     #################
-
-
-
-
-#####
-
-# When you run this version of the feedback algorithm, you should:
-
-# 1. Calibrate the image (matches CCD image to SLM image)
-#   1.1 Display "crosshair4" on SLM
-#   1.2 Save image (usually as "crosshairImg")
-#   1.3 Run calibration function until properly aligned
-#   1.4 Transfer numbers to zoom_at and feedback functions
-
-# 2. Save initial beam input image as "initial.png"
-#   2.1 This would also be a good time to save wavefront data if applicable
-
-# 3. Once image shows up in GDrive, run "runFeedback" with trial number as input
-#   3.1 If you plan to put the result onto the SLM, instead of running the function for testing, make sure to uncomment the two lines that save the output image and output lineout graph. Otherwise, leave commented out to prevent unwanted images from being saved in folder
-
-# 4. Once output image shows up on GDrive, display on SLM.
-#   4.1 Naming convention: Algorithm will save the first output image as "1.png". Save the resulting beam image as "1Result.png" so algorithm will recognize it
-#   4.2 Also another good time to save wavefront data if applicable
-
-# 5. Repeat to your heart's desire!
-
-# 6. MAKE SURE to note down the trial number and what you changed / any notes for that trial. Will be helpful to look back later
-
-#####
-
-
-
-
-# calibration()
