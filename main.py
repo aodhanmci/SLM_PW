@@ -10,12 +10,12 @@ def onClose():
 
 if __name__ == "__main__":
     root = tk.Tk()
-    print('1')
     camera = cameraCapture()
+    camera.start_capture()
     testWidget = Page(root, root, camera) 
     # SLMwindow = window2(root)
 
     root.protocol("WM_DELETE_WINDOW", onClose)
-    # root.bind('<Escape>', lambda x: onClose) # not working
-    print('2')
+
     root.mainloop()
+    camera.stop_capture()

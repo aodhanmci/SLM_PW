@@ -16,12 +16,27 @@ from PIL import Image, ImageTk
 import pandas as pd
 from SLM_HAMAMATSU import *
 import os
+import threading
 
 class cameraCapture(tk.Frame):
 
+    _instance = None
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(cameraCapture, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
+        if not self._initialized:
+            # Initialization code here
+            self._initialized = True
         self.img0 = []
         self.windowName = 'SLM CCD'
+        self.lock = threading.Lock()
+        self.frame = None
+
 
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
@@ -68,7 +83,6 @@ class cameraCapture(tk.Frame):
             # set up for free-running continuous acquisition.
             #Grabbing continuously (video) with minimal delay
             self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly) 
-
             # converting to opencv bgr format
             self.converter = pylon.ImageFormatConverter()
             self.converter.OutputPixelFormat = pylon.PixelType_Mono8
@@ -84,53 +98,61 @@ class cameraCapture(tk.Frame):
             print(error)
             pass
 
+    def capture_loop(self):
+        while self.continue_capture:
+            # Capture a new frame
+            frame = self.getFrame()
+
+    def start_capture(self):
+        # Flag to control the capture loop
+        self.continue_capture = True
+        self.capture_thread = threading.Thread(target=self.getFrame)
+        self.capture_thread.start()
+        
     def getFrame(self):
-        try:
-            self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
-            if self.grabResult.GrabSucceeded():
-                image = self.converter.Convert(self.grabResult) # Access the openCV image data
-                self.img0 = image.GetArray()
-            else:
-                print("Error: ", self.grabResult.ErrorCode)
-    
-            self.grabResult.Release()
-            #time.sleep(0.01)
-
-            return self.img0
-            
-        # except genicam.GenericException as e:
-        #     # Error handling
-        #     print("An exception occurred.", e.GetDescription())
-        #     exitCode = 1
-        except Exception as error:
-            if self.camera.TriggerMode.GetValue() == "On":
-                self.camera.StopGrabbing()
-                self.camera.TriggerMode.SetValue("Off")
-                self.camera.StartGrabbing()
-                self.page.trigger_button.config(background="SystemButtonFace")
-                print("TRIGGER NOT CONNECTED")
-
+        while self.continue_capture:
+            try:
                 self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
                 if self.grabResult.GrabSucceeded():
-                    image = self.converter.Convert(self.grabResult)  # Access the openCV image data
+                    image = self.converter.Convert(self.grabResult) # Access the openCV image data
                     self.img0 = image.GetArray()
                 else:
                     print("Error: ", self.grabResult.ErrorCode)
-
+        
                 self.grabResult.Release()
-                # time.sleep(0.01)
+                #time.sleep(0.01)
 
                 return self.img0
-            else:
-                print(error)
+                
+            # except genicam.GenericException as e:
+            #     # Error handling
+            #     print("An exception occurred.", e.GetDescription())
+            #     exitCode = 1
+            except Exception as error:
+                if self.camera.TriggerMode.GetValue() == "On":
+                    self.camera.StopGrabbing()
+                    self.camera.TriggerMode.SetValue("Off")
+                    self.camera.StartGrabbing()
+                    self.page.trigger_button.config(background="SystemButtonFace")
+                    print("TRIGGER NOT CONNECTED")
 
-    def exposure_change(self):
-        try:
-            self.camera.ExposureTimeRaw = int(self.page.exposure_entry.get())
-            self.page.exposure_entry.config(background="white")
-        except Exception as error:
-            print(error)
-            self.page.exposure_entry.config(background="red")
+                    self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
+                    if self.grabResult.GrabSucceeded():
+                        image = self.converter.Convert(self.grabResult)  # Access the openCV image data
+                        self.img0 = image.GetArray()
+                    else:
+                        print("Error: ", self.grabResult.ErrorCode)
+
+                    self.grabResult.Release()
+                    # time.sleep(0.01)
+
+                    return self.img0
+                else:
+                    print(error)
+
+    def stop_capture(self):
+        self.continue_capture = False
+        self.capture_thread.join()
 
     def gain_change(self):
         try:
@@ -244,10 +266,3 @@ class cameraCapture(tk.Frame):
             print(error)
             self.page.save_SLM_button.config(background="red")
     
-
-
-if __name__ == "__main__":
-    testWidget = cameraCapture()
-    while testWidget.camera.IsGrabbing():
-        #input("Press Enter to continue...")
-        testWidget.getFrame()

@@ -17,20 +17,13 @@ import time
 class Page(tk.Frame):
 
     def __init__(self, parent, window, camera):
-        global onClose, scale_percent
-
-        # self.grid()
 
         tk.Frame.__init__(self, parent)
 
         self.window = window
         window.title("SLM & CCD Control")
         # window.geometry(f"{window_width}x{window_height}")
-        
-        self.vid = camera
-
-        # Detect SLM monitor
-        global mainDim, SLMdim
+        self.camera=camera
 
         mainDisplayNum = 0
         mainDisplay = screeninfo.get_monitors()[mainDisplayNum]
@@ -47,11 +40,13 @@ class Page(tk.Frame):
         self.SLMwidth = SLMwidth
         self.SLMheight = SLMheight
 
-        CCDwidth = self.vid.getFrame().shape[1] # 1920
-        CCDheight = self.vid.getFrame().shape[0] # 1200
+        # CCDwidth = camera.getFrame().shape[1] # 1920
+        # CCDheight = camera.getFrame().shape[0] # 1200
+        CCDwidth=1920
+        CCDheight=1200
 
         scale_percent = 30 # percent of original size
-
+        self.scale_percent = scale_percent
         gap = min(SLMwidth, CCDwidth)*scale_percent/600
 
         window_width = int(SLMwidth*scale_percent/100 + CCDwidth*scale_percent/100 + 3*gap)
@@ -103,12 +98,13 @@ class Page(tk.Frame):
             anchor=tk.CENTER
             )
 
+
         # Create buttons
-        self.start_button = tk.Button(window, text="Start", command=self.vid.testFunc)
+        self.start_button = tk.Button(window, text="Start", command=camera.testFunc)
         self.start_button.place(x=0, **upper_row_dict)
-        self.stop_button = tk.Button(window, text="Stop", command=self.vid.stopGUI)
+        self.stop_button = tk.Button(window, text="Stop", command=camera.stopGUI)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
-        self.exit_button = tk.Button(window, text="Exit", command=self.vid.exitGUI)
+        self.exit_button = tk.Button(window, text="Exit", command=camera.exitGUI)
         self.exit_button.place(x=2*large_button_width, **upper_row_dict)
         self.save_SLM_entry = tk.Entry(window)
         self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
@@ -116,39 +112,40 @@ class Page(tk.Frame):
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
 
-        self.browse_button = tk.Button(window, text="Browse", command=self.vid.browse)
+        self.browse_button = tk.Button(window, text="Browse", command=camera.browse)
         self.browse_button.place(x=0, **lower_row_dict)
-        self.display_button = tk.Button(window, text="Display to SLM", command=self.vid.displayToSLM)
+        self.display_button = tk.Button(window, text="Display to SLM", command=camera.displayToSLM)
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
-        self.clear_button = tk.Button(window, text="Clear", command=self.vid.clearSLM)
+        self.clear_button = tk.Button(window, text="Clear", command=camera.clearSLM)
         self.clear_button.place(x=2*large_button_width, **lower_row_dict)
-        self.save_SLM_button = tk.Button(window, text="Save SLM", command=self.vid.save_SLM)
+        self.save_SLM_button = tk.Button(window, text="Save SLM", command=camera.save_SLM)
         self.save_SLM_button.place(x=3*large_button_width, **lower_row_dict)
-        self.one_loop_button = tk.Button(window, text="1 loop", command=self.vid.oneloop)
+        self.one_loop_button = tk.Button(window, text="1 loop", command=camera.oneloop)
         self.one_loop_button.place(x=4*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="n loop", command=self.vid.nloops)
+        self.five_loop_button = tk.Button(window, text="n loop", command=camera.nloops)
         self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
-        self.crosshair_button = tk.Button(window, text="Crosshair", command=self.vid.crosshair)
+        self.crosshair_button = tk.Button(window, text="Crosshair", command=camera.crosshair)
         self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.vid.calibrate)
+        self.calibrate_button = tk.Button(window, text="Calibrate", command=camera.calibrate)
         self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
-        self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection())
+        self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection)
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
-        self.lineout_button = tk.Button(window, text="Lineout", command=lambda: lineout())
+        self.lineout_toggle=False
+        self.lineout_button = tk.Button(window, text="Lineout", command= self.lineout)
         self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
         self.trigger_button = tk.Button(window, text="Trigger", command=lambda: trigger())
         self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
-        self.wf_button = tk.Button(window, text="WF", command=lambda: wf())
+        self.wf_button = tk.Button(window, text="WF", command=self.wf)
         self.wf_button.place(x=11*large_button_width, **lower_row_dict)
 
         # Create labels and entry widgets for exposure, gain, and save file
-        self.exposure_button = tk.Button(window, text="Set Exposure", command=self.vid.exposure_change)
+        self.exposure_button = tk.Button(window, text="Set Exposure", command=self.exposure_change)
         self.exposure_button.place(x=window_width-4*large_button_width, **lower_row_dict)
-        self.gain_button = tk.Button(window, text="Set Gain", command=self.vid.gain_change)
+        self.gain_button = tk.Button(window, text="Set Gain", command=camera.gain_change)
         self.gain_button.place(x=window_width-3*large_button_width, **lower_row_dict)
-        self.save_button = tk.Button(window, text="Save CCD", command=self.vid.save_image)
+        self.save_button = tk.Button(window, text="Save CCD", command=camera.save_image)
         self.save_button.place(x=window_width-2*large_button_width, **lower_row_dict)
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.vid.saveLineout)
+        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=camera.saveLineout)
         self.save_lineout_button.place(x=window_width-large_button_width, **lower_row_dict)
 
         self.exposure_entry = tk.Entry(window)
@@ -159,8 +156,10 @@ class Page(tk.Frame):
         self.gain_entry.place(x=window_width-3*large_button_width, **upper_row_dict)
         self.save_entry = tk.Entry(window)
         self.save_entry.place(x=window_width-2*large_button_width, **upper_row_dict)
+        
         self.save_lineout_entry = tk.Entry(window)
         self.save_lineout_entry.place(x=window_width-large_button_width, **upper_row_dict)
+        
         # load in the last saved image transformation object
         try:
             with open('./settings/calibration/warp_transform.pckl', 'rb') as warp_trans_file:
@@ -237,53 +236,67 @@ class Page(tk.Frame):
         self.count = 0
         self.timer = 0
 
+        self.delay=1
+        print("HELLO")
+        self.after(self.delay, self.update)
+        ## end of initialisation ##
 
-        def circleDetection():
-            if self.circle_toggle:
-                self.circle_toggle = False
-                self.circle_button.config(background="SystemButtonFace")
-            else:
-                self.circle_toggle = True
-                self.circle_button.config(background="white")
+    def exposure_change(self):
+        try:
+            self.camera.ExposureTimeRaw = int(self.exposure_entry.get())
+            self.exposure_entry.config(background="white")
+        except Exception as error:
+            print(error)
+            self.exposure_entry.config(background="red")
 
-        def lineout():
-            if self.lineout_toggle:
-                self.lineout_toggle = False
-                self.lineout_button.config(background="SystemButtonFace")
-            else:
-                self.lineout_toggle = True
-                self.lineout_button.config(background="white")
+    def circleDetection(self):
+        if self.circle_toggle:
+            self.circle_toggle = False
+            self.circle_button.config(background="SystemButtonFace")
+        else:
+            self.circle_toggle = True
+            self.circle_button.config(background="white")
 
-        def trigger():
-            if self.vid.camera.TriggerMode.GetValue() == "On":
-                try:
-                    self.vid.camera.StopGrabbing()
-                    self.vid.camera.TriggerMode.SetValue("Off")
-                    self.vid.camera.StartGrabbing()
-                    self.trigger_button.config(background="SystemButtonFace")
+    def lineout(self):
+        if self.lineout_toggle:
+            self.lineout_toggle = False
+            self.lineout_button.config(background="SystemButtonFace")
+        else:
+            self.lineout_toggle = True
+            self.lineout_button.config(background="white")
+
+
+
+    def trigger(self):
+        if self.camera.TriggerMode.GetValue() == "On":
+            try:
+                self.camera.StopGrabbing()
+                self.camera.TriggerMode.SetValue("Off")
+                self.camera.StartGrabbing()
+                self.trigger_button.config(background="SystemButtonFace")
                     # print("TRIGGER OFF")
-                except Exception as error:
-                    print(error)
-            else:
-                try:
-                    self.vid.camera.StopGrabbing()
-                    self.vid.camera.TriggerMode.SetValue("On")
-                    self.vid.camera.StartGrabbing()
-                    self.trigger_button.config(background="white")
+            except Exception as error:
+                print(error)
+        else:
+            try:
+                self.camera.StopGrabbing()
+                self.camera.TriggerMode.SetValue("On")
+                self.camera.StartGrabbing()
+                self.trigger_button.config(background="white")
                     # print("TRIGGER ON")
-                except Exception as error:
-                    self.vid.camera.StopGrabbing()
-                    self.vid.camera.TriggerMode.SetValue("Off")
-                    self.vid.camera.StartGrabbing()
-                    self.trigger_button.config(background="SystemButtonFace")
+            except Exception as error:
+                self.camera.StopGrabbing()
+                self.camera.TriggerMode.SetValue("Off")
+                self.camera.StartGrabbing()
+                self.trigger_button.config(background="SystemButtonFace")
                     # print("TRIGGER OFF")
-                    print(error)
+                print(error)
 
-        def wf():
+    def wf(self):
             # gratingArray = Image.fromarray(gratingArray).show()
 
             # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
-            yshiftArray = np.ones(shape=gratingArray.shape)  # Initialize yshift array
+        yshiftArray = np.ones(shape=gratingArray.shape)  # Initialize yshift array
             # print(yshiftArray[0][0])
             # yshiftArray = yshiftArray * 70
             # print(yshiftArray[0][0])
@@ -295,20 +308,10 @@ class Page(tk.Frame):
             # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
             # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.
 
-            yshiftArray = gaussian_filter(yshiftArray,
+        yshiftArray = gaussian_filter(yshiftArray,
                                           sigma=15)  # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
             # totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
-            totalMultArray = totalMultArray
-
-        self.delay=3
-        print("HELLO")
-        self.update()
-        
-        onClose = self.vid.exitGUI
-
-
-
-
+        totalMultArray = totalMultArray
 
 
     def update(self):
@@ -323,10 +326,10 @@ class Page(tk.Frame):
         # SLMimage = Image.fromarray(image_array2)
 
         # SLMgrating = np.asarray(Image.open("./calibration/crosshair4.png"))
-        # SLMgrating = np.asarray(self.vid.SLMdisp)
+        # SLMgrating = np.asarray(camera.SLMdisp)
 
         if self.nloop_pressed == True or self.loop_pressed == True:
-            currentBeam = self.vid.getFrame()
+            currentBeam = self.camera.getFrame()
             if self.count == 0 and self.timer == 0:
                 beginningIntensity = np.sum(currentBeam[currentBeam > 1])
                 # print("BEGINNING TOTAL: " + str(beginningIntensity))
@@ -342,7 +345,7 @@ class Page(tk.Frame):
                     gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
                         count = self.count,
                         # plot = True,
-                        initialArray = self.vid.getFrame(),
+                        initialArray = self.camera.getFrame(),
                         image_transform=self.cal_transform,
                         SLM_height = self.SLMdim[1],
                         SLM_width = self.SLMdim[0]
@@ -353,7 +356,7 @@ class Page(tk.Frame):
                         lastloop = True,
                         # plot = True,
                         threshold = threshold,
-                        initialArray = self.vid.getFrame(),
+                        initialArray = self.camera.getFrame(),
                         image_transform=self.cal_transform,
                         SLM_height=self.SLMdim[1],
                         SLM_width=self.SLMdim[0]
@@ -363,7 +366,7 @@ class Page(tk.Frame):
                         count = self.count,
                         # plot = True,
                         threshold = threshold,
-                        initialArray = self.vid.getFrame(),
+                        initialArray = self.camera.getFrame(),
                         image_transform=self.cal_transform,
                         SLM_height=self.SLMdim[1],
                         SLM_width=self.SLMdim[0]
@@ -376,26 +379,26 @@ class Page(tk.Frame):
                     self.count = 0
                     self.nloop_pressed = False
                     self.loop_pressed = False
-                    self.vid.SLMdisp = Image.fromarray(gratingArray)
+                    self.camera.SLMdisp = Image.fromarray(gratingArray)
                     goalArray = None
                 else:
                     self.count += 1
                 self.timer = 0
                 print("THROUGHPUT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),2)) + "%")
         else:
-            SLMgrating = np.asarray(self.vid.SLMdisp)
+            SLMgrating = np.asarray(self.camera.SLMdisp)
 
         if len(SLMgrating.shape) == 3:
             SLMgrating = SLMgrating[:,:,0]
 
-        SLMbrowse = np.asarray(self.vid.browseImg)
+        SLMbrowse = np.asarray(self.camera.browseImg)
 
         if SLMimage[0][0] != None:
             check = np.array_equal(SLMimage, SLMgrating)
             if check != True:
                 self.SLMimage = SLMgrating
 
-                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
+                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.SLMdim[0]*self.scale_percent/100), int(self.SLMdim[1]*self.scale_percent/100)))
                 self.SLMgrating = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMgrating))
                 self.SLM_image_widget.photo = self.SLMgrating
                 self.SLM_image_widget.config(image=self.SLMgrating)
@@ -403,14 +406,15 @@ class Page(tk.Frame):
         if SLMpreview[0][0] != None:
             check2 = np.array_equal(SLMpreview, SLMbrowse)
             if check2 != True:
-                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)))
+                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.SLMdim[0]*self.scale_percent/100), int(self.SLMdim[1]*self.scale_percent/100)))
                 self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
 
-
-        self.ccd_data = self.vid.getFrame() #This is an array
-        self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+        with self.camera.lock:
+            self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
+        # self.ccd_data = self.camera.getFrame() #This is an array
+        self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
 
 
         image = self.ccd_data
@@ -418,6 +422,7 @@ class Page(tk.Frame):
         detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
 
         # Live lineout plotting
+
 
         if self.lineout_toggle:
             self.clearCanvas = False
@@ -431,7 +436,7 @@ class Page(tk.Frame):
 
                 try:
                     if np.amax(self.SLMimage) != 0.0:
-                        gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                        gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                         SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
                         ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
                         # ySLM = gratingArray[int(self.SLMheight/2),:]
@@ -445,7 +450,7 @@ class Page(tk.Frame):
                     pass
 
                 try:
-                    goalArray = cv2.resize(goalArray, dsize=(int(self.vid.getFrame().shape[1]*scale_percent/100), int(self.vid.getFrame().shape[0]*scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                    goalArray = cv2.resize(goalArray, dsize=(int(self.camera.ccd_data.shape[1]*self.scale_percent/100), int(self.camera.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                     yGoal = goalArray[int(cy),:]
                     self.ax.plot(x,yGoal, color="black")
                 except Exception as error:
@@ -475,27 +480,27 @@ class Page(tk.Frame):
 
         # if self.trigger_toggle:
         #     try:
-        #         self.vid.camera.StopGrabbing()
-        #         self.vid.camera.TriggerMode.SetValue("On")
-        #         self.vid.camera.StartGrabbing()
+        #         camera.camera.StopGrabbing()
+        #         camera.camera.TriggerMode.SetValue("On")
+        #         camera.camera.StartGrabbing()
         # else:
         #     try:
-        #         self.vid.camera.StopGrabbing()
-        #         self.vid.camera.TriggerMode.SetValue("Off")
-        #         self.vid.camera.StartGrabbing()
+        #         camera.camera.StopGrabbing()
+        #         camera.camera.TriggerMode.SetValue("Off")
+        #         camera.camera.StartGrabbing()
         #     except Exception as error:
         #         print(error)
 
         # def trigger():
-        #     if self.vid.camera.TriggerMode.GetValue == "On":
-        #         self.vid.camera.StopGrabbing()
-        #         self.vid.camera.TriggerMode.SetValue("Off")
-        #         self.vid.camera.StartGrabbing()
+        #     if camera.camera.TriggerMode.GetValue == "On":
+        #         camera.camera.StopGrabbing()
+        #         camera.camera.TriggerMode.SetValue("Off")
+        #         camera.camera.StartGrabbing()
         #         self.trigger_button.config(background="SystemButtonFace")
         #     else:
-        #         self.vid.camera.StopGrabbing()
-        #         self.vid.camera.TriggerMode.SetValue("On")
-        #         self.vid.camera.StartGrabbing()
+        #         camera.camera.StopGrabbing()
+        #         camera.camera.TriggerMode.SetValue("On")
+        #         camera.camera.StartGrabbing()
         #         self.trigger_button.config(background="white")
 
         self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
