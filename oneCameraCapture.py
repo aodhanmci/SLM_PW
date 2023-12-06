@@ -98,15 +98,14 @@ class cameraCapture(tk.Frame):
             print(error)
             pass
     
-    def SetExposure(self, exposure_value):
-        with self.lock:
-            self.camera.ExposureTimeRaw = exposure_value
+
 
     def start_capture(self):
         # Flag to control the capture loop
         self.continue_capture = True
         self.capture_thread = threading.Thread(target=self.getFrame)
         self.capture_thread.start()
+
         
     def getFrame(self):
         while self.continue_capture:
@@ -132,7 +131,6 @@ class cameraCapture(tk.Frame):
                     self.camera.StopGrabbing()
                     self.camera.TriggerMode.SetValue("Off")
                     self.camera.StartGrabbing()
-                    self.page.trigger_button.config(background="SystemButtonFace")
                     print("TRIGGER NOT CONNECTED")
 
                     self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
@@ -153,23 +151,37 @@ class cameraCapture(tk.Frame):
         self.continue_capture = False
         self.capture_thread.join()
 
-    def gain_change(self):
-        try:
-            self.camera.GainRaw = int(self.page.gain_entry.get())
-            self.page.gain_entry.config(background="white")
-        except Exception as error:
-            print(error)
-            self.page.gain_entry.config(background="red")
+    def Set_Exposure(self, exposure_value):
+        with self.lock:
+            self.camera.ExposureTimeRaw = exposure_value
+    
+    def Set_Gain(self, gain_value):
+        with self.lock:
+            self.camera.GainRaw = gain_value
 
-    def save_image(self):
-        filename = self.page.save_entry.get()
-        try:
-            cv2.imwrite(f'{filename}.png', self.img0)  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
-            self.page.save_button.config(background="SystemButtonFace")
-        except Exception as error:
-            print(error)
-            self.page.save_button.config(background="red")
+    def Set_Trigger(self):
+        with self.lock:
+            if self.camera.TriggerMode.GetValue() == "On":
+                try:
+                    self.camera.StopGrabbing()
+                    self.camera.TriggerMode.SetValue("Off")
+                    self.camera.StartGrabbing()
+                        # print("TRIGGER OFF")
+                except Exception as error:
+                    print(error)
+            else:
+                try:
+                    self.camera.StopGrabbing()
+                    self.camera.TriggerMode.SetValue("On")
+                    self.camera.StartGrabbing()
+                        # print("TRIGGER ON")
+                except Exception as error:
+                    self.camera.StopGrabbing()
+                    self.camera.TriggerMode.SetValue("Off")
+                    self.camera.StartGrabbing()
+                        # print("TRIGGER OFF")
+                    print(error)
+
     
     def browse(self):
         global browseImg
@@ -202,19 +214,7 @@ class cameraCapture(tk.Frame):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
         self.page.clearSLM = True
 
-    def stopGUI(self):
-        # self.camera.StopGrabbing()
-        # print("Stopped")
-        pass
 
-    def exitGUI(self):
-        print("GOODBYE")
-        df = pd.DataFrame({'exposure': [self.page.exposure_entry.get()],
-                           'gain': [self.page.gain_entry.get()],
-                           'loop': [self.page.loop_entry.get()]})
-        df.to_csv('./settings/prevVals.csv', index=False)
-        self.page.window.destroy()
-        self.camera.Close
     
     def crosshair(self):
         self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
@@ -250,13 +250,5 @@ class cameraCapture(tk.Frame):
         warp_transform = calibration(self.SLMdisp, self.getFrame())
         self.page.cal_transform = warp_transform
 
-    def saveLineout(self):
-        filename = self.page.save_lineout_entry.get()
-        try:
-            self.page.fig.savefig(f"./data/{filename}")
-            print(f"Image saved as /data/{filename}.png")
-            self.page.save_SLM_button.config(background="SystemButtonFace")
-        except Exception as error:
-            print(error)
-            self.page.save_SLM_button.config(background="red")
+
     

@@ -19,3 +19,5 @@ if __name__ == "__main__":
 
     root.mainloop()
     camera.stop_capture()
+
+    

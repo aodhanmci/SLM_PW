@@ -67,7 +67,7 @@ class Page(tk.Frame):
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
-
+        self.ccd_data = None
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
         self.slm_image_label.place(
@@ -102,9 +102,9 @@ class Page(tk.Frame):
         # Create buttons
         self.start_button = tk.Button(window, text="Start", command=camera.testFunc)
         self.start_button.place(x=0, **upper_row_dict)
-        self.stop_button = tk.Button(window, text="Stop", command=camera.stopGUI)
+        self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
-        self.exit_button = tk.Button(window, text="Exit", command=camera.exitGUI)
+        self.exit_button = tk.Button(window, text="Exit", command=self.exitGUI)
         self.exit_button.place(x=2*large_button_width, **upper_row_dict)
         self.save_SLM_entry = tk.Entry(window)
         self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
@@ -128,12 +128,12 @@ class Page(tk.Frame):
         self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
         self.calibrate_button = tk.Button(window, text="Calibrate", command=camera.calibrate)
         self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
-        self.circle_button = tk.Button(window, text="Circle", command=lambda: circleDetection)
+        self.circle_button = tk.Button(window, text="Circle", command=self.circleDetection)
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
         self.lineout_toggle=False
         self.lineout_button = tk.Button(window, text="Lineout", command= self.lineout)
         self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
-        self.trigger_button = tk.Button(window, text="Trigger", command=lambda: trigger())
+        self.trigger_button = tk.Button(window, text="Trigger", command=self.trigger)
         self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
         self.wf_button = tk.Button(window, text="WF", command=self.wf)
         self.wf_button.place(x=11*large_button_width, **lower_row_dict)
@@ -141,11 +141,11 @@ class Page(tk.Frame):
         # Create labels and entry widgets for exposure, gain, and save file
         self.exposure_button = tk.Button(window, text="Set Exposure", command=self.exposure_change)
         self.exposure_button.place(x=window_width-4*large_button_width, **lower_row_dict)
-        self.gain_button = tk.Button(window, text="Set Gain", command=camera.gain_change)
+        self.gain_button = tk.Button(window, text="Set Gain", command=self.gain_change)
         self.gain_button.place(x=window_width-3*large_button_width, **lower_row_dict)
-        self.save_button = tk.Button(window, text="Save CCD", command=camera.save_image)
+        self.save_button = tk.Button(window, text="Save CCD", command=self.save_image)
         self.save_button.place(x=window_width-2*large_button_width, **lower_row_dict)
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=camera.saveLineout)
+        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.saveLineout)
         self.save_lineout_button.place(x=window_width-large_button_width, **lower_row_dict)
 
         self.exposure_entry = tk.Entry(window)
@@ -205,12 +205,12 @@ class Page(tk.Frame):
                                     )
 
 
-        global SLMimage, SLMpreview
+        # global SLMimage, SLMpreview
         self.SLMimage = np.zeros((SLMdim[0], SLMdim[1]))
         self.SLMimage[0][0] = None
         SLMimage = self.SLMimage
         self.SLMpreview = SLMimage
-        SLMpreview = SLMimage
+        # SLMpreview = SLMimage
 
         fig, ax = plt.subplots(figsize=(4.5,3.5))
 
@@ -241,13 +241,42 @@ class Page(tk.Frame):
         self.after(self.delay, self.update)
         ## end of initialisation ##
 
+    def gain_change(self):
+        try:
+            self.camera.Set_Gain(int(self.gain_entry.get()))
+            self.gain_entry.config(background="white")
+        except Exception as error:
+            print(error)
+            self.gain_entry.config(background="red")
+
     def exposure_change(self):
         try:
-            self.camera.SetExposure(int(self.exposure_entry.get()))
+            self.camera.Set_Exposure(int(self.exposure_entry.get()))
             self.exposure_entry.config(background="white")
         except Exception as error:
             print(error)
             self.exposure_entry.config(background="red")
+
+    def save_image(self):
+        filename = self.save_entry.get()
+        try:
+            cv2.imwrite(f'{filename}.png', self.ccd_data)  # Save the captured image to a file
+            print(f"Image saved as {filename}.png")
+            self.save_button.config(background="SystemButtonFace")
+
+        except Exception as error:
+            print(error)
+            self.save_button.config(background="red")
+    
+    def saveLineout(self):
+        filename = self.save_lineout_entry.get()
+        try:
+            self.fig.savefig(f"./data/{filename}")
+            print(f"Image saved as /data/{filename}.png")
+            self.save_SLM_button.config(background="SystemButtonFace")
+        except Exception as error:
+            print(error)
+            self.save_SLM_button.config(background="red")
 
     def circleDetection(self):
         if self.circle_toggle:
@@ -266,31 +295,23 @@ class Page(tk.Frame):
             self.lineout_button.config(background="white")
 
 
-
     def trigger(self):
-        if self.camera.TriggerMode.GetValue() == "On":
-            try:
-                self.camera.StopGrabbing()
-                self.camera.TriggerMode.SetValue("Off")
-                self.camera.StartGrabbing()
-                self.trigger_button.config(background="SystemButtonFace")
-                    # print("TRIGGER OFF")
-            except Exception as error:
-                print(error)
-        else:
-            try:
-                self.camera.StopGrabbing()
-                self.camera.TriggerMode.SetValue("On")
-                self.camera.StartGrabbing()
-                self.trigger_button.config(background="white")
-                    # print("TRIGGER ON")
-            except Exception as error:
-                self.camera.StopGrabbing()
-                self.camera.TriggerMode.SetValue("Off")
-                self.camera.StartGrabbing()
-                self.trigger_button.config(background="SystemButtonFace")
-                    # print("TRIGGER OFF")
-                print(error)
+        self.camera.Set_Trigger()
+        
+
+    def stopGUI(self):
+        self.camera.StopGrabbing()
+        print("Stopped")
+        pass
+
+    def exitGUI(self):
+        print("GOODBYE")
+        df = pd.DataFrame({'exposure': [self.exposure_entry.get()],
+                           'gain': [self.gain_entry.get()],
+                           'loop': [self.loop_entry.get()]})
+        df.to_csv('./settings/prevVals.csv', index=False)
+        self.window.destroy()
+        self.camera.Close
 
     def wf(self):
             # gratingArray = Image.fromarray(gratingArray).show()
@@ -403,8 +424,8 @@ class Page(tk.Frame):
                 self.SLM_image_widget.photo = self.SLMgrating
                 self.SLM_image_widget.config(image=self.SLMgrating)
         
-        if SLMpreview[0][0] != None:
-            check2 = np.array_equal(SLMpreview, SLMbrowse)
+        if self.SLMpreview[0][0] != None:
+            check2 = np.array_equal(self.SLMpreview, SLMbrowse)
             if check2 != True:
                 self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.SLMdim[0]*self.scale_percent/100), int(self.SLMdim[1]*self.scale_percent/100)))
                 self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
