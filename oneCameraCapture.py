@@ -97,11 +97,10 @@ class cameraCapture(tk.Frame):
         except Exception as error:
             print(error)
             pass
-
-    def capture_loop(self):
-        while self.continue_capture:
-            # Capture a new frame
-            frame = self.getFrame()
+    
+    def SetExposure(self, exposure_value):
+        with self.lock:
+            self.camera.ExposureTimeRaw = exposure_value
 
     def start_capture(self):
         # Flag to control the capture loop
@@ -230,11 +229,6 @@ class cameraCapture(tk.Frame):
         # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
         self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
         print("Image displayed.")
-        
-        # self.page.update()
-        # input("Press enter to continue....")
-        # cv2.imwrite(f'./HMPolTests/testImg.png', self.img0)  # Save the captured image to a file
-        # print(f"Image saved as testImg.png")
     
     def oneloop(self):
         self.page.loop_pressed = True

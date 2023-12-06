@@ -243,7 +243,7 @@ class Page(tk.Frame):
 
     def exposure_change(self):
         try:
-            self.camera.ExposureTimeRaw = int(self.exposure_entry.get())
+            self.camera.SetExposure(int(self.exposure_entry.get()))
             self.exposure_entry.config(background="white")
         except Exception as error:
             print(error)
@@ -450,7 +450,7 @@ class Page(tk.Frame):
                     pass
 
                 try:
-                    goalArray = cv2.resize(goalArray, dsize=(int(self.camera.ccd_data.shape[1]*self.scale_percent/100), int(self.camera.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                    goalArray = cv2.resize(goalArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                     yGoal = goalArray[int(cy),:]
                     self.ax.plot(x,yGoal, color="black")
                 except Exception as error:
