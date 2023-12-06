@@ -230,11 +230,7 @@ class cameraCapture(tk.Frame):
         self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
         print("Image displayed.")
     
-    def oneloop(self):
-        self.page.loop_pressed = True
-    
-    def nloops(self):
-        self.page.nloop_pressed = True
+
     
     def save_SLM(self):
         filename = self.page.save_SLM_entry.get()
@@ -246,9 +242,7 @@ class cameraCapture(tk.Frame):
             print(error)
             self.page.save_SLM_button.config(background="red")
 
-    def calibrate(self):
-        warp_transform = calibration(self.SLMdisp, self.getFrame())
-        self.page.cal_transform = warp_transform
+
 
 
     
