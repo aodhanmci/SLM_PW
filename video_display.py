@@ -1,28 +1,22 @@
 import tkinter as tk
-from tkinter import ttk, PhotoImage, filedialog
-from tkinter.filedialog import askopenfile
 from tkinter.constants import *
 import oneCameraCapture
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import PIL
 from SLM_HAMAMATSU import *
 import screeninfo
-from screeninfo import get_monitors
 import pandas as pd
-import os
-import imageio.v3 as iio
 import laserbeamsize as lbs
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 
 # THIS IS A TEST!!!
 
 class Page(tk.Frame):
 
-    def __init__(self, parent, window):
+    def __init__(self, parent, window, camera):
         global onClose, scale_percent
 
         # self.grid()
@@ -33,7 +27,7 @@ class Page(tk.Frame):
         window.title("SLM & CCD Control")
         # window.geometry(f"{window_width}x{window_height}")
         
-        self.vid = oneCameraCapture.cameraCapture(self, self)
+        self.vid = camera
 
         # Detect SLM monitor
         global mainDim, SLMdim
@@ -65,16 +59,12 @@ class Page(tk.Frame):
 
         window.geometry(f"{window_width}x{window_height}+{int(mainDim[0]/2-window_width/2)}+{int(mainDim[1]/2-window_height/2-gap/2)}")
 
-        small_button_height = 20
-        small_button_width = 50
         # just leaving this here
         large_button_height = 30
         large_button_width = 60
 
         button_gap = 0
 
-        width_scale = int(window_width * scale_percent / 100)
-        height_scale = int(window_height * scale_percent / 100)
         first_row_button_height = window_height-2*large_button_height-2*button_gap
         second_row_button_height = window_height-large_button_height-button_gap
 
@@ -225,7 +215,7 @@ class Page(tk.Frame):
 
         fig, ax = plt.subplots(figsize=(4.5,3.5))
 
-        canvas = FigureCanvasTkAgg(fig, root)
+        canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
         canvas.get_tk_widget().place(
                                     x = int(window_width - CCDwidth*scale_percent/200 - gap),
@@ -518,65 +508,6 @@ class Page(tk.Frame):
 
 
 
-class window2(tk.Toplevel, Page):
-    def __init__(self, parent):
-        global SLMimage
-
-        self.SLMdims = SLMdim
-
-        # Get main display and SLM display dimensions to send window2 to SLM display
-        mainWidth = mainDim[0] # 2560
-        mainHeight = mainDim[1] # 1440
-        SLMwidth = SLMdim[0] # 1280
-        SLMheight = SLMdim[1] # 1024
-
-        # print(mainWidth, mainHeight, SLMwidth, SLMheight)
-
-        tk.Toplevel.__init__(self,parent)
-        self.parent = parent
-        self.title("SLM DISPLAY")
-        self.geometry('%dx%d+%d+%d'%(SLMwidth, SLMheight, mainWidth, 0))
-        self.overrideredirect(1) # Remove window borders
-        self.another_widget = tk.Label(self, width = int(SLMdim[0]*3), height = int(SLMdim[1]*3))
-        self.another_widget.place(x=SLMdim[0]/2, y=SLMdim[1]/2, anchor=tk.CENTER)
-
-        self.delay=1
-        self.update2()
-
-    def update2(self):
-        global SLMimage
-
-        self.SLMdims = SLMdim
-
-        # Only change image on SLM if the variable "SLMgrating" from oneCameraCapture (created from Upload to SLM button) is different from current display on SLM
-
-        if SLMimage[0][0] != None:
-            if check != True:
-                SLMimage = SLMgrating
-                SLMimage = ImageOps.fit(Image.fromarray(SLMimage), (int(self.SLMdims[0]), int(self.SLMdims[1])))
-                SLMimage = np.asarray(SLMimage)
-                self.SLMpreview = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(SLMimage))
-                # self.SLMpreview = PIL.ImageTk.PhotoImage(image=SLMimage)
-                # self.SLMpreview = SLMimage
-                self.another_widget.photo = self.SLMpreview
-                # self.another_widget.image = self.SLMpreview
-                self.another_widget.config(image=self.SLMpreview)
-                # self.another_widget.attributes("-fullscreen", True)
-                # self.another_widget.pack(fill="both")
-
-                # print("CHANGED SLM")
-
-        self.after(self.delay, self.update2)
 
 
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    testWidget = Page(root, root) 
-
-    window2 = window2(root)
-
-    root.protocol("WM_DELETE_WINDOW", onClose)
-    # root.bind('<Escape>', lambda x: onClose) # not working
-    root.mainloop()
 

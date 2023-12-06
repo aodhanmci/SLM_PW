@@ -19,11 +19,10 @@ import os
 
 class cameraCapture(tk.Frame):
 
-    def __init__(self, page_instance, window2_instance):
+    def __init__(self):
         self.img0 = []
         self.windowName = 'SLM CCD'
-        self.page = page_instance
-        self.window2 = window2_instance
+
         # self.SLMdisp = Image.open('10lpmm_190amp.png')
 
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
