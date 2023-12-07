@@ -297,21 +297,12 @@ class Page(tk.Frame):
 
     def trigger(self):
         self.camera.Set_Trigger()
-    
-    def oneloop(self):
-        self.loop_pressed = True
-    
-    def nloops(self):
-        self.nloop_pressed = True
+        
 
     def stopGUI(self):
         self.camera.StopGrabbing()
         print("Stopped")
         pass
-    
-    def calibrate(self):
-        warp_transform = calibration(self.SLMdisp, self.getFrame())
-        self.cal_transform = warp_transform
 
     def exitGUI(self):
         print("GOODBYE")
