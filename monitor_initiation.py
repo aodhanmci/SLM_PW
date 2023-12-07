@@ -6,7 +6,7 @@ class InitiateMonitors(tk.Frame):
         self.mainDisplayNum = 0
         self.mainDisplay = screeninfo.get_monitors()[self.mainDisplayNum]
         self.mainDim = (int(self.mainDisplay.width), int(self.mainDisplay.height))
-
+        print(screeninfo.get_monitors())
         self.SLMdisplayNum = 1
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
