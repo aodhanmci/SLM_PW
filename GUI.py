@@ -193,13 +193,6 @@ class Page(tk.Frame):
                                     )
 
 
-        # global SLMimage, SLMpreview
-        self.SLMimage = np.zeros((self.Monitors.SLMdim[0], self.Monitors.SLMdim[1]))
-        self.SLMimage[0][0] = None
-        SLMimage = self.SLMimage
-        self.SLMpreview = SLMimage
-        # SLMpreview = SLMimage
-
         fig, ax = plt.subplots(figsize=(4.5,3.5))
 
         canvas = FigureCanvasTkAgg(fig, parent)
@@ -322,7 +315,7 @@ class Page(tk.Frame):
             # gratingArray = Image.fromarray(gratingArray).show()
 
             # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
-        yshiftArray = np.ones(shape=gratingArray.shape)  # Initialize yshift array
+        # yshiftArray = np.ones(shape=gratingArray.shape)  # Initialize yshift array
             # print(yshiftArray[0][0])
             # yshiftArray = yshiftArray * 70
             # print(yshiftArray[0][0])
@@ -341,8 +334,8 @@ class Page(tk.Frame):
 
 
     def update(self):
-        global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger, gratingArray
-        SLMimage = self.SLMimage
+        # global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger, gratingArray
+        SLMimage = self.SLM.SLMimage
         time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
         # SLMgrating = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
@@ -422,15 +415,15 @@ class Page(tk.Frame):
         if SLMimage[0][0] != None:
             check = np.array_equal(SLMimage, SLMgrating)
             if check != True:
-                self.SLMimage = SLMgrating
+                self.SLM.SLMimage = SLMgrating
 
                 self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMgrating = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMgrating))
                 self.SLM_image_widget.photo = self.SLMgrating
                 self.SLM_image_widget.config(image=self.SLMgrating)
         
-        if self.SLMpreview[0][0] != None:
-            check2 = np.array_equal(self.SLMpreview, SLMbrowse)
+        if self.SLM.SLMpreview[0][0] != None:
+            check2 = np.array_equal(self.SLM.SLMpreview, SLMbrowse)
             if check2 != True:
                 self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
@@ -456,12 +449,11 @@ class Page(tk.Frame):
                 y = self.ccd_data[int(cy),:]
                 x = np.arange(len(y))
 
-
                 self.ax.clear()
                 self.ax.plot(x,y, color = "dimgrey")
 
                 try:
-                    if np.amax(self.SLMimage) != 0.0:
+                    if np.amax(self.SLM.SLMimage) != 0.0:
                         gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                         SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
                         ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]

@@ -10,6 +10,10 @@ class DisplaySLM(tk.Frame):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
         self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
         self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png"))
+        
+        self.SLMimage = np.zeros((Monitors.SLMdim[0], Monitors.SLMdim[1]))
+        self.SLMimage[0][0] = None
+        self.SLMpreview = self.SLMimage
 
     def browse(self):
         try:
