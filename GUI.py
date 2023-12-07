@@ -100,17 +100,17 @@ class Page(tk.Frame):
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
 
-        self.browse_button = tk.Button(window, text="Browse", command=self.camera.browse)
+        self.browse_button = tk.Button(window, text="Browse", command=self.SLM.browse)
         self.browse_button.place(x=0, **lower_row_dict)
-        self.display_button = tk.Button(window, text="Display to SLM", command=camera.displayToSLM)
+        self.display_button = tk.Button(window, text="Display to SLM", command=SLM.displayToSLM)
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
-        self.clear_button = tk.Button(window, text="Clear", command=camera.clearSLM)
+        self.clear_button = tk.Button(window, text="Clear", command=SLM.clearSLM)
         self.clear_button.place(x=2*large_button_width, **lower_row_dict)
-        self.save_SLM_button = tk.Button(window, text="Save SLM", command=camera.save_SLM)
+        self.save_SLM_button = tk.Button(window, text="Save SLM", command=self.save_SLM)
         self.save_SLM_button.place(x=3*large_button_width, **lower_row_dict)
-        self.one_loop_button = tk.Button(window, text="1 loop", command=camera.oneloop)
+        self.one_loop_button = tk.Button(window, text="1 loop", command=self.oneloop)
         self.one_loop_button.place(x=4*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="n loop", command=camera.nloops)
+        self.five_loop_button = tk.Button(window, text="n loop", command=self.nloops)
         self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
         self.crosshair_button = tk.Button(window, text="Crosshair", command=camera.crosshair)
         self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
@@ -244,6 +244,22 @@ class Page(tk.Frame):
         except Exception as error:
             print(error)
             self.exposure_entry.config(background="red")
+
+    def oneloop(self):
+        self.loop_pressed = True
+    
+    def nloops(self):
+        self.nloop_pressed = True
+    
+    def save_SLM(self):
+        filename = self.save_SLM_entry.get()
+        try:
+            cv2.imwrite(f'./data/{filename}.png', asarray(self.SLM.SLMdisp))  # Save the captured image to a file
+            print(f"Image saved as /data/{filename}.png")
+            self.save_SLM_button.config(background="SystemButtonFace")
+        except Exception as error:
+            print(error)
+            self.save_SLM_button.config(background="red")
 
     def save_image(self):
         filename = self.save_entry.get()

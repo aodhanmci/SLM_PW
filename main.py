@@ -17,7 +17,7 @@ if __name__ == "__main__":
     Monitors = InitiateMonitors()
     SLM=DisplaySLM(Monitors)
     testWidget = Page(root, root, camera, Monitors, SLM) 
-    # SLMwindow = window2(root)
+    # SLMwindow = window2(root, Monitors, SLM)
 
     root.protocol("WM_DELETE_WINDOW", onClose)
 
