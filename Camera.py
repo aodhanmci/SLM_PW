@@ -1,7 +1,4 @@
 import os
-
-os.environ["PYLON_CAMEMU"] = "3"
-
 from pypylon import genicam
 from pypylon import pylon
 import sys
@@ -11,12 +8,12 @@ import numpy as np
 import tkinter as tk
 from tkinter import ttk, PhotoImage, filedialog
 from tkinter.filedialog import askopenfile
-import video_display
 from PIL import Image, ImageTk
 import pandas as pd
 from SLM_HAMAMATSU import *
 import os
 import threading
+os.environ["PYLON_CAMEMU"] = "3"
 
 class cameraCapture(tk.Frame):
 

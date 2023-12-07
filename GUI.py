@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter.constants import *
-import oneCameraCapture
+import Camera
 from PIL import Image, ImageOps
 import numpy as np
 import cv2
@@ -16,7 +16,7 @@ import time
 
 class Page(tk.Frame):
 
-    def __init__(self, parent, window, camera):
+    def __init__(self, parent, window, camera, Monitors):
 
         tk.Frame.__init__(self, parent)
 
@@ -24,21 +24,8 @@ class Page(tk.Frame):
         window.title("SLM & CCD Control")
         # window.geometry(f"{window_width}x{window_height}")
         self.camera=camera
+        self.Monitors = Monitors
 
-        mainDisplayNum = 0
-        mainDisplay = screeninfo.get_monitors()[mainDisplayNum]
-        mainDim = (int(mainDisplay.width), int(mainDisplay.height))
-
-        self.SLMdisplayNum = 1
-        self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
-        self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
-        SLMdim = self.SLMdim
-
-        # Define dimensions for object placement
-        SLMwidth = SLMdim[0]
-        SLMheight = SLMdim[1]
-        self.SLMwidth = SLMwidth
-        self.SLMheight = SLMheight
 
         # CCDwidth = camera.getFrame().shape[1] # 1920
         # CCDheight = camera.getFrame().shape[0] # 1200
@@ -47,12 +34,12 @@ class Page(tk.Frame):
 
         scale_percent = 30 # percent of original size
         self.scale_percent = scale_percent
-        gap = min(SLMwidth, CCDwidth)*scale_percent/600
+        gap = min(self.Monitors.SLMwidth, CCDwidth)*scale_percent/600
 
-        window_width = int(SLMwidth*scale_percent/100 + CCDwidth*scale_percent/100 + 3*gap)
-        window_height = int(max(SLMheight, CCDheight)*scale_percent/50 + 3*gap)
+        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + CCDwidth*scale_percent/100 + 3*gap)
+        window_height = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/50 + 3*gap)
 
-        window.geometry(f"{window_width}x{window_height}+{int(mainDim[0]/2-window_width/2)}+{int(mainDim[1]/2-window_height/2-gap/2)}")
+        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
 
         # just leaving this here
         large_button_height = 30
@@ -71,7 +58,7 @@ class Page(tk.Frame):
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
         self.slm_image_label.place(
-            x = SLMwidth*scale_percent/200 + gap,
+            x = self.Monitors.SLMwidth*scale_percent/200 + gap,
             y= gap/2,
             anchor=tk.CENTER
             )
@@ -86,15 +73,15 @@ class Page(tk.Frame):
         
         self.slm_preview_label = tk.Label(window, text="SLM Preview")
         self.slm_preview_label.place(
-            x = SLMwidth*scale_percent/200 + gap,
-            y= 3*gap/2 + max(SLMheight, CCDheight)*scale_percent/100, 
+            x = self.Monitors.SLMwidth*scale_percent/200 + gap,
+            y= 3*gap/2 + max(self.Monitors.SLMheight, CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
             )
         
         self.lineout_label = tk.Label(window, text="Center Lineout")
         self.lineout_label.place(
             x = window_width - CCDwidth*scale_percent/200 - gap,
-            y= 3*gap/2 + max(SLMheight, CCDheight)*scale_percent/100, 
+            y= 3*gap/2 + max(self.Monitors.SLMheight, CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
             )
 
@@ -170,13 +157,13 @@ class Page(tk.Frame):
 
         #Create a canvas that will display what is on the SLM
         self.SLM_image_widget = tk.Label(window, 
-                                         width=int(SLMwidth*scale_percent/100),
-                                         height=int(SLMheight*scale_percent/100),
+                                         width=int(self.Monitors.SLMwidth*scale_percent/100),
+                                         height=int(self.Monitors.SLMheight*scale_percent/100),
                                          anchor=tk.CENTER
                                          )
         self.SLM_image_widget.place(
-                                    x = int(SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(SLMheight, CCDheight)*scale_percent/200 + gap),
+                                    x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
+                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
@@ -188,25 +175,25 @@ class Page(tk.Frame):
                                          )
         self.ccd_image_widget.place(
                                     x = int(window_width - CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(SLMheight, CCDheight)*scale_percent/200 + gap),
+                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
         #Create a canvas that will preview the SLM image
         self.SLM_preview_widget = tk.Label(window, 
-                                         width=int(SLMwidth*scale_percent/100),
-                                         height=int(SLMheight*scale_percent/100),
+                                         width=int(self.Monitors.SLMwidth*scale_percent/100),
+                                         height=int(self.Monitors.SLMheight*scale_percent/100),
                                          anchor=tk.CENTER
                                          )
         self.SLM_preview_widget.place(
-                                    x = int(SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
+                                    x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
+                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
                                     anchor=tk.CENTER
                                     )
 
 
         # global SLMimage, SLMpreview
-        self.SLMimage = np.zeros((SLMdim[0], SLMdim[1]))
+        self.SLMimage = np.zeros((self.Monitors.SLMdim[0], self.Monitors.SLMdim[1]))
         self.SLMimage[0][0] = None
         SLMimage = self.SLMimage
         self.SLMpreview = SLMimage
@@ -218,7 +205,7 @@ class Page(tk.Frame):
         canvas.draw()
         canvas.get_tk_widget().place(
                                     x = int(window_width - CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
+                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
                                     anchor=tk.CENTER
         )
 
@@ -419,7 +406,7 @@ class Page(tk.Frame):
             if check != True:
                 self.SLMimage = SLMgrating
 
-                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.SLMdim[0]*self.scale_percent/100), int(self.SLMdim[1]*self.scale_percent/100)))
+                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMgrating = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMgrating))
                 self.SLM_image_widget.photo = self.SLMgrating
                 self.SLM_image_widget.config(image=self.SLMgrating)
@@ -427,7 +414,7 @@ class Page(tk.Frame):
         if self.SLMpreview[0][0] != None:
             check2 = np.array_equal(self.SLMpreview, SLMbrowse)
             if check2 != True:
-                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.SLMdim[0]*self.scale_percent/100), int(self.SLMdim[1]*self.scale_percent/100)))
+                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)

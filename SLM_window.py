@@ -1,5 +1,5 @@
 import tkinter as tk
-from video_display import *
+from GUI import *
 
 class window2(tk.Toplevel):
     def __init__(self, parent):
