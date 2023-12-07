@@ -11,12 +11,12 @@ import pandas as pd
 import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
-
+from tkinter import ttk, PhotoImage, filedialog
 # THIS IS A TEST!!!
 
 class Page(tk.Frame):
 
-    def __init__(self, parent, window, camera, Monitors):
+    def __init__(self, parent, window, camera, Monitors, SLM):
 
         tk.Frame.__init__(self, parent)
 
@@ -99,7 +99,7 @@ class Page(tk.Frame):
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
 
-        self.browse_button = tk.Button(window, text="Browse", command=camera.browse)
+        self.browse_button = tk.Button(window, text="Browse", command=self.camera.browse)
         self.browse_button.place(x=0, **lower_row_dict)
         self.display_button = tk.Button(window, text="Display to SLM", command=camera.displayToSLM)
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
@@ -299,6 +299,7 @@ class Page(tk.Frame):
         df.to_csv('./settings/prevVals.csv', index=False)
         self.window.destroy()
         self.camera.Close
+
 
     def wf(self):
             # gratingArray = Image.fromarray(gratingArray).show()

@@ -179,16 +179,11 @@ class cameraCapture(tk.Frame):
                         # print("TRIGGER OFF")
                     print(error)
 
-    
     def browse(self):
-        global browseImg
         try:
             f_types = [('hurry up and pick one', '*.*')]
             filename = filedialog.askopenfilename(filetypes=f_types)
             self.browseImg = Image.open(filename)
-            browseImg = self.browseImg
-            # img_width = img.width()
-            # img_height = img.height()
             self.browseImgArray = np.asarray(self.browseImg)
             self.page.browse_button.config(background='SystemButtonFace')
         except Exception as error:

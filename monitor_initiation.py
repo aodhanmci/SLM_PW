@@ -10,10 +10,8 @@ class InitiateMonitors(tk.Frame):
         self.SLMdisplayNum = 1
         self.SLMdisplay = screeninfo.get_monitors()[self.SLMdisplayNum]
         self.SLMdim = (int(self.SLMdisplay.width), int(self.SLMdisplay.height))
-        SLMdim = self.SLMdim
 
         # Define dimensions for object placement
-        SLMwidth = SLMdim[0]
-        SLMheight = SLMdim[1]
-        self.SLMwidth = SLMwidth
-        self.SLMheight = SLMheight
+        self.SLMwidth = self.SLMdim[0]
+        self.SLMheight = self.SLMdim[1]
+
