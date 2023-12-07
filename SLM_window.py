@@ -3,6 +3,10 @@ from GUI import *
 
 class window2(tk.Toplevel):
     def __init__(self, parent, Monitors, SLM):
+
+
+        # print(mainWidth, mainHeight, SLMwidth, SLMheight)
+
         tk.Toplevel.__init__(self,parent)
         self.parent = parent
         self.Monitors = Monitors
