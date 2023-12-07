@@ -15,7 +15,7 @@ if __name__ == "__main__":
     camera = cameraCapture()
     camera.start_capture()
     Monitors = InitiateMonitors()
-    SLM = DisplaySLM(Monitors)
+    SLM=DisplaySLM(Monitors)
     testWidget = Page(root, root, camera, Monitors, SLM) 
     # SLMwindow = window2(root)
 

@@ -90,13 +90,15 @@ class cameraCapture(tk.Frame):
             print(error)
             pass
     
+
+
     def start_capture(self):
         # Flag to control the capture loop
         self.continue_capture = True
         self.capture_thread = threading.Thread(target=self.getFrame)
         self.capture_thread.start()
 
-      
+        
     def getFrame(self):
         while self.continue_capture:
             try:
@@ -172,9 +174,28 @@ class cameraCapture(tk.Frame):
                         # print("TRIGGER OFF")
                     print(error)
 
+    def browse(self):
+        try:
+            f_types = [('hurry up and pick one', '*.*')]
+            filename = filedialog.askopenfilename(filetypes=f_types)
+            self.browseImg = Image.open(filename)
+            self.browseImgArray = np.asarray(self.browseImg)
+            self.page.browse_button.config(background='SystemButtonFace')
+        except Exception as error:
+            self.page.browse_button.config(background='red')
+            print(error)
 
-
-
+    def displayToSLM(self):
+        try:
+            self.SLMdisp = Image.fromarray(self.browseImgArray)
+            self.page.display_button.config(background='SystemButtonFace')
+        except AttributeError as error:
+            print("NO IMAGE SELECTED")
+            # print(error)
+            self.page.display_button.config(background='red')
+        except Exception as error:
+            print(error)
+            self.page.display_button.config(background='red')
 
     def clearSLM(self):
         self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
