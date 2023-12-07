@@ -1,72 +1,69 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.colors as colors
-from scipy import signal
-from PIL import Image, ImageOps, ImageFont, ImageDraw, ImageFilter
+
 from numpy import asarray
 import cv2
 from scipy.ndimage import gaussian_filter
 from autoscaling import *
-import pandas as pd
-# from IPython.display import display
 
 
-def run_Anthony_Feedback(self):
-    currentBeam = self.ccd_data
-    self.count=0
-    self.timer=0
-    if self.count == 0 and self.timer == 0:
+
+def run_Anthony_Feedback(ccd_data, SLMwidth, SLMheight, loop_pressed, maxLoops, cal_transform):
+    currentBeam = ccd_data
+
+    count=0
+    timer=0
+    if count == 0 and timer == 0:
         beginningIntensity = np.sum(currentBeam[currentBeam > 1])
-        gratingArray = np.zeros((1080, 768))
+        gratingArray = np.zeros(SLMwidth, SLMheight)
                 # print("BEGINNING TOTAL: " + str(beginningIntensity))
-    if self.loop_pressed == True:
+    if loop_pressed == True:
         maxLoops = 0
     else:
-        maxLoops = int(self.loop_entry.get())
-    if self.timer != 5:
+        maxLoops = maxLoops
+    if timer != 5:
             # time.sleep(0.1)
-        self.timer += 1
-    if self.timer == 5:
-        if self.count == 0:
+        timer += 1
+    if timer == 5:
+        if count == 0:
             gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
+                        count = count,
                         # plot = True,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height = self.SLMdim[1],
-                        SLM_width = self.SLMdim[0]
+                        initialArray = ccd_data,
+                        image_transform=cal_transform,
+                        SLM_height = SLMheight,
+                        SLM_width = SLMwidth
                     )
-        if self.count == maxLoops:
+        if count == maxLoops:
             gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
+                        count = count,
                         lastloop = True,
                         # plot = True,
                         threshold = threshold,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height=self.SLMdim[1],
-                        SLM_width=self.SLMdim[0]
+                        initialArray = ccd_data,
+                        image_transform=cal_transform,
+                        SLM_height=SLMheight,
+                        SLM_width=SLMwidth
                     )
         else:
             gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
+                        count = count,
                         # plot = True,
                         threshold = threshold,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height=self.SLMdim[1],
-                        SLM_width=self.SLMdim[0]
+                        initialArray = ccd_data,
+                        image_transform=cal_transform,
+                        SLM_height=SLMheight,
+                        SLM_width=SLMwidth
                     )
 
-        if self.count == maxLoops:
-            self.count = 0
-            self.nloop_pressed = False
-            self.loop_pressed = False
-            self.camera.SLMdisp = Image.fromarray(gratingArray)
+        if count == maxLoops:
+            count = 0
+            nloop_pressed = False
+            loop_pressed = False
             goalArray = None
         else:
-            self.count += 1
-        self.timer = 0
+            count += 1
+        timer = 0
     
     return gratingArray
 

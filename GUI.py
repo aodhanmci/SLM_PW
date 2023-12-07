@@ -360,19 +360,16 @@ class Page(tk.Frame):
             self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
         if self.nloop_pressed == True or self.loop_pressed == True:
-            gratingArray = run_Anthony_Feedback(self)
+            SLMgrating = run_Anthony_Feedback(self)
             
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
-            gratingArray = SLMgrating
 
-        if len(SLMgrating.shape) == 3:
-            SLMgrating = SLMgrating[:,:,0]
-
-        SLMbrowse = np.asarray(self.SLM.browseImg)
+        # if len(SLMgrating.shape) == 3:
+        #     SLMgrating = SLMgrating[:,:,0]
 
         if SLMimage[0][0] != None:
-            check = np.array_equal(SLMimage, SLMgrating)
+            check = np.array_equal(self.SLM.SLMimage, SLMgrating)
             if check != True:
                 self.SLM.SLMimage = SLMgrating
 
@@ -382,14 +379,12 @@ class Page(tk.Frame):
                 self.SLM_image_widget.config(image=self.SLMgrating)
         
         if self.SLM.SLMpreview[0][0] != None:
-            check2 = np.array_equal(self.SLM.SLMpreview, SLMbrowse)
+            check2 = np.array_equal(self.SLM.SLMpreview, np.asarray(self.SLM.browseImg))
             if check2 != True:
-                self.SLMbrowse = cv2.resize(SLMbrowse, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
+                self.SLMbrowse = cv2.resize(np.asarray(self.SLM.browseImg), dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMbrowse = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMbrowse))
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
-
-        
 
 
         image = self.ccd_data
@@ -410,7 +405,7 @@ class Page(tk.Frame):
 
                 try:
                     if np.amax(self.SLM.SLMimage) != 0.0:
-                        gratingArrayRescaled = cv2.resize(gratingArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                        gratingArrayRescaled = cv2.resize(SLMgrating, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
                         SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
                         ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
                         # ySLM = gratingArray[int(self.SLMheight/2),:]
