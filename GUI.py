@@ -28,7 +28,7 @@ class Page(tk.Frame):
         
         # CCDwidth = camera.getFrame().shape[1] # 1920
         # CCDheight = camera.getFrame().shape[0] # 1200
-        CCDwidth=1920
+        CCDwidth=1600
         CCDheight=1200
 
         scale_percent = 30 # percent of original size
