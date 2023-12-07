@@ -11,7 +11,6 @@ import pandas as pd
 import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
-from tkinter import ttk, PhotoImage, filedialog
 # THIS IS A TEST!!!
 
 class Page(tk.Frame):
@@ -26,8 +25,7 @@ class Page(tk.Frame):
         # window.geometry(f"{window_width}x{window_height}")
         self.camera=camera
         self.Monitors = Monitors
-
-
+        
         # CCDwidth = camera.getFrame().shape[1] # 1920
         # CCDheight = camera.getFrame().shape[0] # 1200
         CCDwidth=1920
@@ -88,7 +86,7 @@ class Page(tk.Frame):
 
 
         # Create buttons
-        self.start_button = tk.Button(window, text="Start", command=camera.testFunc)
+        self.start_button = tk.Button(window, text="Start", command=self.testFunc)
         self.start_button.place(x=0, **upper_row_dict)
         self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
@@ -112,9 +110,9 @@ class Page(tk.Frame):
         self.one_loop_button.place(x=4*large_button_width, **lower_row_dict)
         self.five_loop_button = tk.Button(window, text="n loop", command=self.nloops)
         self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
-        self.crosshair_button = tk.Button(window, text="Crosshair", command=camera.crosshair)
+        self.crosshair_button = tk.Button(window, text="Crosshair", command=self.crosshair)
         self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=camera.calibrate)
+        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.calibrate)
         self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
         self.circle_button = tk.Button(window, text="Circle", command=self.circleDetection)
         self.circle_button.place(x=8*large_button_width, **lower_row_dict)
@@ -147,7 +145,8 @@ class Page(tk.Frame):
         
         self.save_lineout_entry = tk.Entry(window)
         self.save_lineout_entry.place(x=window_width-large_button_width, **upper_row_dict)
-        
+        # with self.camera.lock:
+        #     self.ccd_data = self.camera.getFrame()
         # load in the last saved image transformation object
         try:
             with open('./settings/calibration/warp_transform.pckl', 'rb') as warp_trans_file:
@@ -253,6 +252,17 @@ class Page(tk.Frame):
         except Exception as error:
             print(error)
             self.save_SLM_button.config(background="red")
+    
+    def crosshair(self):
+        self.SLM.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
+    
+    def testFunc(self):
+        # self.camera.StartGrabbing()
+        pass
+
+    def calibrate(self):
+        warp_transform = calibration(self.SLM.SLMdisp, self.ccd_data)
+        self.cal_transform = warp_transform
 
     def save_image(self):
         filename = self.save_entry.get()
@@ -334,7 +344,6 @@ class Page(tk.Frame):
 
 
     def update(self):
-        # global SLMgrating, check, threshold, calibrate, circleDetection, saveLineout, goalArray, beginningIntensity, trigger, gratingArray
         SLMimage = self.SLM.SLMimage
         time1 = time.time()
         # Example arrays (you can replace these with your actual image data)
@@ -346,66 +355,16 @@ class Page(tk.Frame):
 
         # SLMgrating = np.asarray(Image.open("./calibration/crosshair4.png"))
         # SLMgrating = np.asarray(camera.SLMdisp)
-
+        with self.camera.lock:
+            self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
+            self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+        
         if self.nloop_pressed == True or self.loop_pressed == True:
-            currentBeam = self.camera.getFrame()
-            if self.count == 0 and self.timer == 0:
-                beginningIntensity = np.sum(currentBeam[currentBeam > 1])
-                # print("BEGINNING TOTAL: " + str(beginningIntensity))
-            if self.loop_pressed == True:
-                maxLoops = 0
-            else:
-                maxLoops = int(self.loop_entry.get())
-            if self.timer != 5:
-                # time.sleep(0.1)
-                self.timer += 1
-            if self.timer == 5:
-                if self.count == 0:
-                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
-                        # plot = True,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height = self.SLMdim[1],
-                        SLM_width = self.SLMdim[0]
-                    )
-                if self.count == maxLoops:
-                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
-                        lastloop = True,
-                        # plot = True,
-                        threshold = threshold,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height=self.SLMdim[1],
-                        SLM_width=self.SLMdim[0]
-                    )
-                else:
-                    gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
-                        count = self.count,
-                        # plot = True,
-                        threshold = threshold,
-                        initialArray = self.camera.getFrame(),
-                        image_transform=self.cal_transform,
-                        SLM_height=self.SLMdim[1],
-                        SLM_width=self.SLMdim[0]
-                    )
-
-                SLMgrating = gratingArray
-
-
-                if self.count == maxLoops:
-                    self.count = 0
-                    self.nloop_pressed = False
-                    self.loop_pressed = False
-                    self.camera.SLMdisp = Image.fromarray(gratingArray)
-                    goalArray = None
-                else:
-                    self.count += 1
-                self.timer = 0
-                print("THROUGHPUT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),2)) + "%")
+            gratingArray = run_Anthony_Feedback(self)
+            
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
+            gratingArray = SLMgrating
 
         if len(SLMgrating.shape) == 3:
             SLMgrating = SLMgrating[:,:,0]
@@ -430,10 +389,7 @@ class Page(tk.Frame):
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
 
-        with self.camera.lock:
-            self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
-        # self.ccd_data = self.camera.getFrame() #This is an array
-        self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+        
 
 
         image = self.ccd_data
@@ -496,30 +452,6 @@ class Page(tk.Frame):
             except Exception as error:
                 print(error)
 
-        # if self.trigger_toggle:
-        #     try:
-        #         camera.camera.StopGrabbing()
-        #         camera.camera.TriggerMode.SetValue("On")
-        #         camera.camera.StartGrabbing()
-        # else:
-        #     try:
-        #         camera.camera.StopGrabbing()
-        #         camera.camera.TriggerMode.SetValue("Off")
-        #         camera.camera.StartGrabbing()
-        #     except Exception as error:
-        #         print(error)
-
-        # def trigger():
-        #     if camera.camera.TriggerMode.GetValue == "On":
-        #         camera.camera.StopGrabbing()
-        #         camera.camera.TriggerMode.SetValue("Off")
-        #         camera.camera.StartGrabbing()
-        #         self.trigger_button.config(background="SystemButtonFace")
-        #     else:
-        #         camera.camera.StopGrabbing()
-        #         camera.camera.TriggerMode.SetValue("On")
-        #         camera.camera.StartGrabbing()
-        #         self.trigger_button.config(background="white")
 
         self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
         self.ccd_image_widget.config(image=self.photo)

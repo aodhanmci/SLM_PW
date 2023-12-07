@@ -57,14 +57,18 @@ class cameraCapture(tk.Frame):
                 # running=False
                 # Print the model name of the camera.
                 print("Using device ", self.camera.GetDeviceInfo().GetModelName())
+            
 
             # self.camera.PixelFormat = "Mono8"
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
             # self.camera.PixelFormat = "Mono8"
             self.camera.ExposureTimeRaw = int(df.exposure[0])
+            # self.camera.height = self.camera.Height.GetValue()
+            # self.camera.width = self.camera.width.GetValue()
             self.camera.GainRaw = int(df.gain[0])
             self.camera.TriggerSource.SetValue("Line1")
             self.camera.AcquisitionMode.SetValue("Continuous")
+
             # self.camera.TriggerMode.SetValue("On")
             # self.camera.TriggerMode.GetValue()
             # Print the model name of the camera.
@@ -175,27 +179,6 @@ class cameraCapture(tk.Frame):
                     print(error)
 
 
-
-    
-    def crosshair(self):
-        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/crosshairNums.png")
-    
-    def testFunc(self):
-        self.camera.StartGrabbing()
-    
-    def runThrough(self):
-        # for pol in np.arange(0,360,10):
-        #     for gray in np.arange(0, 260, 10):
-        gray=160
-        # self.SLMdisp = Image.open("./HMPolTests/HAMAMATSU_"+str(gray)+".png")
-        self.SLMdisp = Image.open("./settings/calibration/HAMAMATSU/HAMAMATSU_2px_crosshair.png")
-        print("Image displayed.")
-    
-
-
-    def calibrate(self):
-        warp_transform = calibration(self.SLMdisp, self.getFrame())
-        self.page.cal_transform = warp_transform
 
 
     

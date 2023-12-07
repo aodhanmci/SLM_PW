@@ -10,6 +10,71 @@ from autoscaling import *
 import pandas as pd
 # from IPython.display import display
 
+
+def run_Anthony_Feedback(self):
+    currentBeam = self.ccd_data
+    self.count=0
+    self.timer=0
+    if self.count == 0 and self.timer == 0:
+        beginningIntensity = np.sum(currentBeam[currentBeam > 1])
+        gratingArray = np.zeros((1080, 768))
+                # print("BEGINNING TOTAL: " + str(beginningIntensity))
+    if self.loop_pressed == True:
+        maxLoops = 0
+    else:
+        maxLoops = int(self.loop_entry.get())
+    if self.timer != 5:
+            # time.sleep(0.1)
+        self.timer += 1
+    if self.timer == 5:
+        if self.count == 0:
+            gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        # plot = True,
+                        initialArray = self.camera.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height = self.SLMdim[1],
+                        SLM_width = self.SLMdim[0]
+                    )
+        if self.count == maxLoops:
+            gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        lastloop = True,
+                        # plot = True,
+                        threshold = threshold,
+                        initialArray = self.camera.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLMdim[1],
+                        SLM_width=self.SLMdim[0]
+                    )
+        else:
+            gratingImg, gratingArray, goalArray, diff, threshold, allTest = feedback(
+                        count = self.count,
+                        # plot = True,
+                        threshold = threshold,
+                        initialArray = self.camera.getFrame(),
+                        image_transform=self.cal_transform,
+                        SLM_height=self.SLMdim[1],
+                        SLM_width=self.SLMdim[0]
+                    )
+
+        if self.count == maxLoops:
+            self.count = 0
+            self.nloop_pressed = False
+            self.loop_pressed = False
+            self.camera.SLMdisp = Image.fromarray(gratingArray)
+            goalArray = None
+        else:
+            self.count += 1
+        self.timer = 0
+    
+    return gratingArray
+
+
+
+
+
+
 def calibration(SLM_data, CCD_data):
     warp_transform = clickCorners(SLM_data, CCD_data)
     return warp_transform
