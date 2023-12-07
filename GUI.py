@@ -100,9 +100,9 @@ class Page(tk.Frame):
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
 
-        self.browse_button = tk.Button(window, text="Browse", command=self.camera.browse)
+        self.browse_button = tk.Button(window, text="Browse", command=self.SLM.browse)
         self.browse_button.place(x=0, **lower_row_dict)
-        self.display_button = tk.Button(window, text="Display to SLM", command=camera.displayToSLM)
+        self.display_button = tk.Button(window, text="Display to SLM", command=self.SLM.displayToSLM)
         self.display_button.place(x=1*large_button_width, **lower_row_dict)
         self.clear_button = tk.Button(window, text="Clear", command=camera.clearSLM)
         self.clear_button.place(x=2*large_button_width, **lower_row_dict)
@@ -285,6 +285,8 @@ class Page(tk.Frame):
 
     def trigger(self):
         self.camera.Set_Trigger()
+        
+
         
 
     def stopGUI(self):
