@@ -21,6 +21,7 @@ class Page(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.window = window
+        self.SLM = SLM
         window.title("SLM & CCD Control")
         # window.geometry(f"{window_width}x{window_height}")
         self.camera=camera
@@ -395,12 +396,12 @@ class Page(tk.Frame):
                 self.timer = 0
                 print("THROUGHPUT: " + str(np.round(np.sum(currentBeam[currentBeam > 1]/beginningIntensity*100),2)) + "%")
         else:
-            SLMgrating = np.asarray(self.camera.SLMdisp)
+            SLMgrating = np.asarray(self.SLM.SLMdisp)
 
         if len(SLMgrating.shape) == 3:
             SLMgrating = SLMgrating[:,:,0]
 
-        SLMbrowse = np.asarray(self.camera.browseImg)
+        SLMbrowse = np.asarray(self.SLM.browseImg)
 
         if SLMimage[0][0] != None:
             check = np.array_equal(SLMimage, SLMgrating)

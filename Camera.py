@@ -34,11 +34,6 @@ class cameraCapture(tk.Frame):
         self.lock = threading.Lock()
         self.frame = None
 
-
-        # self.SLMdisp = Image.open('10lpmm_190amp.png')
-
-        self.SLMdisp = Image.fromarray(np.zeros((1080,1920)))
-        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
         try:
             df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
