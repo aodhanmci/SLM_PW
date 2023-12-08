@@ -8,9 +8,9 @@ class DisplaySLM(tk.Frame):
         self.SLMwidth = Monitors.SLMwidth
         self.SLMheight = Monitors.SLMheight
         # self.SLMdisp = Image.fromarray(np.zeros((Monitors.SLMdim[0],Monitors.SLMdim[1])))
-        self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png")
-        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png")
-        self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png"))
+        self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
+        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
+        self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png"))
         
         self.SLMimage = np.zeros((Monitors.SLMdim[0], Monitors.SLMdim[1]))
         self.SLMimage[0][0] = None

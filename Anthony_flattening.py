@@ -19,36 +19,36 @@ def center(imageArray):
     return cX, cY
 
 class Flattening_algo:
-    def __init__(self, SLMwidth, SLMheight, maxLoops, cal_transform, ccd_data):
+    def __init__(self, SLMwidth, SLMheight, maxLoops, cal_transform):
+
         self.SLMwidth = SLMwidth
         self.SLMheight = SLMheight
         self.maxLoops = maxLoops
         self.cal_transform = cal_transform
         self.count = 0
         self.threshold = 75  # default threshold
-        self.beginningIntensity = np.sum(ccd_data[ccd_data > 1])
-        self.ccd_data = ccd_data
+        self.beginningIntensity = 0
+        self.ccd_data = np.zeros((1600, 1200))
         self.gratingArray = np.zeros((SLMwidth, SLMheight))
         self.grating = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_2px.png')
         self.blazedData = asarray(self.grating)
         
-        self.initialImgArray = asarray(self.gratingArray)
-        self.initialArray = cv2.warpPerspective(self.initialImgArray, self.cal_transform, (np.shape(self.blazedData)[1], np.shape(self.blazedData)[0]), flags=cv2.INTER_LINEAR)
-        self.initialImg = Image.fromarray(self.initialArray)
+        self.initialImgArray = None
+        self.initialArray = None
+        self.initialImg = None
         
-        self.xi, self.yi = (self.initialArray >= int(self.threshold-5)).nonzero()
-        self.stacked = np.stack((self.xi, self.yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array
-        self.aboveMultArray = np.zeros(self.initialArray.shape)
-        self.belowMultArray = np.zeros(self.initialArray.shape)
-        self.totalMultArray = np.zeros(self.initialArray.shape)
-        print(type(self.initialArray))
-        print(np.shape(self.initialArray))
-        self.cX, self.cY = center(self.initialArray)
-        self.threshold = np.mean(sorted(self.initialArray.flatten(), reverse=True)[50]) * 0.75
-        self.innerBlur = 15, 
+        self.xi, self.yi =None, None
+        self.stacked = None   
+        self.aboveMultArray = None
+        self.belowMultArray = None
+        self.totalMultArray = None
+        self.cX, self.cY = None, None
+        self.threshold = None
+        self.innerBlur = 15, 15
         self.blur = 15
         self.rangeVal=5
         self.lastloop = False
+        self.threshold = None
 
 
     def calibration(SLM_data, CCD_data):
@@ -57,7 +57,25 @@ class Flattening_algo:
 
 
     def feedback(self):
+        if self.count == 0:
+            self.beginningIntensity = np.sum(self.ccd_data[self.ccd_data > 1])
+            self.initialImgArray = self.ccd_data
+            self.initialArray = cv2.warpPerspective(self.initialImgArray, self.cal_transform, (np.shape(self.blazedData)[1], np.shape(self.blazedData)[0]), flags=cv2.INTER_LINEAR)
+            self.initialImg = Image.fromarray(self.initialArray)
+            self.threshold = np.mean(sorted(self.initialArray.flatten(), reverse=True)[50]) * 0.9
 
+            self.xi, self.yi = (self.initialArray >= int(self.threshold-5)).nonzero()
+            self.stacked = np.stack((self.xi, self.yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array
+            self.aboveMultArray = np.zeros(self.initialArray.shape)
+            self.belowMultArray = np.zeros(self.initialArray.shape)
+            self.totalMultArray = np.zeros(self.initialArray.shape)
+            print(type(self.initialArray))
+            print(np.shape(self.initialArray))
+            self.cX, self.cY = center(self.initialArray)
+            
+
+
+        self.initialArray = self.initialArray = cv2.warpPerspective(np.asarray(self.ccd_data), self.cal_transform, (np.shape(self.blazedData)[1], np.shape(self.blazedData)[0]), flags=cv2.INTER_LINEAR)
         x, y = (self.initialArray >= int(self.threshold-10)).nonzero()
         stacked2 = np.stack((x, y), axis = -1)
         unique = np.unique(np.concatenate((self.stacked, stacked2)),axis=0)
@@ -135,30 +153,30 @@ class Flattening_algo:
         belowMaxBlurred = belowImgMaxGray.filter(ImageFilter.GaussianBlur(radius = self.blur))
         belowMaxBlurredArray = asarray(belowMaxBlurred, dtype=np.int32) # int32
         
-        aboveMultArray2 = aboveMultArray     # Save previous multArray as multArray2 to take average later
+        aboveMultArray2 = self.aboveMultArray     # Save previous multArray as multArray2 to take average later
         aboveMultArray2Blurred = asarray(Image.fromarray(aboveMultArray2, "L").filter(ImageFilter.GaussianBlur(radius = self.blur)), dtype = np.int32)
         
-        aboveMultArray = np.multiply(aboveMaxBlurredArray, self.blazedData)     # Final grating should take into account the "edges" or "boundaries" of the threshold area, and should have blurred edges. This multiplies the blurred edges by the previously created grating image.
-        aboveMultArray = np.multiply(aboveMultArray, aboveBlurredArray)     # Final grating should also take into account the general shape of the threshold area. So pixels 50 above the threshold should receive less intense grating, while pixels 150 above the threshold should receive more intense grating. This takes the shape (values) into account
+        self.aboveMultArray = np.multiply(aboveMaxBlurredArray, self.blazedData)     # Final grating should take into account the "edges" or "boundaries" of the threshold area, and should have blurred edges. This multiplies the blurred edges by the previously created grating image.
+        self.aboveMultArray = np.multiply(self.aboveMultArray, aboveBlurredArray)     # Final grating should also take into account the general shape of the threshold area. So pixels 50 above the threshold should receive less intense grating, while pixels 150 above the threshold should receive more intense grating. This takes the shape (values) into account
         
         # aboveMultArray = np.multiply(aboveBlurredArray, blazedData)     # This one does not have to be used. Added for testing. The above two lines would be replaced with this line.
         
         
-        belowMultArray2 = belowMultArray
-        belowMultArray = np.multiply(belowMaxBlurredArray, self.blazedData)
+        belowMultArray2 = self.belowMultArray
+        self.belowMultArray = np.multiply(belowMaxBlurredArray, self.blazedData)
         # belowMultArray = np.multiply(belowMultArray, belowBlurredArray)
-        belowMultArray = np.multiply(belowBlurredArray, self.blazedData)
+        self.belowMultArray = np.multiply(belowBlurredArray, self.blazedData)
         
         #####
         # Since multiple arrays were multiplied together, now must normalize the final grating array to the intended amplitude
         #####
         
-        if np.amax(aboveMultArray) != 0:
-            aboveMultArray = (aboveMultArray * np.amax(aboveBlurredArray) / (np.amax(aboveMultArray))).astype(np.int32) # Normalize multiplied grating to the max of the subtracted image
-        if np.amax(belowMultArray) != 0:
-            belowMultArray = (belowMultArray * np.amax(belowBlurredArray) / (np.amax(belowMultArray))).astype(np.int32)
+        if np.amax(self.aboveMultArray) != 0:
+            self.aboveMultArray = (self.aboveMultArray * np.amax(aboveBlurredArray) / (np.amax(self.aboveMultArray))).astype(np.int32) # Normalize multiplied grating to the max of the subtracted image
+        if np.amax(self.belowMultArray) != 0:
+            self.belowMultArray = (self.belowMultArray * np.amax(belowBlurredArray) / (np.amax(self.belowMultArray))).astype(np.int32)
 
-        totalMultArray2 = totalMultArray.astype(np.int32)     # Copy final grating array (totalMultArray) to take average later
+        totalMultArray2 = self.totalMultArray.astype(np.int32)     # Copy final grating array (totalMultArray) to take average later
 
         
         #####
@@ -211,9 +229,9 @@ class Flattening_algo:
         
         # totalMultArray = (totalMultArray2 + diffMult * aboveMultArray - diffMult * belowMultArray).astype(np.int32)
         # totalMultArray = (totalMultArray2 + 0.5 * aboveMultArray - 0.5 * belowMultArray).astype(np.int32)     # Add and subtract 1/2 of the above and below arrays. More conservative application, but slower. Use if encounter positive feedback loop issues.
-        totalMultArray = (totalMultArray2 + aboveMultArray/2 - belowMultArray/2).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
+        self.totalMultArray = (totalMultArray2 + self.aboveMultArray/2 - self.belowMultArray/2).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
         
-        totalMultArray[totalMultArray < 0] = 0     # Sometimes, subtracting belowMultArray leads to negative grating values (overcorrection). This does not work with SLM, so change all negative numbers to zero
+        self.totalMultArray[self.totalMultArray < 0] = 0     # Sometimes, subtracting belowMultArray leads to negative grating values (overcorrection). This does not work with SLM, so change all negative numbers to zero
 
 
 
@@ -224,15 +242,15 @@ class Flattening_algo:
         if self.lastloop == True:
             print("LAST LOOP")
             # totalMultArray[xi,yi] = totalMultArray[xi,yi] + yshift
-            yshiftArray = np.ones(shape = totalMultArray.shape)     # Initialize yshift array
+            yshiftArray = np.ones(shape = self.totalMultArray.shape)     # Initialize yshift array
             # print(yshiftArray[0][0])
             # yshiftArray = yshiftArray * 70
             # print(yshiftArray[0][0])
             # yshiftArray = yshiftArray
             # print(yshiftArray[0][0])
-            totalMultArray[totalMultArray < 0] = 0
+            self.totalMultArray[self.totalMultArray < 0] = 0
 
-            yshiftArray[xi,yi] = totalMultArray[xi,yi]
+            yshiftArray[xi,yi] = self.totalMultArray[xi,yi]
             # yshiftArray[xi,yi] = totalMultArray[xi,yi] + 50    # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
             # yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
             # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
@@ -240,19 +258,19 @@ class Flattening_algo:
         
             
             # yshiftArray = gaussian_filter(yshiftArray, sigma = 3)     # Smooth transition from yshift to zero. Testing shows ideal sigma value of 15.
-            totalMultArray = totalMultArray + yshiftArray     # Directly add yshift to previous grating
+            self.totalMultArray = self.totalMultArray + yshiftArray     # Directly add yshift to previous grating
             # totalMultArray = totalMultArray
 
 
 
         ######
         
-        totalMultArray = totalMultArray.astype(np.uint8)
+        self.totalMultArray = self.totalMultArray.astype(np.uint8)
 
-        aboveMultImg = Image.fromarray(aboveMultArray, "L") # mode = L
+        aboveMultImg = Image.fromarray(self.aboveMultArray, "L") # mode = L
         
-        totalMultImg = Image.fromarray(totalMultArray, "L") # mode = L
-        return totalMultImg, totalMultArray, goalArray, diff, self.threshold, allTest
+        totalMultImg = Image.fromarray(self.totalMultArray, "L") # mode = L
+        return totalMultImg, self.totalMultArray, goalArray, diff, self.threshold, allTest
 
 
 

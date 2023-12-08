@@ -26,6 +26,7 @@ class Page(tk.Frame):
         self.camera=camera
         self.Monitors = Monitors
         
+
         # CCDwidth = camera.getFrame().shape[1] # 1920
         # CCDheight = camera.getFrame().shape[0] # 1200
         CCDwidth=1600
@@ -216,9 +217,10 @@ class Page(tk.Frame):
         self.count = 0 
         self.timer = 0
         self.beginning_intensity = 0
-        self.init_code = 0
+        self.flattening_object = Flattening_algo(self.SLM.SLMwidth, self.SLM.SLMheight, self.loop_entry.get(), self.cal_transform)
+        
         ##### end of anthony initialising
-        self.delay=1
+        self.delay=100
         print("HELLO")
         self.after(self.delay, self.update)
         ## end of initialisation ##
@@ -354,19 +356,17 @@ class Page(tk.Frame):
             self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
         ########### Anthony Algo
-        self.init_code = 0
         if self.nloop_pressed == True or self.loop_pressed == True:
-            if self.init_code == 0:
-                flattening_object = Flattening_algo(self.SLM.SLMwidth, self.SLM.SLMheight, self.loop_entry.get(), self.cal_transform, self.ccd_data)
-                self.init_code +=1
-            gratingImg, SLMgrating, goalArray, diff, threshold, allTest = flattening_object.feedback(self.ccd_data)
-            flattening_object.threshold = threshold
+            self.flattening_object.ccd_data = self.ccd_data
+            gratingImg, SLMgrating, goalArray, diff, threshold, allTest = self.flattening_object.feedback()
+            self.flattening_object.threshold = threshold
         
-            flattening_object.count+=1
-            if flattening_object.count == self.loop_entry.get():
+            self.flattening_object.count +=1
+            self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
+            if self.flattening_object.count == int(self.loop_entry.get()):
                 self.nloop_pressed = False
                 self.loop_pressed = False
-                flattening_object.count=0
+                self.flattening_object.count=0
 
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
@@ -379,7 +379,7 @@ class Page(tk.Frame):
             if check != True:
                 self.SLM.SLMimage = SLMgrating
 
-                self.SLMgrating = cv2.resize(SLMgrating, dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
+                self.SLMgrating = cv2.resize(np.array(SLMgrating), dsize=(int(self.Monitors.SLMdim[0]*self.scale_percent/100), int(self.Monitors.SLMdim[1]*self.scale_percent/100)))
                 self.SLMgrating = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.SLMgrating))
                 self.SLM_image_widget.photo = self.SLMgrating
                 self.SLM_image_widget.config(image=self.SLMgrating)
