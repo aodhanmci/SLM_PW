@@ -5,7 +5,7 @@ from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import PIL
-from SLM_HAMAMATSU import *
+from Anthony_flattening import *
 import screeninfo
 import pandas as pd
 import laserbeamsize as lbs
@@ -191,7 +191,6 @@ class Page(tk.Frame):
                                     anchor=tk.CENTER
                                     )
 
-
         fig, ax = plt.subplots(figsize=(4.5,3.5))
 
         canvas = FigureCanvasTkAgg(fig, parent)
@@ -213,13 +212,17 @@ class Page(tk.Frame):
         self.loop_pressed = False
         self.nloop_pressed = False
         self.clearSLM = False
-        self.count = 0
+        ##### initialising Anthony Feedback
+        self.count = 0 
         self.timer = 0
-
+        self.beginning_intensity = 0
+        self.init_code = 0
+        ##### end of anthony initialising
         self.delay=1
         print("HELLO")
         self.after(self.delay, self.update)
         ## end of initialisation ##
+    
 
     def gain_change(self):
         try:
@@ -259,9 +262,10 @@ class Page(tk.Frame):
     def testFunc(self):
         # self.camera.StartGrabbing()
         pass
-
+    
+    ## this has been moved to Anthony flattening
     def calibrate(self):
-        warp_transform = calibration(self.SLM.SLMdisp, self.ccd_data)
+        warp_transform = Flattening_algo.calibration(self.SLM.SLMdisp, self.ccd_data)
         self.cal_transform = warp_transform
 
     def save_image(self):
@@ -344,31 +348,33 @@ class Page(tk.Frame):
 
 
     def update(self):
-        SLMimage = self.SLM.SLMimage
-        time1 = time.time()
-        # Example arrays (you can replace these with your actual image data)
-        # SLMgrating = np.random.randint(0, 256, size=(int(self.SLMdim[0]*scale_percent/100), int(self.SLMdim[1]*scale_percent/100)), dtype=np.uint8).T
-        # image_array2 = np.random.randint(0, 10, size=(width_scale, height_scale), dtype=np.uint8).T
-        # Convert NumPy arrays to Pillow Images
-        # image1 = Image.fromarray(image_array1)
-        # SLMimage = Image.fromarray(image_array2)
 
-        # SLMgrating = np.asarray(Image.open("./calibration/crosshair4.png"))
-        # SLMgrating = np.asarray(camera.SLMdisp)
         with self.camera.lock:
             self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
             self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
+        ########### Anthony Algo
+        self.init_code = 0
         if self.nloop_pressed == True or self.loop_pressed == True:
-            SLMgrating = run_Anthony_Feedback(self)
-            
+            if self.init_code == 0:
+                flattening_object = Flattening_algo(self.SLM.SLMwidth, self.SLM.SLMheight, self.loop_entry.get(), self.cal_transform, self.ccd_data)
+                self.init_code +=1
+            gratingImg, SLMgrating, goalArray, diff, threshold, allTest = flattening_object.feedback(self.ccd_data)
+            flattening_object.threshold = threshold
+        
+            flattening_object.count+=1
+            if flattening_object.count == self.loop_entry.get():
+                self.nloop_pressed = False
+                self.loop_pressed = False
+                flattening_object.count=0
+
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
 
         # if len(SLMgrating.shape) == 3:
         #     SLMgrating = SLMgrating[:,:,0]
 
-        if SLMimage[0][0] != None:
+        if self.SLM.SLMimage[0][0] != None:
             check = np.array_equal(self.SLM.SLMimage, SLMgrating)
             if check != True:
                 self.SLM.SLMimage = SLMgrating
@@ -386,7 +392,7 @@ class Page(tk.Frame):
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
 
-
+        ############# End of Anthony Algo
         image = self.ccd_data
         cx, cy, dx, dy, phi = lbs.beam_size(image)
         detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))

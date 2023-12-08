@@ -1,16 +1,8 @@
 import os
-from pypylon import genicam
 from pypylon import pylon
-import sys
-import time
-import cv2
-import numpy as np
 import tkinter as tk
-from tkinter import ttk, PhotoImage, filedialog
 from tkinter.filedialog import askopenfile
-from PIL import Image, ImageTk
 import pandas as pd
-from SLM_HAMAMATSU import *
 import os
 import threading
 os.environ["PYLON_CAMEMU"] = "3"
