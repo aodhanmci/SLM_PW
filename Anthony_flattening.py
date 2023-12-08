@@ -62,7 +62,7 @@ class Flattening_algo:
             self.initialImgArray = self.ccd_data
             self.initialArray = cv2.warpPerspective(self.initialImgArray, self.cal_transform, (np.shape(self.blazedData)[1], np.shape(self.blazedData)[0]), flags=cv2.INTER_LINEAR)
             self.initialImg = Image.fromarray(self.initialArray)
-            self.threshold = np.mean(sorted(self.initialArray.flatten(), reverse=True)[50]) * 0.9
+            self.threshold = np.mean(sorted(self.initialArray.flatten(), reverse=True)[50]) * 0.7
 
             self.xi, self.yi = (self.initialArray >= int(self.threshold-5)).nonzero()
             self.stacked = np.stack((self.xi, self.yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array

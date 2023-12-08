@@ -363,10 +363,12 @@ class Page(tk.Frame):
         
             self.flattening_object.count +=1
             self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
+            self.delay = 500
             if self.flattening_object.count == int(self.loop_entry.get()):
                 self.nloop_pressed = False
                 self.loop_pressed = False
                 self.flattening_object.count=0
+                self.delay=100
 
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
