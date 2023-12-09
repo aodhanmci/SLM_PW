@@ -18,7 +18,7 @@ class Page(tk.Frame):
     def __init__(self, parent, window, camera, Monitors, SLM):
 
         tk.Frame.__init__(self, parent)
-
+        self.parent = parent
         self.window = window
         self.SLM = SLM
         window.title("SLM & CCD Control")
@@ -29,8 +29,11 @@ class Page(tk.Frame):
 
         # CCDwidth = camera.getFrame().shape[1] # 1920
         # CCDheight = camera.getFrame().shape[0] # 1200
-        CCDwidth=1600
-        CCDheight=1200
+        # print(self.camera.camera.Width)
+        CCDwidth = self.camera.camera.Width.GetValue()
+        CCDheight = self.camera.camera.Height.GetValue()
+        # CCDwidth=1600
+        # CCDheight=1200
 
         scale_percent = 30 # percent of original size
         self.scale_percent = scale_percent
@@ -62,7 +65,12 @@ class Page(tk.Frame):
             y= gap/2,
             anchor=tk.CENTER
             )
-
+        name_label = tk.Label(window, text="Aodhan McIlvenny and Anthony Lu LBNL")
+        name_label.place(
+            x = 120,
+            y= 10, 
+            anchor=tk.CENTER
+            )
         # Create a label for the CCD image
         self.ccd_image_label = tk.Label(window, text="CCD")
         self.ccd_image_label.place(
@@ -323,8 +331,10 @@ class Page(tk.Frame):
                            'gain': [self.gain_entry.get()],
                            'loop': [self.loop_entry.get()]})
         df.to_csv('./settings/prevVals.csv', index=False)
-        self.window.destroy()
-        self.camera.Close
+        self.camera.camera.Close()
+        self.parent.destroy()
+        
+        
 
 
     def wf(self):
@@ -360,6 +370,7 @@ class Page(tk.Frame):
             self.flattening_object.ccd_data = self.ccd_data
             gratingImg, SLMgrating, goalArray, diff, threshold, allTest = self.flattening_object.feedback()
             self.flattening_object.threshold = threshold
+            print(threshold)
         
             self.flattening_object.count +=1
             self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)

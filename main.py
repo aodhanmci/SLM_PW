@@ -5,23 +5,23 @@ from Camera import *
 from monitor_initiation import *
 from SLM_display import *
 
-def onClose():
-    # Your code to handle the window close event
-    print("Window is closing")
-    root.destroy()
+def close_application():
+    if SLMwindow.winfo_exists():
+        SLMwindow.destroy()
+    
+    GUIwindow.exitGUI()
 
 if __name__ == "__main__":
     root = tk.Tk()
     camera = cameraCapture()
     camera.start_capture()
+    
     Monitors = InitiateMonitors()
     SLM=DisplaySLM(Monitors)
-    testWidget = Page(root, root, camera, Monitors, SLM) 
+    GUIwindow = Page(root, root, camera, Monitors, SLM) 
     SLMwindow = window2(root, Monitors, SLM)
 
-    root.protocol("WM_DELETE_WINDOW", onClose)
-
+    root.protocol("WM_DELETE_WINDOW", close_application)
     root.mainloop()
-    camera.stop_capture()
 
     
