@@ -1,17 +1,14 @@
 import tkinter as tk
 from tkinter.constants import *
-import Camera
-from PIL import Image, ImageOps
+from PIL import Image
 import numpy as np
 import cv2
 import PIL
 from Anthony_flattening import *
-import screeninfo
 import pandas as pd
 import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
-# THIS IS A TEST!!!
 
 class Page(tk.Frame):
 

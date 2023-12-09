@@ -1,7 +1,7 @@
 import tkinter as tk
 from PIL import Image
 import numpy as np
-from tkinter import ttk, PhotoImage, filedialog
+from tkinter import filedialog
 
 class DisplaySLM(tk.Frame):
     def __init__(self, Monitors):
