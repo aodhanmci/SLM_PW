@@ -14,7 +14,7 @@ def close_application():
 if __name__ == "__main__":
     root = tk.Tk()
     camera = cameraCapture()
-    camera.start_capture()
+    camera.start_capture() # thread locking
     
     Monitors = InitiateMonitors()
     SLM=DisplaySLM(Monitors)
@@ -23,5 +23,6 @@ if __name__ == "__main__":
 
     root.protocol("WM_DELETE_WINDOW", close_application)
     root.mainloop()
+    camera.stop_capture() # thread locking
 
     

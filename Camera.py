@@ -89,7 +89,7 @@ class cameraCapture(tk.Frame):
 
 
     def start_capture(self):
-        # Flag to control the capture loop
+        # thread locking
         self.continue_capture = True
         self.capture_thread = threading.Thread(target=self.getFrame)
         self.capture_thread.start()
