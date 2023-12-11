@@ -90,7 +90,6 @@ class Page(tk.Frame):
             anchor=tk.CENTER
             )
 
-
         # Create buttons
         self.start_button = tk.Button(window, text="Start", command=self.testFunc)
         self.start_button.place(x=0, **upper_row_dict)
@@ -100,6 +99,8 @@ class Page(tk.Frame):
         self.exit_button.place(x=2*large_button_width, **upper_row_dict)
         self.save_SLM_entry = tk.Entry(window)
         self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
+        self.GA_Start_button = tk.Button(window, text="GA GO", command=self.GA_Start)
+        self.GA_Start_button.place(x=4*large_button_width, **upper_row_dict)
         self.loop_entry = tk.Entry(window)
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
@@ -112,8 +113,8 @@ class Page(tk.Frame):
         self.clear_button.place(x=2*large_button_width, **lower_row_dict)
         self.save_SLM_button = tk.Button(window, text="Save SLM", command=self.save_SLM)
         self.save_SLM_button.place(x=3*large_button_width, **lower_row_dict)
-        self.one_loop_button = tk.Button(window, text="1 loop", command=self.oneloop)
-        self.one_loop_button.place(x=4*large_button_width, **lower_row_dict)
+        self.GA_button = tk.Button(window, text="GA", command=self.GA_parameters)
+        self.GA_button.place(x=4*large_button_width, **lower_row_dict)
         self.five_loop_button = tk.Button(window, text="n loop", command=self.nloops)
         self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
         self.crosshair_button = tk.Button(window, text="Crosshair", command=self.crosshair)
@@ -247,9 +248,35 @@ class Page(tk.Frame):
             print(error)
             self.exposure_entry.config(background="red")
 
-    def oneloop(self):
-        self.loop_pressed = True
+    def GA_parameters(self):
+        
+        self.GA_window = tk.Toplevel(self.parent)
+        self.GA_window.geometry("300x300")
+        self.GA_window.title("Genetic Algorithm Flattening")
+        self.GA_population_label = tk.Label(self.GA_window , text="Initial Population")
+        self.GA_population_label.grid(row=0, column=0)
+        self.GA_population = tk.Entry(self.GA_window)
+        self.GA_population.insert(0, "20")
+        self.GA_population.grid(row=0, column=1)
+        self.GA_generation_label = tk.Label(self.GA_window , text="Number of Gens")
+        self.GA_generation_label.grid(row=1, column=0)
+        self.GA_generations = tk.Entry(self.GA_window)
+        self.GA_generations.insert(0, "50")
+        self.GA_generations.grid(row=1, column=1)
+        self.GA_mutation_label = tk.Label(self.GA_window , text="Mutation Rate")
+        self.GA_mutation_label.grid(row=2, column=0)
+        self.GA_mutation_rate = tk.Entry(self.GA_window)
+        self.GA_mutation_rate.insert(0, "2")
+        self.GA_mutation_rate.grid(row=2, column=1)
+        self.GA_parents_label = tk.Label(self.GA_window , text="Num of Parents")
+        self.GA_parents_label.grid(row=3, column=0)
+        self.GA_num_parents = tk.Entry(self.GA_window)
+        self.GA_num_parents.insert(0, "6")
+        self.GA_num_parents.grid(row=3, column=1)
     
+    def GA_Start(self):
+        self.GA_GO=True
+
     def nloops(self):
         self.nloop_pressed = True
     
@@ -363,7 +390,7 @@ class Page(tk.Frame):
             self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
         ########### Anthony Algo
-        if self.nloop_pressed == True or self.loop_pressed == True:
+        if self.nloop_pressed == True:
             self.flattening_object.ccd_data = self.ccd_data
             gratingImg, SLMgrating, goalArray, diff, threshold, allTest = self.flattening_object.feedback()
             self.flattening_object.threshold = threshold
