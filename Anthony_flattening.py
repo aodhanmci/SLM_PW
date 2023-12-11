@@ -30,7 +30,7 @@ class Flattening_algo:
         self.beginningIntensity = 0
         self.ccd_data = np.zeros((1600, 1200))
         self.gratingArray = np.zeros((SLMwidth, SLMheight))
-        self.grating = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_2px.png')
+        self.grating = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
         self.blazedData = asarray(self.grating)
         
         self.initialImgArray = None
