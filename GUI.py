@@ -10,6 +10,7 @@ import pandas as pd
 import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
+import random
 
 class Page(tk.Frame):
 
@@ -282,15 +283,15 @@ class Page(tk.Frame):
         self.GA_update.grid(row=4, column=1)
     
     def GA_update_function(self):
-        self.GA_population = self.GA_population_entry.get()
-        self.GA_generation = self.GA_generations_entry.get()
-        self.GA_mutation_rate = self.GA_mutation_rate_entry.get()
-        self.GA_num_parents = self.GA_num_parents_entry.get()
+        self.GA_population = int(self.GA_population_entry.get())
+        self.GA_generation = int(self.GA_generations_entry.get())
+        self.GA_mutation_rate = int(self.GA_mutation_rate_entry.get())
+        self.GA_num_parents = int(self.GA_num_parents_entry.get())
         self.GA_window.destroy()
 
     def GA_Start(self):
         self.GA_GO=True
-        self.GA_object = flattening_GA(int(self.GA_population), int(self.GA_generation), int(self.GA_num_parents), int(self.GA_mutation_rate), self.SLM.SLMwidth, self.SLM.SLMheight)
+        self.GA_object = flattening_GA(self.GA_population, self.GA_generation, self.GA_num_parents, self.GA_mutation_rate, self.SLM.SLMwidth, self.SLM.SLMheight)
 
     def nloops(self):
         self.nloop_pressed = True
@@ -423,39 +424,50 @@ class Page(tk.Frame):
 
         ########## Genetic Algorithm
         elif self.GA_GO == True:
-            # cretae the object
-            if self.generation_number_counter and self.population_number_counter == 0:
+            print(f' gen num:{self.generation_number_counter}, pop num:{self.population_number_counter}')
+            self.delay = 500
+            # set the goal using the initial CCD data
+            if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                self.GA_object.goal_image = np.clip(self.ccd_data, 0, 150)
+                goal = np.clip(self.ccd_data, 0, 200)
+                self.GA_object.goal_image = goal
             # generation loop
+            self.GA_object.fitness_of_population[self.population_number_counter - 1] = self.GA_object.calculate_fitness(self.ccd_data)
+            print(self.GA_object.calculate_fitness(self.ccd_data))
             if self.generation_number_counter ==0:
+                
                 # creates initial population in the first generation from randomised blocks
                 inital = self.GA_object.initialize_individual_block_based()
-                self.GA_object.population_of_generation[self.population_number_counter, :, :] = self.GA_object.apply_block_pattern_to_grid(inital)
-                self.GA_object.fitness_of_population[self.population_number_counter] = self.GA_object.calculate_fitness()
-                self.population_number_counter +=1    
+                tiled_data = self.GA_object.apply_block_pattern_to_grid(inital)
+                self.GA_object.population_of_generation[self.population_number_counter, :, :] = tiled_data
+                # the fitness is from the previous iteration becasue this new one hasn't updated yet
+                
 
             # if it's not the first generation then the data is taken from the parents by ranking and splicing them
-            elif self.generation_number_counter < self.self.GA_generations:
-                    parents = self.GA_object.select_parents()
-                    parent1, parent2 = random.sample(parents, 2)
-                    child = self.GA_object.smooth_crossover(parent1, parent2)
+            elif self.generation_number_counter > 0 and self.generation_number_counter < self.GA_generation:
+                    
+                    parent1, parent2 = random.sample(self.parents, 2)
+                    child = self.GA_object.smooth_crossover(parent1[0, :, :], parent2[0, :, :])
                     child = self.GA_object.smooth_mutate(child)
                     self.GA_object.population_of_generation[self.population_number_counter, :, :] = child
-                    self.GA_object.fitness_of_population[self.population_number_counter] = self.GA_object.calculate_fitness(self.ccd_data)
             # if you're at the end of the number of generations then reset everything
             else:
                 self.GA_GO == False
                 self.generation_number_counter = 0
                 self.population_number_counter = 0
+                self.delay = 100
 
             # set the current image to the SLM so the CCD can be measured in the next loop
             SLMgrating = self.GA_object.population_of_generation[self.population_number_counter, :, :]
-
+            self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
+            
             # keep increasing the number of the population until you hit the limit for the generation. then it will reset and increase the generation number
-            if self.population_number_counter < self.GA_population:
+            if self.population_number_counter < self.GA_population-1:
                 self.population_number_counter +=1
+            
+            # at the end of the generation, select the parents for the next generation    
             else:
+                self.parents = self.GA_object.select_parents()
                 self.population_number_counter =0  
                 self.generation_number_counter +=1               
 
@@ -481,7 +493,7 @@ class Page(tk.Frame):
                 self.SLM_preview_widget.photo = self.SLMbrowse
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
 
-        ############# End of Anthony Algo
+        ############# End of flattening
         image = self.ccd_data
         cx, cy, dx, dy, phi = lbs.beam_size(image)
         detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
