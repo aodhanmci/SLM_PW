@@ -8,7 +8,6 @@ from SLM_display import *
 def close_application():
     if SLMwindow.winfo_exists():
         SLMwindow.destroy()
-    
     GUIwindow.exitGUI()
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import PIL
 from Anthony_flattening import *
+from GA_flattening import *
 import pandas as pd
 import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -225,6 +226,10 @@ class Page(tk.Frame):
         self.beginning_intensity = 0
         self.flattening_object = Flattening_algo(self.SLM.SLMwidth, self.SLM.SLMheight, self.loop_entry.get(), self.cal_transform)
         
+        ##### initialisng machine learning feedback
+        self.generation_number_counter = 0
+        self.population_number_counter = 0
+        self.GA_GO=False
         ##### end of anthony initialising
         self.delay=100
         print("HELLO")
@@ -255,27 +260,37 @@ class Page(tk.Frame):
         self.GA_window.title("Genetic Algorithm Flattening")
         self.GA_population_label = tk.Label(self.GA_window , text="Initial Population")
         self.GA_population_label.grid(row=0, column=0)
-        self.GA_population = tk.Entry(self.GA_window)
-        self.GA_population.insert(0, "20")
-        self.GA_population.grid(row=0, column=1)
+        self.GA_population_entry = tk.Entry(self.GA_window)
+        self.GA_population_entry.insert(0, "20")
+        self.GA_population_entry.grid(row=0, column=1)
         self.GA_generation_label = tk.Label(self.GA_window , text="Number of Gens")
         self.GA_generation_label.grid(row=1, column=0)
-        self.GA_generations = tk.Entry(self.GA_window)
-        self.GA_generations.insert(0, "50")
-        self.GA_generations.grid(row=1, column=1)
+        self.GA_generations_entry = tk.Entry(self.GA_window)
+        self.GA_generations_entry.insert(0, "50")
+        self.GA_generations_entry.grid(row=1, column=1)
         self.GA_mutation_label = tk.Label(self.GA_window , text="Mutation Rate")
         self.GA_mutation_label.grid(row=2, column=0)
-        self.GA_mutation_rate = tk.Entry(self.GA_window)
-        self.GA_mutation_rate.insert(0, "2")
-        self.GA_mutation_rate.grid(row=2, column=1)
+        self.GA_mutation_rate_entry = tk.Entry(self.GA_window)
+        self.GA_mutation_rate_entry.insert(0, "2")
+        self.GA_mutation_rate_entry.grid(row=2, column=1)
         self.GA_parents_label = tk.Label(self.GA_window , text="Num of Parents")
         self.GA_parents_label.grid(row=3, column=0)
-        self.GA_num_parents = tk.Entry(self.GA_window)
-        self.GA_num_parents.insert(0, "6")
-        self.GA_num_parents.grid(row=3, column=1)
+        self.GA_num_parents_entry = tk.Entry(self.GA_window)
+        self.GA_num_parents_entry.insert(0, "6")
+        self.GA_num_parents_entry.grid(row=3, column=1)
+        self.GA_update = tk.Button(self.GA_window, text="Update and Close", command=self.GA_update_function)
+        self.GA_update.grid(row=4, column=1)
     
+    def GA_update_function(self):
+        self.GA_population = self.GA_population_entry.get()
+        self.GA_generation = self.GA_generations_entry.get()
+        self.GA_mutation_rate = self.GA_mutation_rate_entry.get()
+        self.GA_num_parents = self.GA_num_parents_entry.get()
+        self.GA_window.destroy()
+
     def GA_Start(self):
         self.GA_GO=True
+        self.GA_object = flattening_GA(int(self.GA_population), int(self.GA_generation), int(self.GA_num_parents), int(self.GA_mutation_rate), self.SLM.SLMwidth, self.SLM.SLMheight)
 
     def nloops(self):
         self.nloop_pressed = True
@@ -358,8 +373,6 @@ class Page(tk.Frame):
         self.camera.camera.Close()
         self.parent.destroy()
         
-        
-
 
     def wf(self):
             # gratingArray = Image.fromarray(gratingArray).show()
@@ -389,7 +402,9 @@ class Page(tk.Frame):
             self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
             self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
-        ########### Anthony Algo
+        ########### Flattening
+
+        ########### Anthony Flattening
         if self.nloop_pressed == True:
             self.flattening_object.ccd_data = self.ccd_data
             gratingImg, SLMgrating, goalArray, diff, threshold, allTest = self.flattening_object.feedback()
@@ -405,11 +420,48 @@ class Page(tk.Frame):
                 self.flattening_object.count=0
                 self.delay=100
 
+
+        ########## Genetic Algorithm
+        elif self.GA_GO == True:
+            # cretae the object
+            if self.generation_number_counter and self.population_number_counter == 0:
+                # set the threshold using the inital data and creating a cap
+                self.GA_object.goal_image = np.clip(self.ccd_data, 0, 150)
+            # generation loop
+            if self.generation_number_counter ==0:
+                # creates initial population in the first generation from randomised blocks
+                inital = self.GA_object.initialize_individual_block_based()
+                self.GA_object.population_of_generation[self.population_number_counter, :, :] = self.GA_object.apply_block_pattern_to_grid(inital)
+                self.GA_object.fitness_of_population[self.population_number_counter] = self.GA_object.calculate_fitness()
+                self.population_number_counter +=1    
+
+            # if it's not the first generation then the data is taken from the parents by ranking and splicing them
+            elif self.generation_number_counter < self.self.GA_generations:
+                    parents = self.GA_object.select_parents()
+                    parent1, parent2 = random.sample(parents, 2)
+                    child = self.GA_object.smooth_crossover(parent1, parent2)
+                    child = self.GA_object.smooth_mutate(child)
+                    self.GA_object.population_of_generation[self.population_number_counter, :, :] = child
+                    self.GA_object.fitness_of_population[self.population_number_counter] = self.GA_object.calculate_fitness(self.ccd_data)
+            # if you're at the end of the number of generations then reset everything
+            else:
+                self.GA_GO == False
+                self.generation_number_counter = 0
+                self.population_number_counter = 0
+
+            # set the current image to the SLM so the CCD can be measured in the next loop
+            SLMgrating = self.GA_object.population_of_generation[self.population_number_counter, :, :]
+
+            # keep increasing the number of the population until you hit the limit for the generation. then it will reset and increase the generation number
+            if self.population_number_counter < self.GA_population:
+                self.population_number_counter +=1
+            else:
+                self.population_number_counter =0  
+                self.generation_number_counter +=1               
+
+        ######### normal mode of operations
         else:
             SLMgrating = np.asarray(self.SLM.SLMdisp)
-
-        # if len(SLMgrating.shape) == 3:
-        #     SLMgrating = SLMgrating[:,:,0]
 
         if self.SLM.SLMimage[0][0] != None:
             check = np.array_equal(self.SLM.SLMimage, SLMgrating)
