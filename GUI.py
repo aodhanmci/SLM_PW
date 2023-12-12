@@ -445,7 +445,6 @@ class Page(tk.Frame):
 
             # if it's not the first generation then the data is taken from the parents by ranking and splicing them
             elif self.generation_number_counter > 0 and self.generation_number_counter < self.GA_generation:
-                    
                     parent1, parent2 = random.sample(self.parents, 2)
                     child = self.GA_object.smooth_crossover(parent1[0, :, :], parent2[0, :, :])
                     child = self.GA_object.smooth_mutate(child)
@@ -467,6 +466,7 @@ class Page(tk.Frame):
             
             # at the end of the generation, select the parents for the next generation    
             else:
+                # is the problem here, is it not gettin gto the parents
                 self.parents = self.GA_object.select_parents()
                 self.population_number_counter =0  
                 self.generation_number_counter +=1               
