@@ -11,11 +11,11 @@ class flattening_GA:
         self.mutation_rate = GA_mutation_rate
         self.num_parents = GA_num_parents
 
-        self.mutation_strength = 20 # Adjust as needed for smoother transitions
+        self.mutation_strength = 3 # Adjust as needed for smoother transitions
         self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
         self.fitness_of_population = np.zeros((self.population_size, 1))
-        self.block_size_x = 40
-        self.block_size_y = 40
+        self.block_size_x =100
+        self.block_size_y = 100
         
         self.num_blocks_x = (SLMwidth // self.block_size_x)+1
         self.num_blocks_y = (SLMheight // self.block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason
@@ -24,7 +24,9 @@ class flattening_GA:
         self.binary_pattern = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
         self.goal_image = None
 
-
+        x = np.linspace(0, self.num_blocks_x, self.num_blocks_x)
+        y = np.linspace(0, self.num_blocks_y, self.num_blocks_y)
+        self.x, self.y = np.meshgrid(x, y)
 
         self.basic_block_pattern = self.create_basic_block_pattern()
 
@@ -37,17 +39,27 @@ class flattening_GA:
     def initialize_individual_block_based(self):
         # Initialize the amplitude matrix for each block
         return np.random.uniform(0, 250, (self.num_blocks_x, self.num_blocks_y))
+        # gauss1 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        #  -  np.random.randint(0, 200)*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        # gauss2 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        # gauss3 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+
+        # return (gauss1+gauss2+gauss3)/3
+
 
     def apply_block_pattern_to_grid(self, amplitudes):
+        # Generate the Gaussian distribution
+
+
         # Tile the amplitudes to match the size of the basic block pattern
         tiled_amplitudes = np.repeat(np.repeat(amplitudes, self.block_size_x, axis=0), self.block_size_y, axis=1)
 
-        # Apply the amplitudes to the basic block pattern
+        # Apply the modulated amplitudes to the basic block pattern
         pattern_grid = self.basic_block_pattern * tiled_amplitudes
 
         # Trim the pattern to fit the SLM dimensions
         return pattern_grid[:self.SLMwidth, :self.SLMheight]
-
+    
     # def mutate_amplitudes(self, amplitudes):
     #     # Apply mutation to the amplitude matrix
     #     mutation_strength = 10  # Adjust as needed
@@ -61,11 +73,16 @@ class flattening_GA:
         return fitness
 
     def select_parents(self):
-        parents = np.argsort(self.fitness_of_population[:, 0])[:self.num_parents]
+        self.fitness_of_population = self.fitness_of_population[:, 0]
+        # print(self.fitness_of_population)
+        self.fitness_of_population[self.fitness_of_population <0.01] = np.NaN
+        parents = np.argsort(self.fitness_of_population)[1:self.num_parents+1]
         counter = 0
         for i in parents:
             self.parents[counter, :, :] =  self.amplitudes[i, :, :]
             counter +=1
+        # print(np.nanmin(self.fitness_of_population))
+
 
 
     # def smooth_mutate(self, individual):

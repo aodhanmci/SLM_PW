@@ -280,7 +280,7 @@ class Page(tk.Frame):
         self.GA_population_label = tk.Label(self.GA_window , text="Initial Population")
         self.GA_population_label.grid(row=0, column=0)
         self.GA_population_entry = tk.Entry(self.GA_window)
-        self.GA_population_entry.insert(0, "20")
+        self.GA_population_entry.insert(0, "30")
         self.GA_population_entry.grid(row=0, column=1)
         self.GA_generation_label = tk.Label(self.GA_window , text="Number of Gens")
         self.GA_generation_label.grid(row=1, column=0)
@@ -295,7 +295,7 @@ class Page(tk.Frame):
         self.GA_parents_label = tk.Label(self.GA_window , text="Num of Parents")
         self.GA_parents_label.grid(row=3, column=0)
         self.GA_num_parents_entry = tk.Entry(self.GA_window)
-        self.GA_num_parents_entry.insert(0, "6")
+        self.GA_num_parents_entry.insert(0, "10")
         self.GA_num_parents_entry.grid(row=3, column=1)
         self.GA_update = tk.Button(self.GA_window, text="Update and Close", command=self.GA_update_function)
         self.GA_update.grid(row=4, column=1)
@@ -448,7 +448,7 @@ class Page(tk.Frame):
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 90)
+                goal = np.clip(self.ccd_data, 0, 120)
                 self.GA_object.goal_image = goal
             # generation loop
             if self.population_number_counter == 0:
@@ -460,6 +460,7 @@ class Page(tk.Frame):
                 
                 # creates initial population in the first generation from randomised blocks
                 amplitudes = self.GA_object.initialize_individual_block_based()
+                # image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
                 image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
                 self.GA_object.amplitudes[self.population_number_counter, :, :] = amplitudes
                 self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
@@ -497,8 +498,8 @@ class Page(tk.Frame):
             # at the end of the generation, select the parents for the next generation    
             else:
                 # need to select the best parents
-                self.GA_object.select_parents()
                 print(np.mean(self.GA_object.fitness_of_population))
+                self.GA_object.select_parents()
                 # resest the population so it can be filled with the next generation
                 self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
                 self.GA_object.amplitudes = np.zeros((self.GA_object.population_size, self.GA_object.num_blocks_x, self.GA_object.num_blocks_y))
