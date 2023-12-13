@@ -290,7 +290,7 @@ class Page(tk.Frame):
         self.GA_mutation_label = tk.Label(self.GA_window , text="Mutation Rate")
         self.GA_mutation_label.grid(row=2, column=0)
         self.GA_mutation_rate_entry = tk.Entry(self.GA_window)
-        self.GA_mutation_rate_entry.insert(0, "2")
+        self.GA_mutation_rate_entry.insert(0, "0.2")
         self.GA_mutation_rate_entry.grid(row=2, column=1)
         self.GA_parents_label = tk.Label(self.GA_window , text="Num of Parents")
         self.GA_parents_label.grid(row=3, column=0)
@@ -443,7 +443,7 @@ class Page(tk.Frame):
 
         ########## Genetic Algorithm
         elif self.GA_GO == True:
-            print(f' gen num:{self.generation_number_counter}, pop num:{self.population_number_counter}')
+            # print(f' gen num:{self.generation_number_counter}, pop num:{self.population_number_counter}')
             self.delay = 500
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
@@ -455,7 +455,7 @@ class Page(tk.Frame):
                 pass
             else:
                 self.GA_object.fitness_of_population[self.population_number_counter - 1] = self.GA_object.calculate_fitness(self.ccd_data)
-            print(self.GA_object.calculate_fitness(self.ccd_data))
+            # print(self.GA_object.calculate_fitness(self.ccd_data))
             if self.generation_number_counter ==0:
                 
                 # creates initial population in the first generation from randomised blocks
@@ -476,6 +476,7 @@ class Page(tk.Frame):
                     parent2 = self.GA_object.parents[indices[1], :, :]
                     child = self.GA_object.smooth_crossover(parent1, parent2)
                     child = self.GA_object.smooth_mutate(child)
+                    self.GA_object.amplitudes[self.population_number_counter, :, ] = child
                     image = self.GA_object.apply_block_pattern_to_grid(child)
                     self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
             # if you're at the end of the number of generations then reset everything
@@ -497,10 +498,11 @@ class Page(tk.Frame):
             else:
                 # need to select the best parents
                 self.GA_object.select_parents()
+                print(np.mean(self.GA_object.fitness_of_population))
                 # resest the population so it can be filled with the next generation
-                # self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
-                # self.GA_object.amplitudes = np.zeros((self.GA_object.population_size, self.GA_object.num_blocks_x, self.GA_object.num_blocks_y))
-                # self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
+                self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
+                self.GA_object.amplitudes = np.zeros((self.GA_object.population_size, self.GA_object.num_blocks_x, self.GA_object.num_blocks_y))
+                self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
                 self.population_number_counter =0  
                 self.generation_number_counter +=1               
 
