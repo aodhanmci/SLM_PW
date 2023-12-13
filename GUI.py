@@ -429,10 +429,13 @@ class Page(tk.Frame):
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 200)
+                goal = np.clip(self.ccd_data, 0, 100)
                 self.GA_object.goal_image = goal
             # generation loop
-            self.GA_object.fitness_of_population[self.population_number_counter - 1] = self.GA_object.calculate_fitness(self.ccd_data)
+            if self.population_number_counter == 0:
+                pass
+            else:
+                self.GA_object.fitness_of_population[self.population_number_counter - 1] = self.GA_object.calculate_fitness(self.ccd_data)
             print(self.GA_object.calculate_fitness(self.ccd_data))
             if self.generation_number_counter ==0:
                 
@@ -445,13 +448,15 @@ class Page(tk.Frame):
 
             # if it's not the first generation then the data is taken from the parents by ranking and splicing them
             elif self.generation_number_counter > 0 and self.generation_number_counter < self.GA_generation:
-                    parent1, parent2 = random.sample(self.parents, 2)
-                    child = self.GA_object.smooth_crossover(parent1[0, :, :], parent2[0, :, :])
+                    # parent1, parent2 = random.sample(self.GA_object.parents, 2)
+                    parent1 = self.GA_object.parents[random.randint(0, self.GA_num_parents-1), :, :]
+                    parent2 = self.GA_object.parents[random.randint(0, self.GA_num_parents-1), :, :]
+                    child = self.GA_object.smooth_crossover(parent1, parent2)
                     child = self.GA_object.smooth_mutate(child)
                     self.GA_object.population_of_generation[self.population_number_counter, :, :] = child
             # if you're at the end of the number of generations then reset everything
             else:
-                self.GA_GO == False
+                self.GA_GO = False
                 self.generation_number_counter = 0
                 self.population_number_counter = 0
                 self.delay = 100
@@ -466,8 +471,11 @@ class Page(tk.Frame):
             
             # at the end of the generation, select the parents for the next generation    
             else:
-                # is the problem here, is it not gettin gto the parents
-                self.parents = self.GA_object.select_parents()
+                # need to select the best parents
+                self.GA_object.select_parents()
+                # resest the population so it can be filled with the next generation
+                self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
+                self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
                 self.population_number_counter =0  
                 self.generation_number_counter +=1               
 
@@ -509,6 +517,7 @@ class Page(tk.Frame):
 
                 self.ax.clear()
                 self.ax.plot(x,y, color = "dimgrey")
+                self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
 
                 try:
                     if np.amax(self.SLM.SLMimage) != 0.0:
