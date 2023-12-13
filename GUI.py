@@ -429,7 +429,7 @@ class Page(tk.Frame):
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 100)
+                goal = np.clip(self.ccd_data, 0, 90)
                 self.GA_object.goal_image = goal
             # generation loop
             if self.population_number_counter == 0:
@@ -440,20 +440,25 @@ class Page(tk.Frame):
             if self.generation_number_counter ==0:
                 
                 # creates initial population in the first generation from randomised blocks
-                inital = self.GA_object.initialize_individual_block_based()
-                tiled_data = self.GA_object.apply_block_pattern_to_grid(inital)
-                self.GA_object.population_of_generation[self.population_number_counter, :, :] = tiled_data
+                amplitudes = self.GA_object.initialize_individual_block_based()
+                image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
+                self.GA_object.amplitudes[self.population_number_counter, :, :] = amplitudes
+                self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
                 # the fitness is from the previous iteration becasue this new one hasn't updated yet
                 
 
             # if it's not the first generation then the data is taken from the parents by ranking and splicing them
+            # to work on - the amplitudes should be all thats kept because thats all that matters - they can then be tiled with the underlying macroblock
             elif self.generation_number_counter > 0 and self.generation_number_counter < self.GA_generation:
                     # parent1, parent2 = random.sample(self.GA_object.parents, 2)
-                    parent1 = self.GA_object.parents[random.randint(0, self.GA_num_parents-1), :, :]
-                    parent2 = self.GA_object.parents[random.randint(0, self.GA_num_parents-1), :, :]
+                    # amplitudes = self.GA_object.mutate_amplitudes(amplitudes)
+                    indices = random.sample(range(self.GA_num_parents), 2)
+                    parent1 = self.GA_object.parents[indices[0], :, :]
+                    parent2 = self.GA_object.parents[indices[1], :, :]
                     child = self.GA_object.smooth_crossover(parent1, parent2)
                     child = self.GA_object.smooth_mutate(child)
-                    self.GA_object.population_of_generation[self.population_number_counter, :, :] = child
+                    image = self.GA_object.apply_block_pattern_to_grid(child)
+                    self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
             # if you're at the end of the number of generations then reset everything
             else:
                 self.GA_GO = False
@@ -474,8 +479,9 @@ class Page(tk.Frame):
                 # need to select the best parents
                 self.GA_object.select_parents()
                 # resest the population so it can be filled with the next generation
-                self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
-                self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
+                # self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))
+                # self.GA_object.amplitudes = np.zeros((self.GA_object.population_size, self.GA_object.num_blocks_x, self.GA_object.num_blocks_y))
+                # self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
                 self.population_number_counter =0  
                 self.generation_number_counter +=1               
 
