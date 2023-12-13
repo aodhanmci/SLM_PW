@@ -26,20 +26,20 @@ class Page(tk.Frame):
         self.Monitors = Monitors
         
 
-        # CCDwidth = camera.getFrame().shape[1] # 1920
-        # CCDheight = camera.getFrame().shape[0] # 1200
+        # self.CCDwidth = camera.getFrame().shape[1] # 1920
+        # self.CCDheight = camera.getFrame().shape[0] # 1200
         # print(self.camera.camera.Width)
-        CCDwidth = self.camera.camera.Width.GetValue()
-        CCDheight = self.camera.camera.Height.GetValue()
-        # CCDwidth=1600
-        # CCDheight=1200
+        self.CCDwidth = self.camera.camera.Width.GetValue()
+        self.CCDheight = self.camera.camera.Height.GetValue()
+        # self.CCDwidth=1600
+        # self.CCDheight=1200
 
         scale_percent = 30 # percent of original size
         self.scale_percent = scale_percent
-        gap = min(self.Monitors.SLMwidth, CCDwidth)*scale_percent/600
+        gap = min(self.Monitors.SLMwidth, self.CCDwidth)*scale_percent/600
 
-        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + CCDwidth*scale_percent/100 + 3*gap)
-        window_height = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/50 + 3*gap)
+        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 3*gap)
+        window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
 
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
 
@@ -56,7 +56,7 @@ class Page(tk.Frame):
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
-        self.ccd_data = None
+        self.ccd_data = np.zeros_like((self.CCDwidth, self.CCDheight))
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM")
         self.slm_image_label.place(
@@ -73,7 +73,7 @@ class Page(tk.Frame):
         # Create a label for the CCD image
         self.ccd_image_label = tk.Label(window, text="CCD")
         self.ccd_image_label.place(
-            x = window_width - CCDwidth*scale_percent/200 - gap,
+            x = window_width - self.CCDwidth*scale_percent/200 - gap,
             y= gap/2, 
             anchor=tk.CENTER
             )
@@ -81,14 +81,14 @@ class Page(tk.Frame):
         self.slm_preview_label = tk.Label(window, text="SLM Preview")
         self.slm_preview_label.place(
             x = self.Monitors.SLMwidth*scale_percent/200 + gap,
-            y= 3*gap/2 + max(self.Monitors.SLMheight, CCDheight)*scale_percent/100, 
+            y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
             )
         
         self.lineout_label = tk.Label(window, text="Center Lineout")
         self.lineout_label.place(
-            x = window_width - CCDwidth*scale_percent/200 - gap,
-            y= 3*gap/2 + max(self.Monitors.SLMheight, CCDheight)*scale_percent/100, 
+            x = window_width - self.CCDwidth*scale_percent/200 - gap,
+            y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
             )
 
@@ -103,6 +103,9 @@ class Page(tk.Frame):
         self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
         self.GA_Start_button = tk.Button(window, text="GA GO", command=self.GA_Start)
         self.GA_Start_button.place(x=4*large_button_width, **upper_row_dict)
+        self.background_button = tk.Button(window, text="BG", command=self.get_background)
+        self.background_button.place(x=6*large_button_width, **upper_row_dict)
+
         self.loop_entry = tk.Entry(window)
         self.loop_entry.insert(0, str(df.loop[0]))
         self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
@@ -163,7 +166,9 @@ class Page(tk.Frame):
         except FileNotFoundError:
             print('No image transform file found. Pls calibrate.')
             self.cal_transform = 0
-
+        self.counter_flag = 0
+        
+        self.ccd_data_gui = np.zeros((int(self.CCDwidth*scale_percent/100),int(self.CCDheight*scale_percent/100)))
         #Create a canvas that will display what is on the SLM
         self.SLM_image_widget = tk.Label(window, 
                                          width=int(self.Monitors.SLMwidth*scale_percent/100),
@@ -172,19 +177,19 @@ class Page(tk.Frame):
                                          )
         self.SLM_image_widget.place(
                                     x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/200 + gap),
+                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
         #Create a canvas that will show the CCD image
         self.ccd_image_widget = tk.Label(window, 
-                                         width=int(CCDwidth*scale_percent/100), 
-                                         height=int(CCDheight*scale_percent/100),
+                                         width=int(self.CCDwidth*scale_percent/100), 
+                                         height=int(self.CCDheight*scale_percent/100),
                                          anchor=tk.CENTER
                                          )
         self.ccd_image_widget.place(
-                                    x = int(window_width - CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent/200 + gap),
+                                    x = int(window_width - self.CCDwidth*scale_percent/200 - gap),
+                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
                                     anchor=tk.CENTER
                                     )
 
@@ -196,7 +201,7 @@ class Page(tk.Frame):
                                          )
         self.SLM_preview_widget.place(
                                     x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
+                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent*1.5/100 + 2*gap),
                                     anchor=tk.CENTER
                                     )
 
@@ -205,8 +210,8 @@ class Page(tk.Frame):
         canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
         canvas.get_tk_widget().place(
-                                    x = int(window_width - CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(self.Monitors.SLMheight, CCDheight)*scale_percent*1.5/100 + 2*gap),
+                                    x = int(window_width - self.CCDwidth*scale_percent/200 - gap),
+                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent*1.5/100 + 2*gap),
                                     anchor=tk.CENTER
         )
 
@@ -221,6 +226,8 @@ class Page(tk.Frame):
         self.loop_pressed = False
         self.nloop_pressed = False
         self.clearSLM = False
+        self.background_toggle = False
+        self.background = np.zeros((self.CCDheight, self.CCDwidth))
         ##### initialising Anthony Feedback
         self.count = 0 
         self.timer = 0
@@ -232,7 +239,7 @@ class Page(tk.Frame):
         self.population_number_counter = 0
         self.GA_GO=False
         ##### end of anthony initialising
-        self.delay=100
+        self.delay=500
         print("HELLO")
         self.after(self.delay, self.update)
         ## end of initialisation ##
@@ -253,6 +260,17 @@ class Page(tk.Frame):
         except Exception as error:
             print(error)
             self.exposure_entry.config(background="red")
+    
+    
+    def get_background(self):
+        if self.background_toggle == False:
+            self.background = self.ccd_data
+            self.background_toggle = True
+        else:
+            self.background = np.zeros_like((self.CCDheight, self.CCDwidth))
+            self.background_toggle = False
+
+
 
     def GA_parameters(self):
         
@@ -285,7 +303,7 @@ class Page(tk.Frame):
     def GA_update_function(self):
         self.GA_population = int(self.GA_population_entry.get())
         self.GA_generation = int(self.GA_generations_entry.get())
-        self.GA_mutation_rate = int(self.GA_mutation_rate_entry.get())
+        self.GA_mutation_rate = float(self.GA_mutation_rate_entry.get())
         self.GA_num_parents = int(self.GA_num_parents_entry.get())
         self.GA_window.destroy()
 
@@ -398,10 +416,11 @@ class Page(tk.Frame):
 
 
     def update(self):
-
+        # self.counter_flag +=1
+        # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            self.ccd_data = self.camera.getFrame()  # Access the shared frame in a thread-safe manner
-            self.ccd_data = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+            self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
+            self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         
         ########### Flattening
 
@@ -419,7 +438,7 @@ class Page(tk.Frame):
                 self.nloop_pressed = False
                 self.loop_pressed = False
                 self.flattening_object.count=0
-                self.delay=100
+                # self.delay=100
 
 
         ########## Genetic Algorithm
@@ -570,7 +589,7 @@ class Page(tk.Frame):
                 print(error)
 
 
-        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data))
+        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.ccd_data_gui))
         self.ccd_image_widget.config(image=self.photo)
         self.ccd_image_widget.photo = self.photo
 

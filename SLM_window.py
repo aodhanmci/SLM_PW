@@ -14,6 +14,7 @@ class window2(tk.Toplevel):
         self.another_widget = tk.Label(self, width = int(self.Monitors.SLMdim[0]*3), height = int(self.Monitors.SLMdim[1]*3))
         self.another_widget.place(x=self.Monitors.SLMdim[0]/2, y=self.Monitors.SLMdim[1]/2, anchor=tk.CENTER)
         # this delay allows it to write things to the window
+        self.counter_flag = 0
         self.delay=500
         self.update2()
 
@@ -21,4 +22,6 @@ class window2(tk.Toplevel):
         # this reference needs to be here to avoid garbage collection
         self.another_widget.photo = ImageTk.PhotoImage(self.SLM.SLMdisp)
         self.another_widget.config(image= self.another_widget.photo)
+        self.counter_flag+=1
+        # print(f'SLM: {self.counter_flag}')
         self.after(self.delay, self.update2)
