@@ -37,20 +37,22 @@ class flattening_GA:
         return np.tile(basic_block, (self.num_blocks_x, self.num_blocks_y))
 
     def initialize_individual_block_based(self):
-        # Initialize the amplitude matrix for each block
-        return np.random.uniform(0, 250, (self.num_blocks_x, self.num_blocks_y))
-        # gauss1 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
-        #  -  np.random.randint(0, 200)*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
-        # gauss2 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
-        # gauss3 =  100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+       
 
-        # return (gauss1+gauss2+gauss3)/3
+        initial_guess = np.random.uniform(0, 250, (self.num_blocks_x, self.num_blocks_y))
+        
+        # number_of_gauss = 10
+        # # these are some initial guesses
+        # gaussian =100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        # for counter in range(0, number_of_gauss):
+        #     gaussian +=100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        # initial_guess = gaussian / (number_of_gauss+1)
+
+        return initial_guess
 
 
     def apply_block_pattern_to_grid(self, amplitudes):
-        # Generate the Gaussian distribution
-
-
+  
         # Tile the amplitudes to match the size of the basic block pattern
         tiled_amplitudes = np.repeat(np.repeat(amplitudes, self.block_size_x, axis=0), self.block_size_y, axis=1)
 
@@ -59,13 +61,6 @@ class flattening_GA:
 
         # Trim the pattern to fit the SLM dimensions
         return pattern_grid[:self.SLMwidth, :self.SLMheight]
-    
-    # def mutate_amplitudes(self, amplitudes):
-    #     # Apply mutation to the amplitude matrix
-    #     mutation_strength = 10  # Adjust as needed
-    #     mutation_changes = np.random.uniform(-mutation_strength, mutation_strength, amplitudes.shape)
-    #     mutated_amplitudes = np.clip(amplitudes + mutation_changes, 0, 200)
-    #     return mutated_amplitudes
 
     def calculate_fitness(self, ccd_data):
         IntensityDifference =  ((np.sum(self.goal_image[600:1100, 350:800])/100 - np.sum(ccd_data[600:1100, 350:800])/100)**2)/1000
