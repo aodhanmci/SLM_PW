@@ -11,11 +11,11 @@ class flattening_GA:
         self.mutation_rate = GA_mutation_rate
         self.num_parents = GA_num_parents
 
-        self.mutation_strength = 20 # Adjust as needed for smoother transitions
+        self.mutation_strength = 5 # Adjust as needed for smoother transitions
         self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
         self.fitness_of_population = np.zeros((self.population_size, 1))
-        self.block_size_x = 100
-        self.block_size_y = 100
+        self.block_size_x = 200
+        self.block_size_y = 200
         
         self.num_blocks_x = (SLMwidth // self.block_size_x)+1
         self.num_blocks_y = (SLMheight // self.block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason
@@ -63,8 +63,10 @@ class flattening_GA:
         return pattern_grid[:self.SLMwidth, :self.SLMheight]
 
     def calculate_fitness(self, ccd_data):
-        IntensityDifference =  ((np.sum(self.goal_image[600:1100, 350:800])/100 - np.sum(ccd_data[600:1100, 350:800])/100)**2)/1000
+        # max_difference = np.size(ccd_data[ccd_data>self.goal_image])
+        IntensityDifference =  ((np.sum(self.goal_image[380:800, 600:1030])/100 - np.sum(ccd_data[380:800, 600:1030])/100)**2)/1000
         fitness = IntensityDifference
+        # print(f'max difference {max_difference}, intensity difference {IntensityDifference}')
         return fitness
 
     def select_parents(self):

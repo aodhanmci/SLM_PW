@@ -421,7 +421,7 @@ class Page(tk.Frame):
         with self.camera.lock:
             self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
             self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-        
+        # print(np.shape(self.ccd_data))
         ########### Flattening
 
         ########### Anthony Flattening
@@ -450,6 +450,7 @@ class Page(tk.Frame):
                 # set the threshold using the inital data and creating a cap
                 goal = np.clip(self.ccd_data, 0, 150)
                 self.GA_object.goal_image = goal
+                print(self.GA_object.calculate_fitness(self.ccd_data))
             # generation loop
             if self.population_number_counter == 0:
                 pass
@@ -490,7 +491,11 @@ class Page(tk.Frame):
             # set the current image to the SLM so the CCD can be measured in the next loop
             SLMgrating = self.GA_object.population_of_generation[self.population_number_counter, :, :]
             self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
-            
+            # if self.generation_number_counter == 5:
+            #     self.GA_object.mutation_rate = self.GA_object.mutation_rate/2
+            #     self.GA_object.mutation_strength = self.GA_object.mutation_strength/2
+
+
             # keep increasing the number of the population until you hit the limit for the generation. then it will reset and increase the generation number
             if self.population_number_counter < self.GA_population-1:
                 self.population_number_counter +=1
