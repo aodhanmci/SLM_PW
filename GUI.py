@@ -448,7 +448,7 @@ class Page(tk.Frame):
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 120)
+                goal = np.clip(self.ccd_data, 0, 150)
                 self.GA_object.goal_image = goal
             # generation loop
             if self.population_number_counter == 0:
@@ -540,11 +540,14 @@ class Page(tk.Frame):
         if self.lineout_toggle:
             self.clearCanvas = False
             try:
-                y = self.ccd_data[int(cy),:]
-                x = np.arange(len(y))
+                data_y = self.ccd_data[int(cy),:]
+                data_x = self.ccd_data[:, int(cx)]
+                x = np.arange(len(data_y))
+                y = np.arange(len(data_x))
 
                 self.ax.clear()
-                self.ax.plot(x,y, color = "dimgrey")
+                self.ax.plot(x,data_y, color = "green")
+                self.ax.plot(y,data_x, color = "red")
                 self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
 
                 try:

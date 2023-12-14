@@ -11,10 +11,10 @@ class flattening_GA:
         self.mutation_rate = GA_mutation_rate
         self.num_parents = GA_num_parents
 
-        self.mutation_strength = 3 # Adjust as needed for smoother transitions
+        self.mutation_strength = 20 # Adjust as needed for smoother transitions
         self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
         self.fitness_of_population = np.zeros((self.population_size, 1))
-        self.block_size_x =100
+        self.block_size_x = 100
         self.block_size_y = 100
         
         self.num_blocks_x = (SLMwidth // self.block_size_x)+1
@@ -68,7 +68,7 @@ class flattening_GA:
     #     return mutated_amplitudes
 
     def calculate_fitness(self, ccd_data):
-        IntensityDifference =  ((np.sum(self.goal_image)/100 - np.sum(ccd_data)/100)**2)/1000
+        IntensityDifference =  ((np.sum(self.goal_image[600:1100, 350:800])/100 - np.sum(ccd_data[600:1100, 350:800])/100)**2)/1000
         fitness = IntensityDifference
         return fitness
 
