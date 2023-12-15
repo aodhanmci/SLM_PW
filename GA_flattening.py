@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import sawtooth
 import numpy as np
 from PIL import Image
+from matplotlib.colors import LogNorm
+from scipy.ndimage import zoom
 
 class flattening_GA:
     def __init__(self, GA_population, GA_generations, GA_num_parents, GA_mutation_rate, SLMwidth, SLMheight):
@@ -13,14 +15,24 @@ class flattening_GA:
         self.num_parents = GA_num_parents
 
         self.mutation_strength = 50 # Adjust as needed for smoother transitions
-        self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
-        self.fitness_of_population = np.zeros((self.population_size, 1))
-        self.block_size_x = 20
-        self.block_size_y = 20
-        
+
+        self.block_size_x = 40
+        self.block_size_y = 40
+
         self.num_blocks_x = (SLMwidth // self.block_size_x)+1
         self.num_blocks_y = (SLMheight // self.block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason
+        
+        self.weights = np.load('./settings/GA_weights.npy')**2
+        zoom_factors = [self.num_blocks_x / self.weights.shape[0],
+                self.num_blocks_y / self.weights.shape[1]]
+        self.tiled_weights = zoom(self.weights , zoom_factors, order=3)
+        
+    
+        print(np.shape(self.weights))
+        self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
+        self.fitness_of_population = np.zeros((self.population_size, 1))
         self.amplitudes =  np.zeros((self.population_size, self.num_blocks_x, self.num_blocks_y))
+        
         self.parents = np.zeros((self.num_parents, self.num_blocks_x, self.num_blocks_y))
         self.binary_pattern = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
         self.goal_image = None
@@ -31,6 +43,11 @@ class flattening_GA:
 
         self.basic_block_pattern = self.create_basic_block_pattern()
 
+    def tile_weights(self):
+        
+        # tiled_weights = zoom(self.weights, (self.SLMwidth/shape[0],self.SLMheight/shape[1]), order=3)
+        return 
+    
     def create_basic_block_pattern(self):
         # Create a 20x20 basic block with alternating 0s and 1s in the x-direction
         
@@ -40,14 +57,13 @@ class flattening_GA:
         # y_blocks = np.linspace(0, self.block_size_y, self.block_size_y)
         # meshX, meshY = np.meshgrid(x_blocks, y_blocks)
         
-        # basic_block = (sawtooth(2 * np.pi * 100 * meshX/np.max(meshX))+1)/2
+        # basic_block = (sawtooth(2 * np.pi * 4000 * meshX/np.max(meshX))+1)/2
         return np.tile(basic_block, (self.num_blocks_x, self.num_blocks_y))
+    
 
-    def initialize_individual_block_based(self):
-       
-
-        initial_guess = np.random.uniform(0, 255, (self.num_blocks_x, self.num_blocks_y))
-        
+    def initialize_individual_block_based(self, population_number):
+        initial_guess = np.random.uniform(0, 700, (self.num_blocks_x, self.num_blocks_y))
+        # initial_guess = np.zeros(( (self.num_blocks_x, self.num_blocks_y)))
         # number_of_gauss = 10
         # # these are some initial guesses
         # gaussian =100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
@@ -89,44 +105,43 @@ class flattening_GA:
         # print(np.nanmin(self.fitness_of_population))
 
 
+    # def smooth_mutate(self, individual):
+    #     for i in range(individual.shape[0]):
+    #         for j in range(individual.shape[1]):
+    #             if np.random.rand() < self.mutation_rate:
+    #                 # Apply a smaller mutation, bounded by mutation_strength
+    #                 change = np.random.uniform(-self.mutation_strength, self.mutation_strength)
+    #                 individual[i, j] += change
+
+    #             # Optionally, apply similar small changes to adjacent blocks
+    #                 if i > 0:
+    #                     individual[i - 1, j] += change / 4  # Adjust factor as needed
+    #                 if i < individual.shape[0] - 1:
+    #                     individual[i + 1, j] += change / 4
+    #                 if j > 0:
+    #                     individual[i, j - 1] += change / 4
+    #                 if j < individual.shape[1] - 1:
+    #                     individual[i, j + 1] += change / 4
+    #     return individual
 
     def smooth_mutate(self, individual):
-        for i in range(individual.shape[0]):
-            for j in range(individual.shape[1]):
-                if np.random.rand() < self.mutation_rate:
-                    # Apply a smaller mutation, bounded by mutation_strength
-                    change = np.random.uniform(-self.mutation_strength, self.mutation_strength)
-                    individual[i, j] += change
-
-                # Optionally, apply similar small changes to adjacent blocks
-                    if i > 0:
-                        individual[i - 1, j] += change / 4  # Adjust factor as needed
-                    if i < individual.shape[0] - 1:
-                        individual[i + 1, j] += change / 4
-                    if j > 0:
-                        individual[i, j - 1] += change / 4
-                    if j < individual.shape[1] - 1:
-                        individual[i, j + 1] += change / 4
+        # the asterisks unpacks it
+        mutation_mask = np.random.rand(*individual.shape) < self.mutation_rate
+        changes = np.random.uniform(-self.mutation_strength, self.mutation_strength, individual.shape)
+        individual += changes * mutation_mask
+        # individual +=changes
         return individual
-
-    # def smooth_mutate(self, individual):
-    #     # the asterisks unpacks it
-    #     mutation_mask = np.random.rand(*individual.shape) < self.mutation_rate
-    #     changes = np.random.uniform(-self.mutation_strength, self.mutation_strength, individual.shape)
-    #     individual += changes * mutation_mask
-    #     # individual +=changes
-    #     return individual
     
-    def smooth_crossover(self, parent1, parent2):
-        child = np.copy(parent1)
-        for i in range(self.num_blocks_x):
-            for j in range(self.num_blocks_y):
-                if np.random.rand() < self.mutation_rate:
-                    # Blend the values from both parents
-                    child[i, j] = (parent1[i, j] + parent2[i, j]) / 2
-        return child
     # def smooth_crossover(self, parent1, parent2):
-    #     child = (parent1 + parent2) / 2
+    #     child = np.copy(parent1)
+    #     for i in range(self.num_blocks_x):
+    #         for j in range(self.num_blocks_y):
+    #             if np.random.rand() < self.mutation_rate:
+    #                 # Blend the values from both parents
+    #                 child[i, j] = (parent1[i, j] + parent2[i, j]) / 2
     #     return child
+    def smooth_crossover(self, parent1, parent2):
+        child = (parent1 + parent2) / 2
+        return child
     
 
