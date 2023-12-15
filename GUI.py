@@ -11,6 +11,7 @@ import laserbeamsize as lbs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 import random
+from scipy.ndimage import gaussian_filter
 
 class Page(tk.Frame):
 
@@ -230,7 +231,9 @@ class Page(tk.Frame):
         self.background = np.zeros((self.CCDheight, self.CCDwidth))
         ##### initialising Anthony Feedback
         self.count = 0 
-        self.timer = 0
+        self.CCDtime = 0
+        self.SLMtime = 0
+        self.initialtime = 0
         self.beginning_intensity = 0
         self.flattening_object = Flattening_algo(self.SLM.SLMwidth, self.SLM.SLMheight, self.loop_entry.get(), self.cal_transform)
         
@@ -239,7 +242,7 @@ class Page(tk.Frame):
         self.population_number_counter = 0
         self.GA_GO=False
         ##### end of anthony initialising
-        self.delay=500
+        self.delay=1000
         print("HELLO")
         self.after(self.delay, self.update)
         ## end of initialisation ##
@@ -426,6 +429,7 @@ class Page(tk.Frame):
 
         ########### Anthony Flattening
         if self.nloop_pressed == True:
+            
             self.flattening_object.ccd_data = self.ccd_data
             gratingImg, SLMgrating, goalArray, diff, threshold, allTest = self.flattening_object.feedback()
             self.flattening_object.threshold = threshold
@@ -443,14 +447,20 @@ class Page(tk.Frame):
 
         ########## Genetic Algorithm
         elif self.GA_GO == True:
-            # print(f' gen num:{self.generation_number_counter}, pop num:{self.population_number_counter}')
-            self.delay = 500
+            # time.sleep(0.5)
+
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 150)
+                goal = np.clip(self.ccd_data, 0, 120)
                 self.GA_object.goal_image = goal
                 print(self.GA_object.calculate_fitness(self.ccd_data))
+                self.initialtime = int(round(time.time() * 1000))
+            
+            self.count +=1
+            self.time = int(round(time.time() * 1000)) - self.initialtime
+            # print(f' CCD {self.count}, time :{self.time}')
+            # print(f' gen num:{self.generation_number_counter}, pop num:{self.population_number_counter}')
             # generation loop
             if self.population_number_counter == 0:
                 pass
@@ -461,8 +471,8 @@ class Page(tk.Frame):
                 
                 # creates initial population in the first generation from randomised blocks
                 amplitudes = self.GA_object.initialize_individual_block_based()
-                # image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
                 image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
+                # image = self.GA_object.apply_block_pattern_to_grid(gaussian_filter(amplitudes,sigma=2))
                 self.GA_object.amplitudes[self.population_number_counter, :, :] = amplitudes
                 self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
                 # the fitness is from the previous iteration becasue this new one hasn't updated yet
@@ -478,6 +488,8 @@ class Page(tk.Frame):
                     parent2 = self.GA_object.parents[indices[1], :, :]
                     child = self.GA_object.smooth_crossover(parent1, parent2)
                     child = self.GA_object.smooth_mutate(child)
+                    # child = gaussian_filter(child, sigma=2)
+
                     self.GA_object.amplitudes[self.population_number_counter, :, ] = child
                     image = self.GA_object.apply_block_pattern_to_grid(child)
                     self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
@@ -497,7 +509,7 @@ class Page(tk.Frame):
 
 
             # keep increasing the number of the population until you hit the limit for the generation. then it will reset and increase the generation number
-            if self.population_number_counter < self.GA_population-1:
+            if self.population_number_counter < self.GA_population-2:
                 self.population_number_counter +=1
             
             # at the end of the generation, select the parents for the next generation    
