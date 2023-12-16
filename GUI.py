@@ -243,6 +243,7 @@ class Page(tk.Frame):
         self.population_number_counter = 0
         self.GA_GO=False
         self.weights_pressed=False
+        self.fitness_watch = None
         ##### end of anthony initialising
         self.delay=1000
         print("HELLO")
@@ -472,7 +473,7 @@ class Page(tk.Frame):
                 plt.imshow(normalised_weights)
                 plt.colorbar()
                 plt.show()
-                normalised_weights = (normalised_weights/np.max(normalised_weights))**2
+                normalised_weights = (normalised_weights/np.max(normalised_weights))
                 plt.imshow(normalised_weights)
                 plt.colorbar()
                 # plt.xlim(0, 13)
@@ -488,12 +489,14 @@ class Page(tk.Frame):
         ########## Genetic Algorithm
         elif self.GA_GO == True:
             # time.sleep(0.5)
-            
+            sigma=1
             # set the goal using the initial CCD data
             if self.generation_number_counter == 0 and self.population_number_counter == 0:
                 # set the threshold using the inital data and creating a cap
-                goal = np.clip(self.ccd_data, 0, 120)
+                goal = np.clip(self.ccd_data, 0, 100)
                 self.GA_object.goal_image = goal
+                self.GA_object.positive_goal_index = self.ccd_data >= goal
+                self.GA_object.negative_goal_index = (self.ccd_data < goal) & (self.ccd_data >20)
                 print(self.GA_object.calculate_fitness(self.ccd_data))
                 self.initialtime = int(round(time.time() * 1000))
                 # self.weights = self.GA_object.tile_weights()
@@ -510,10 +513,12 @@ class Page(tk.Frame):
             if self.generation_number_counter ==0:
                 # self.GA_population = self.GA_object.num_blocks_x * self.GA_object.num_blocks_y
                 # creates initial population in the first generation from randomised blocks
-                amplitudes = self.GA_object.initialize_individual_block_based(self.population_number_counter)*self.GA_object.tiled_weights
+                amplitudes = self.GA_object.initialize_individual_block_based(self.population_number_counter)
+                # amplitudes = self.GA_object.initialize_individual_block_based(self.population_number_counter)*self.GA_object.tiled_weights
                 # image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
-                image = self.GA_object.apply_block_pattern_to_grid(gaussian_filter(amplitudes,sigma=1))
+                image = self.GA_object.apply_block_pattern_to_grid(gaussian_filter(amplitudes,sigma=sigma))
                 self.GA_object.amplitudes[self.population_number_counter, :, :] = amplitudes
+                # self.GA_object.population_of_generation[self.population_number_counter, :, :] = image*self.GA_object.tiled_weights
                 self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
                 # the fitness is from the previous iteration becasue this new one hasn't updated yet
                 
@@ -528,14 +533,18 @@ class Page(tk.Frame):
                     parent2 = self.GA_object.parents[indices[1], :, :]
                     child = self.GA_object.smooth_crossover(parent1, parent2)
                     child = self.GA_object.smooth_mutate(child)
-                    child = gaussian_filter(child, sigma=1)
-
-                    self.GA_object.amplitudes[self.population_number_counter, :, ] = child*self.GA_object.tiled_weights
+                    # if self.generation_number_counter > 5:
+                    #     self.GA_object.mutation_strength = 20
+                    child = gaussian_filter(child, sigma=sigma)
+                    self.GA_object.amplitudes[self.population_number_counter, :, ] = child
+                    # self.GA_object.amplitudes[self.population_number_counter, :, ] = child*self.GA_object.tiled_weights
+                    # image = self.GA_object.apply_block_pattern_to_grid(child)*self.GA_object.tiled_weights
                     image = self.GA_object.apply_block_pattern_to_grid(child)
                     self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
             # if you're at the end of the number of generations then reset everything
             else:
                 self.GA_GO = False
+                np.save('./data/final_after_gen', self.ccd_data)
                 self.generation_number_counter = 0
                 self.population_number_counter = 0
                 self.delay = 100
@@ -547,7 +556,6 @@ class Page(tk.Frame):
             #     self.GA_object.mutation_rate = self.GA_object.mutation_rate/2
             #     self.GA_object.mutation_strength = self.GA_object.mutation_strength/2
 
-
             # keep increasing the number of the population until you hit the limit for the generation. then it will reset and increase the generation number
             if self.population_number_counter < self.GA_population-2:
                 self.population_number_counter +=1
@@ -555,6 +563,7 @@ class Page(tk.Frame):
             # at the end of the generation, select the parents for the next generation    
             else:
                 # need to select the best parents
+                # self.fitness_watch.append(self.GA_object.fitness_of_population)
                 print(np.mean(self.GA_object.fitness_of_population))
                 self.GA_object.select_parents()
                 # resest the population so it can be filled with the next generation

@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 from matplotlib.colors import LogNorm
 from scipy.ndimage import zoom
-
+from scipy.ndimage import gaussian_filter
 class flattening_GA:
     def __init__(self, GA_population, GA_generations, GA_num_parents, GA_mutation_rate, SLMwidth, SLMheight):
         self.SLMwidth = SLMwidth
@@ -14,18 +14,18 @@ class flattening_GA:
         self.mutation_rate = GA_mutation_rate
         self.num_parents = GA_num_parents
 
-        self.mutation_strength = 50 # Adjust as needed for smoother transitions
+        self.mutation_strength = 150 # Adjust as needed for smoother transitions
 
-        self.block_size_x = 40
-        self.block_size_y = 40
+        self.block_size_x = 10
+        self.block_size_y = 10
 
         self.num_blocks_x = (SLMwidth // self.block_size_x)+1
         self.num_blocks_y = (SLMheight // self.block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason
         
-        self.weights = np.load('./settings/GA_weights.npy')**2
-        zoom_factors = [self.num_blocks_x / self.weights.shape[0],
-                self.num_blocks_y / self.weights.shape[1]]
-        self.tiled_weights = zoom(self.weights , zoom_factors, order=3)
+        self.weights = np.load('./settings/GA_adjusted_weights.npy')
+        zoom_factors = [self.SLMwidth / self.weights.shape[0],
+                self.SLMheight / self.weights.shape[1]]
+        self.tiled_weights = gaussian_filter(zoom(self.weights , zoom_factors, order=3), sigma=100)
         
     
         print(np.shape(self.weights))
@@ -36,17 +36,14 @@ class flattening_GA:
         self.parents = np.zeros((self.num_parents, self.num_blocks_x, self.num_blocks_y))
         self.binary_pattern = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
         self.goal_image = None
-
+        self.positive_goal_index = None
+        self.negative_goal_index = None
         x = np.linspace(0, self.num_blocks_x, self.num_blocks_x)
         y = np.linspace(0, self.num_blocks_y, self.num_blocks_y)
         self.x, self.y = np.meshgrid(x, y)
 
         self.basic_block_pattern = self.create_basic_block_pattern()
 
-    def tile_weights(self):
-        
-        # tiled_weights = zoom(self.weights, (self.SLMwidth/shape[0],self.SLMheight/shape[1]), order=3)
-        return 
     
     def create_basic_block_pattern(self):
         # Create a 20x20 basic block with alternating 0s and 1s in the x-direction
@@ -62,14 +59,14 @@ class flattening_GA:
     
 
     def initialize_individual_block_based(self, population_number):
-        initial_guess = np.random.uniform(0, 700, (self.num_blocks_x, self.num_blocks_y))
+        initial_guess = np.random.uniform(0, 350, (self.num_blocks_x, self.num_blocks_y))
         # initial_guess = np.zeros(( (self.num_blocks_x, self.num_blocks_y)))
-        # number_of_gauss = 10
-        # # these are some initial guesses
-        # gaussian =100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
+        # number_of_gauss = 1
+        # # # these are some initial guesses
+        # gaussian =100*np.exp(-((self.x-np.random.randint(0, self.SLMwidth/2))**2 +(self.y-np.random.randint(0, self.SLMheight/2))**2)/((2*1)**2)).T
         # for counter in range(0, number_of_gauss):
-        #     gaussian +=100*np.exp(-(((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/(2*np.random.randint(1, self.num_blocks_x/6))**2)**2).T
-        # initial_guess = gaussian / (number_of_gauss+1)
+        #     gaussian =100*np.exp(-((self.x-np.random.randint(0, self.num_blocks_x))**2 +(self.y-np.random.randint(0, self.num_blocks_y))**2)/((2*1)**2)).T
+        # initial_guess = gaussian / (number_of_gauss)
 
         return initial_guess
 
@@ -88,8 +85,20 @@ class flattening_GA:
     def calculate_fitness(self, ccd_data):
         # max_difference = np.size(ccd_data[ccd_data>self.goal_image])
         # IntensityDifference =  ((np.sum(self.goal_image[380:800, 600:1030])/100 - np.sum(ccd_data[380:800, 600:1030])/100)**2)/1000
-        IntensityDifference =  ((np.sum(self.goal_image)/100 - np.sum(ccd_data)/100)**2)/1000
-        fitness = IntensityDifference
+        # IntensityDifference =  ((np.sum(self.goal_image) - np.sum(ccd_data))**2)/1000
+        reward = (np.sum(ccd_data[self.positive_goal_index]) - np.sum(self.goal_image[self.positive_goal_index]))**2
+        penalise = (np.sum(ccd_data[self.negative_goal_index]) - np.sum(self.goal_image[self.negative_goal_index]))**2
+        # reward = IntensityDifference
+
+        # number_above = ccd_data[ccd_data>100]
+        # reward = 20*number_above.size
+         
+        # mask = (ccd_data >= 10) & (ccd_data <= 100)
+        # changed_pixels_below_threshold = np.sum(ccd_data[mask] != self.goal_image[mask])
+        # penalty = 0.001 * changed_pixels_below_threshold
+        # print(f'reward:{reward}, penalty:{penalty}')
+        # fitness = reward + penalty
+        fitness = reward + penalise
         # print(f'max difference {max_difference}, intensity difference {IntensityDifference}')
         return fitness
 
@@ -97,7 +106,7 @@ class flattening_GA:
         self.fitness_of_population = self.fitness_of_population[:, 0]
         # print(self.fitness_of_population)
         self.fitness_of_population[self.fitness_of_population <0.01] = np.NaN
-        parents = np.argsort(self.fitness_of_population)[2:self.num_parents+2]
+        parents = np.argsort(self.fitness_of_population)[:self.num_parents]
         counter = 0
         for i in parents:
             self.parents[counter, :, :] =  self.amplitudes[i, :, :]

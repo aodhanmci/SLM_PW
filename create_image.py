@@ -21,10 +21,10 @@ radius = 100
 gaussian_mask=gaussian_mask*np.exp(-(Meshr.T/(radius**2)))
 
 
-# image = basic_block*gaussian_mask
+image = basic_block*gaussian_mask
 # image=sawtooth_wave*gaussian_mask
 # image=sawtooth_wave
-image = basic_block
+# image = basic_block
 
 fig, ax = plt.subplots()
 ax.imshow(image)
