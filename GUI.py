@@ -27,10 +27,6 @@ class Page(tk.Frame):
         self.camera=camera
         self.Monitors = Monitors
         
-
-        # self.CCDwidth = camera.getFrame().shape[1] # 1920
-        # self.CCDheight = camera.getFrame().shape[0] # 1200
-        # print(self.camera.camera.Width)
         self.CCDwidth = self.camera.camera.Width.GetValue()
         self.CCDheight = self.camera.camera.Height.GetValue()
         # self.CCDwidth=1600
