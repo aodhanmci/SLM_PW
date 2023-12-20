@@ -4,8 +4,8 @@ class GA_weight:
     def __init__(self, SLMwidth, SLMheight):
         self.SLMwidth = SLMwidth
         self.SLMheight = SLMheight
-        self.weight_block_size_x = 200
-        self.weight_block_size_y = 200
+        self.weight_block_size_x = 100
+        self.weight_block_size_y = 100
 
         self.weight_num_blocks_x = (SLMwidth // self.weight_block_size_x)+1
         self.weight_num_blocks_y = (SLMheight // self.weight_block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason

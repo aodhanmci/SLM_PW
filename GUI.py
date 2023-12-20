@@ -241,7 +241,7 @@ class Page(tk.Frame):
         self.weights_pressed=False
         self.fitness_watch = None
         ##### end of anthony initialising
-        self.delay=1000
+        self.delay=500
         print("HELLO")
         self.after(self.delay, self.update)
         ## end of initialisation ##
@@ -514,8 +514,8 @@ class Page(tk.Frame):
                 # image = self.GA_object.apply_block_pattern_to_grid(amplitudes)
                 image = self.GA_object.apply_block_pattern_to_grid(gaussian_filter(amplitudes,sigma=sigma))
                 self.GA_object.amplitudes[self.population_number_counter, :, :] = amplitudes
-                # self.GA_object.population_of_generation[self.population_number_counter, :, :] = image*self.GA_object.tiled_weights
-                self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
+                self.GA_object.population_of_generation[self.population_number_counter, :, :] = image*self.GA_object.tiled_weights
+                # self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
                 # the fitness is from the previous iteration becasue this new one hasn't updated yet
                 
 
@@ -536,11 +536,14 @@ class Page(tk.Frame):
                     # self.GA_object.amplitudes[self.population_number_counter, :, ] = child*self.GA_object.tiled_weights
                     # image = self.GA_object.apply_block_pattern_to_grid(child)*self.GA_object.tiled_weights
                     image = self.GA_object.apply_block_pattern_to_grid(child)
-                    self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
+                    # self.GA_object.population_of_generation[self.population_number_counter, :, :] = image
+                    self.GA_object.population_of_generation[self.population_number_counter, :, :] = image*self.GA_object.tiled_weights
             # if you're at the end of the number of generations then reset everything
             else:
                 self.GA_GO = False
                 np.save('./data/final_after_gen', self.ccd_data)
+                GA_convergence_data = pd.DataFrame(self.GA_object.GA_convergence)
+                GA_convergence_data.to_csv('./data/convergence.csv', sep='\t', index=False, header=False)
                 self.generation_number_counter = 0
                 self.population_number_counter = 0
                 self.delay = 100
@@ -561,6 +564,10 @@ class Page(tk.Frame):
                 # need to select the best parents
                 # self.fitness_watch.append(self.GA_object.fitness_of_population)
                 print(np.mean(self.GA_object.fitness_of_population))
+                if np.mean(self.GA_object.fitness_of_population) < 5e11:
+                    self.GA_object.mutation_strength = 20
+                self.GA_object.GA_convergence[self.generation_number_counter, 0] = self.generation_number_counter
+                self.GA_object.GA_convergence[self.generation_number_counter, 1] = np.mean(self.GA_object.fitness_of_population)
                 self.GA_object.select_parents()
                 # resest the population so it can be filled with the next generation
                 self.GA_object.population_of_generation = np.zeros((self.GA_population, self.SLM.SLMwidth, self.SLM.SLMheight))

@@ -5,6 +5,23 @@ from PIL import Image
 from matplotlib.colors import LogNorm
 from scipy.ndimage import zoom
 from scipy.ndimage import gaussian_filter
+
+def shift_array(arr, n, direction):
+    rows, cols = arr.shape
+    new_arr = np.zeros_like(arr)  # Initialize a new array filled with zeros
+
+    if direction == 'right':
+        new_arr[:, n:cols] = arr[:, :cols-n]
+    elif direction == 'left':
+        new_arr[:, :cols-n] = arr[:, n:cols]
+    elif direction == 'down':
+        new_arr[n:rows, :] = arr[:rows-n, :]
+    elif direction == 'up':
+        new_arr[:rows-n, :] = arr[n:rows, :]
+
+    return new_arr
+
+
 class flattening_GA:
     def __init__(self, GA_population, GA_generations, GA_num_parents, GA_mutation_rate, SLMwidth, SLMheight):
         self.SLMwidth = SLMwidth
@@ -14,21 +31,21 @@ class flattening_GA:
         self.mutation_rate = GA_mutation_rate
         self.num_parents = GA_num_parents
 
-        self.mutation_strength = 150 # Adjust as needed for smoother transitions
+        self.mutation_strength = 100 # Adjust as needed for smoother transitions
 
         self.block_size_x = 10
         self.block_size_y = 10
 
-        self.num_blocks_x = (SLMwidth // self.block_size_x)+1
-        self.num_blocks_y = (SLMheight // self.block_size_y)+1 # adding a plus one because it doesn't tile it properly for some reason
+        self.num_blocks_x = (SLMwidth // self.block_size_x) +1
+        self.num_blocks_y = (SLMheight // self.block_size_y) + 1# adding a plus one because it doesn't tile it properly for some reason
         
         self.weights = np.load('./settings/GA_adjusted_weights.npy')
         zoom_factors = [self.SLMwidth / self.weights.shape[0],
                 self.SLMheight / self.weights.shape[1]]
-        self.tiled_weights = gaussian_filter(zoom(self.weights , zoom_factors, order=3), sigma=100)
-        
-    
-        print(np.shape(self.weights))
+        self.tiled_weights = gaussian_filter(zoom(self.weights , zoom_factors, order=3), sigma=50)
+        self.tiled_weights = shift_array(self.tiled_weights, 50, 'left')
+        self.tiled_weights = shift_array(self.tiled_weights, 50, 'up')
+
         self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
         self.fitness_of_population = np.zeros((self.population_size, 1))
         self.amplitudes =  np.zeros((self.population_size, self.num_blocks_x, self.num_blocks_y))
@@ -38,6 +55,7 @@ class flattening_GA:
         self.goal_image = None
         self.positive_goal_index = None
         self.negative_goal_index = None
+        self.GA_convergence = np.zeros((self.generations, 2))
         x = np.linspace(0, self.num_blocks_x, self.num_blocks_x)
         y = np.linspace(0, self.num_blocks_y, self.num_blocks_y)
         self.x, self.y = np.meshgrid(x, y)
@@ -59,7 +77,7 @@ class flattening_GA:
     
 
     def initialize_individual_block_based(self, population_number):
-        initial_guess = np.random.uniform(0, 350, (self.num_blocks_x, self.num_blocks_y))
+        initial_guess = np.random.uniform(0, 1000, (self.num_blocks_x, self.num_blocks_y))
         # initial_guess = np.zeros(( (self.num_blocks_x, self.num_blocks_y)))
         # number_of_gauss = 1
         # # # these are some initial guesses
@@ -81,6 +99,7 @@ class flattening_GA:
 
         # Trim the pattern to fit the SLM dimensions
         return pattern_grid[:self.SLMwidth, :self.SLMheight]
+        # return pattern_grid
 
     def calculate_fitness(self, ccd_data):
         # max_difference = np.size(ccd_data[ccd_data>self.goal_image])
@@ -98,7 +117,8 @@ class flattening_GA:
         # penalty = 0.001 * changed_pixels_below_threshold
         # print(f'reward:{reward}, penalty:{penalty}')
         # fitness = reward + penalty
-        fitness = reward + penalise
+        # fitness = reward + penalise
+        fitness = reward
         # print(f'max difference {max_difference}, intensity difference {IntensityDifference}')
         return fitness
 
