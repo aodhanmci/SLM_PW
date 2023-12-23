@@ -5,10 +5,13 @@ from tkinter.filedialog import askopenfile
 import pandas as pd
 import os
 import threading
-os.environ["PYLON_CAMEMU"] = "3"
+os.environ["PYLON_CAMEMU"] = "1"
+import random
+from PIL import Image
+import numpy as np
 
 class cameraCapture(tk.Frame):
-
+    
     _instance = None
     _initialized = False
 
@@ -39,11 +42,11 @@ class cameraCapture(tk.Frame):
             if NUM_CAMERAS == 0:
                 raise pylon.RuntimeException("No camera connected")
             else:
-                # print(f'{NUM_CAMERAS} cameras detected:\n')
+                print(f'{NUM_CAMERAS} cameras detected:\n')
                 
-                # for counter, device in enumerate(devices):
-                #     print(f'{counter}) {device.GetFriendlyName()}') # return readable name
-                #     print(f'{counter}) {device.GetFullName()}\n') # return unique code
+                for counter, device in enumerate(devices):
+                    print(f'{counter}) {device.GetFriendlyName()}') # return readable name
+                    print(f'{counter}) {device.GetFullName()}\n') # return unique code
 
                 self.camera = pylon.InstantCamera(tlf.CreateDevice(devices[0]))
                 # running=False
@@ -57,7 +60,11 @@ class cameraCapture(tk.Frame):
             self.camera.ExposureTimeRaw = int(df.exposure[0])
             # self.camera.height = self.camera.Height.GetValue()
             # self.camera.width = self.camera.width.GetValue()
-            self.camera.GainRaw = int(df.gain[0])
+            min_gain = int(self.camera.GainRaw.GetValue())
+            if int(df.gain[0]) < min_gain:
+                self.camera.GainRaw = min_gain
+            else:
+                self.camera.GainRaw = int(df.gain[0])
             self.camera.TriggerSource.SetValue("Line1")
             self.camera.AcquisitionMode.SetValue("Continuous")
 
@@ -95,7 +102,7 @@ class cameraCapture(tk.Frame):
         self.capture_thread.start()
 
         
-    def getFrame(self):
+    def getFrame(self, GUIwindow):
         while self.continue_capture:
             try:
                 self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
@@ -133,7 +140,11 @@ class cameraCapture(tk.Frame):
 
                     return self.img0
                 else:
-                    print(error)
+                    # pass
+                    # self.continue_capture = False
+                    # print("Camera error. Continuing without camera.")
+                    return np.array([[random.random() for i in range(GUIwindow.CCDwidth)] for j in range(GUIwindow.CCDheight)])*255
+                    # print(error)
 
     def stop_capture(self):
         self.continue_capture = False

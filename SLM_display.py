@@ -8,17 +8,17 @@ class DisplaySLM(tk.Frame):
         self.SLMwidth = Monitors.SLMwidth
         self.SLMheight = Monitors.SLMheight
         # self.SLMdisp = Image.fromarray(np.zeros((Monitors.SLMdim[0],Monitors.SLMdim[1])))
-        self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
-        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
-        self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png"))
-        
+        self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_white.png")
+        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_white.png")
+        self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_white.png"))
+        self.browseImgArray = np.asarray(self.browseImg) # this is purely for quick display of white image, get rid of this once finished debugging to keep "NO IMAGE SELECTED" error handling working. implemented 12/22/23
         self.SLMimage = np.zeros((Monitors.SLMdim[0], Monitors.SLMdim[1]))
         self.SLMimage[0][0] = None
         self.SLMpreview = self.SLMimage
 
     def browse(self):
         try:
-            f_types = [('hurry up and pick one', '*.*')]
+            f_types = [('hurry up and pick one', '*.png')]
             filename = filedialog.askopenfilename(filetypes=f_types)
             self.browseImg = Image.open(filename)
             self.browseImgArray = np.asarray(self.browseImg)

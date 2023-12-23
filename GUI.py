@@ -17,7 +17,6 @@ from scipy.ndimage import gaussian_filter
 class Page(tk.Frame):
 
     def __init__(self, parent, window, camera, Monitors, SLM):
-
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.window = window
@@ -36,11 +35,14 @@ class Page(tk.Frame):
         self.scale_percent = scale_percent
         gap = min(self.Monitors.SLMwidth, self.CCDwidth)*scale_percent/600
 
+        # print(self.Monitors.SLMwidth*scale_percent/100)
+
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 3*gap)
+        # window_width = int(381.6)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
 
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
-
+        # window.configure(bg="#000000")
         # just leaving this here
         large_button_height = 30
         large_button_width = 60
@@ -93,6 +95,7 @@ class Page(tk.Frame):
         # Create buttons
         self.start_button = tk.Button(window, text="Start", command=self.testFunc)
         self.start_button.place(x=0, **upper_row_dict)
+        self.start_button.config(background="red")
         self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
         self.exit_button = tk.Button(window, text="Exit", command=self.exitGUI)
@@ -203,7 +206,8 @@ class Page(tk.Frame):
                                     anchor=tk.CENTER
                                     )
 
-        fig, ax = plt.subplots(figsize=(4.5,3.5))
+        px = 1/plt.rcParams['figure.dpi']
+        fig, ax = plt.subplots(figsize=(self.CCDwidth*px*scale_percent/200,self.CCDheight*px*scale_percent/200))
 
         canvas = FigureCanvasTkAgg(fig, parent)
         canvas.draw()
@@ -427,7 +431,7 @@ class Page(tk.Frame):
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
+            self.ccd_data = self.camera.getFrame(self) - self.background # Access the shared frame in a thread-safe manner
             self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         # print(np.shape(self.ccd_data))
         ########### Flattening

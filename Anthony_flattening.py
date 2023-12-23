@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
+import PIL
 from PIL import Image, ImageOps, ImageFilter
 from numpy import asarray
 import cv2
@@ -15,7 +16,7 @@ def center(imageArray):
 
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
-        
+    
     return cX, cY
 
 class Flattening_algo:

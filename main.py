@@ -1,4 +1,5 @@
 import tkinter as tk
+import PIL
 from GUI import *
 from SLM_window import *
 from Camera import *
@@ -12,6 +13,7 @@ def close_application():
 
 if __name__ == "__main__":
     root = tk.Tk()
+
     camera = cameraCapture()
     camera.start_capture() # thread locking
     
@@ -23,4 +25,3 @@ if __name__ == "__main__":
     root.mainloop()
     camera.stop_capture() # thread locking
 
-    
