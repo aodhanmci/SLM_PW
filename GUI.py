@@ -20,6 +20,7 @@ class Page(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.window = window
+        # tk.Frame.grid()
         self.SLM = SLM
         window.title("SLM & CCD Control")
         # window.geometry(f"{window_width}x{window_height}")
@@ -92,10 +93,20 @@ class Page(tk.Frame):
             anchor=tk.CENTER
             )
 
+        # Create grid to place buttons into
+
+        # Grid.columnconfigure(self, index = 0,
+        #              weight = 1)
+ 
+        # Grid.rowconfigure(self, 0, 
+        #             weight = 1)
+
+        
         # Create buttons
         self.start_button = tk.Button(window, text="Start", command=self.testFunc)
-        self.start_button.place(x=0, **upper_row_dict)
-        self.start_button.config(background="red")
+        # self.start_button.place(x=0, **upper_row_dict)
+        self.start_button.grid(row=1, column=5, sticky="S")
+        # self.start_button.config(background="red")
         self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
         self.stop_button.place(x=large_button_width, **upper_row_dict)
         self.exit_button = tk.Button(window, text="Exit", command=self.exitGUI)
