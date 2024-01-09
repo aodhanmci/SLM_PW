@@ -9,6 +9,9 @@ def close_application():
     if SLMwindow.winfo_exists():
         SLMwindow.destroy()
     GUIwindow.exitGUI()
+    exit()
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -23,4 +26,3 @@ if __name__ == "__main__":
     root.mainloop()
     camera.stop_capture() # thread locking
 
-    

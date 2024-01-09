@@ -16,7 +16,7 @@ class window2(tk.Toplevel):
         self.another_widget.place(x=self.Monitors.SLMdim[0]/2, y=self.Monitors.SLMdim[1]/2, anchor=tk.CENTER)
         # this delay allows it to write things to the window
         self.counter_flag = 0
-        self.delay=500
+        self.delay=100
         self.update2()
 
     def update2(self):
