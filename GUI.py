@@ -39,9 +39,9 @@ class Page(tk.Frame):
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 6*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-
+        print(window_width, window_height)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
-
+        # print(window.geometry())
 
         # just leaving this here
         large_button_height = 40
@@ -77,7 +77,7 @@ class Page(tk.Frame):
             anchor=tk.CENTER
             )
         
-        
+        print(self.winfo_geometry)
 
         test_label = tk.Label(window, text="THIS IS TEST TEXT")
         test_label.place(
@@ -254,8 +254,6 @@ class Page(tk.Frame):
         self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
         self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
 
-
-
         # with self.camera.lock:
         #     self.ccd_data = self.camera.getFrame()
         # load in the last saved image transformation object
@@ -344,7 +342,7 @@ class Page(tk.Frame):
         ##### end of anthony initialising
         self.delay=500
         print("HELLO")
-        self.after(self.delay, self.update)
+        self.after(self.delay, self.updateGUI)
         ## end of initialisation ##
     
 
@@ -525,7 +523,10 @@ class Page(tk.Frame):
         totalMultArray = totalMultArray
 
 
-    def update(self):
+    def updateGUI(self):
+
+
+
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
@@ -701,12 +702,12 @@ class Page(tk.Frame):
                 self.SLM_preview_widget.config(image=self.SLMbrowse)
 
         ############# End of flattening
+        
         image = self.ccd_data
         cx, cy, dx, dy, phi = lbs.beam_size(image)
         detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
 
         # Live lineout plotting
-
 
         if self.lineout_toggle:
             self.clearCanvas = False
@@ -773,7 +774,7 @@ class Page(tk.Frame):
         self.ccd_image_widget.config(image=self.photo)
         self.ccd_image_widget.photo = self.photo
 
-        self.window.after(self.delay, self.update)
+        self.window.after(self.delay, self.updateGUI)
         time2 = time.time()
         # print(time2-time1)
 
