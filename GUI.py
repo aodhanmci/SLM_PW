@@ -39,7 +39,6 @@ class Page(tk.Frame):
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 6*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-        print(window_width, window_height)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
         # print(window.geometry())
 
@@ -76,8 +75,6 @@ class Page(tk.Frame):
             y= 10, 
             anchor=tk.CENTER
             )
-        
-        print(self.winfo_geometry)
 
         test_label = tk.Label(window, text="THIS IS TEST TEXT")
         test_label.place(
