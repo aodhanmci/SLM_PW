@@ -37,7 +37,7 @@ class Page(tk.Frame):
         self.scale_percent = scale_percent
         gap = min(self.Monitors.SLMwidth, self.CCDwidth)*scale_percent/600
 
-        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 6*gap)
+        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
         # print(window.geometry())
