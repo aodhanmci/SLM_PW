@@ -316,7 +316,9 @@ class Page(tk.Frame):
 
         ##### RESIZE TESTING
 
-        
+        self.menu_left = tk.Frame(window, width=150, bg="#ababab")
+        self.menu_left_upper = tk.Frame(self.menu_left, width=150, height=150, bg="red")
+        self.menu_left_lower = tk.Frame(self.menu_left, width=150, bg="blue")
 
 
 
