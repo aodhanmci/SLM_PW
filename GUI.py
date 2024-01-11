@@ -700,9 +700,8 @@ class Page(tk.Frame):
 
         ############# End of flattening
         
-        image = self.ccd_data
+        image = self.ccd_data_gui
         cx, cy, dx, dy, phi = lbs.beam_size(image)
-        detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
 
         # Live lineout plotting
 
@@ -717,6 +716,8 @@ class Page(tk.Frame):
                 self.ax.clear()
                 self.ax.plot(x,data_y, color = "green")
                 self.ax.plot(y,data_x, color = "red")
+
+                
                 try:
                     self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
                 except:
@@ -761,6 +762,7 @@ class Page(tk.Frame):
 
         if self.circle_toggle:
             try:
+                detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), detected_circle[2], 255, 1)
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), 1, 255, 2)
             except Exception as error:
