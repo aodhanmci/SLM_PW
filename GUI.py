@@ -37,9 +37,8 @@ class Page(tk.Frame):
         self.scale_percent = scale_percent
         gap = min(self.Monitors.SLMwidth, self.CCDwidth)*scale_percent/600
 
-        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 6*gap)
+        window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-        print(window_width, window_height)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
         # print(window.geometry())
 
@@ -76,8 +75,6 @@ class Page(tk.Frame):
             y= 10, 
             anchor=tk.CENTER
             )
-        
-        print(self.winfo_geometry)
 
         test_label = tk.Label(window, text="THIS IS TEST TEXT")
         test_label.place(
@@ -315,6 +312,17 @@ class Page(tk.Frame):
         self.ax = ax
         self.canvas = canvas
         self.fig = fig
+
+
+        ##### RESIZE TESTING
+
+        
+
+
+
+
+        #####
+
 
         self.circle_toggle = False
         self.lineout_toggle = False
@@ -703,23 +711,26 @@ class Page(tk.Frame):
 
         ############# End of flattening
         
-        image = self.ccd_data
+        image = self.ccd_data_gui
         cx, cy, dx, dy, phi = lbs.beam_size(image)
-        detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
 
         # Live lineout plotting
 
         if self.lineout_toggle:
             self.clearCanvas = False
             try:
-                data_y = self.ccd_data[int(cy),:]
-                data_x = self.ccd_data[:, int(cx)]
-                x = np.arange(len(data_y))
-                y = np.arange(len(data_x))
+                data_horizontal = self.ccd_data[int(cy),:]
+                data_vertical = self.ccd_data[:, int(cx)]
+                x = np.arange(len(data_horizontal))
+                y = np.arange(len(data_vertical))
 
                 self.ax.clear()
-                self.ax.plot(x,data_y, color = "green")
-                self.ax.plot(y,data_x, color = "red")
+                self.ax.plot(x,data_horizontal, color = "green")
+                self.ax.plot(y,data_vertical, color = "red")
+
+                cv2.line(image, (0, int(cy)), (int(max(x)*2), int(cy)), color=255, thickness=1)
+                cv2.line(image, (int(cx), 0), (int(cx), int(max(y)*2)), color=255, thickness=1)
+
                 try:
                     self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
                 except:
@@ -749,7 +760,7 @@ class Page(tk.Frame):
                 self.ax.set_ylim([0,260])
                 self.ax.set_xlabel("Position (x)")
                 self.ax.set_ylabel("Pixel Intensity (0-255)")
-                self.ax.set_title("Center Horizontal Lineout of CCD")
+                self.ax.set_title("Beam Center Lineout of CCD")
                 self.canvas.draw()
             except Exception as error:
                 print(error)
@@ -764,6 +775,7 @@ class Page(tk.Frame):
 
         if self.circle_toggle:
             try:
+                detected_circle = np.uint16((cx,cy,(dx/3+dy/3)/2,phi))
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), detected_circle[2], 255, 1)
                 cv2.circle(image, (detected_circle[0],detected_circle[1]), 1, 255, 2)
             except Exception as error:
