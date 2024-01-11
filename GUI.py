@@ -717,6 +717,8 @@ class Page(tk.Frame):
                 self.ax.plot(x,data_y, color = "green")
                 self.ax.plot(y,data_x, color = "red")
 
+                cv2.line(image, (0, int(cy)), (int(max(x)*2), int(cy)), color=255, thickness=1)
+                cv2.line(image, (int(cx), 0), (int(cx), int(max(y)*2)), color=255, thickness=1)
                 
                 try:
                     self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
