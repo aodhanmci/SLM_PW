@@ -312,13 +312,22 @@ class Page(tk.Frame):
         self.ax = ax
         self.canvas = canvas
         self.fig = fig
-
+        
 
         ##### RESIZE TESTING
 
-        self.menu_left = tk.Frame(window, width=150, bg="#ababab")
-        self.menu_left_upper = tk.Frame(self.menu_left, width=150, height=150, bg="red")
-        self.menu_left_lower = tk.Frame(self.menu_left, width=150, bg="blue")
+        self.menu_left = tk.LabelFrame(window, width=150, height=150, bg="black")
+        self.menu_left_upper = tk.LabelFrame(self.menu_left, width=150, height=150, bg="red")
+        self.menu_left_lower = tk.LabelFrame(self.menu_left, width=150, bg="blue")
+
+        self.menu_left.place(anchor='nw', x=200, y=50)
+        self.menu_left_upper.place(anchor='ne')
+
+
+
+
+
+
 
 
 
