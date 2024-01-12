@@ -43,8 +43,9 @@ class flattening_GA:
         zoom_factors = [self.SLMwidth / self.weights.shape[0],
                 self.SLMheight / self.weights.shape[1]]
         self.tiled_weights = gaussian_filter(zoom(self.weights , zoom_factors, order=3), sigma=50)
-        self.tiled_weights = shift_array(self.tiled_weights, 50, 'left')
-        self.tiled_weights = shift_array(self.tiled_weights, 50, 'up')
+        self.tiled_weights = np.ones_like(self.tiled_weights)
+        # self.tiled_weights = shift_array(self.tiled_weights, 50, 'left')
+        # self.tiled_weights = shift_array(self.tiled_weights, 50, 'up')
 
         self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
         self.fitness_of_population = np.zeros((self.population_size, 1))
@@ -77,7 +78,7 @@ class flattening_GA:
     
 
     def initialize_individual_block_based(self, population_number):
-        initial_guess = np.random.uniform(0, 1000, (self.num_blocks_x, self.num_blocks_y))
+        initial_guess = np.random.uniform(0, 200, (self.num_blocks_x, self.num_blocks_y))
         # initial_guess = np.zeros(( (self.num_blocks_x, self.num_blocks_y)))
         # number_of_gauss = 1
         # # # these are some initial guesses
@@ -103,11 +104,15 @@ class flattening_GA:
 
     def calculate_fitness(self, ccd_data):
         # max_difference = np.size(ccd_data[ccd_data>self.goal_image])
+
         # IntensityDifference =  ((np.sum(self.goal_image[380:800, 600:1030])/100 - np.sum(ccd_data[380:800, 600:1030])/100)**2)/1000
         # IntensityDifference =  ((np.sum(self.goal_image) - np.sum(ccd_data))**2)/1000
+        # reward = IntensityDifference
+        # fitness = reward
+
         reward = (np.sum(ccd_data[self.positive_goal_index]) - np.sum(self.goal_image[self.positive_goal_index]))**2
         penalise = (np.sum(ccd_data[self.negative_goal_index]) - np.sum(self.goal_image[self.negative_goal_index]))**2
-        # reward = IntensityDifference
+        fitness = reward + penalise
 
         # number_above = ccd_data[ccd_data>100]
         # reward = 20*number_above.size
@@ -116,9 +121,6 @@ class flattening_GA:
         # changed_pixels_below_threshold = np.sum(ccd_data[mask] != self.goal_image[mask])
         # penalty = 0.001 * changed_pixels_below_threshold
         # print(f'reward:{reward}, penalty:{penalty}')
-        # fitness = reward + penalty
-        # fitness = reward + penalise
-        fitness = reward
         # print(f'max difference {max_difference}, intensity difference {IntensityDifference}')
         return fitness
 

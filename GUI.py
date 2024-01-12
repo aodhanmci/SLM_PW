@@ -14,6 +14,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 import random
 from scipy.ndimage import gaussian_filter
+from datetime import datetime
+import csv
 
 class Page(tk.Frame):
 
@@ -371,29 +373,29 @@ class Page(tk.Frame):
 
 
     def GA_parameters(self):
-        
+        self.df2 = pd.read_csv('./settings/GAVals.csv', usecols=['GA_population','GA_generation', 'GA_mutation_rate', 'GA_num_parents'])
         self.GA_window = tk.Toplevel(self.parent)
         self.GA_window.geometry("300x300")
         self.GA_window.title("Genetic Algorithm Flattening")
         self.GA_population_label = tk.Label(self.GA_window , text="Initial Population")
         self.GA_population_label.grid(row=0, column=0)
         self.GA_population_entry = tk.Entry(self.GA_window)
-        self.GA_population_entry.insert(0, "30")
+        self.GA_population_entry.insert(0, str(self.df2.GA_population[0]))
         self.GA_population_entry.grid(row=0, column=1)
         self.GA_generation_label = tk.Label(self.GA_window , text="Number of Gens")
         self.GA_generation_label.grid(row=1, column=0)
         self.GA_generations_entry = tk.Entry(self.GA_window)
-        self.GA_generations_entry.insert(0, "50")
+        self.GA_generations_entry.insert(0, str(self.df2.GA_generation[0]))
         self.GA_generations_entry.grid(row=1, column=1)
         self.GA_mutation_label = tk.Label(self.GA_window , text="Mutation Rate")
         self.GA_mutation_label.grid(row=2, column=0)
         self.GA_mutation_rate_entry = tk.Entry(self.GA_window)
-        self.GA_mutation_rate_entry.insert(0, "0.2")
+        self.GA_mutation_rate_entry.insert(0, str(self.df2.GA_mutation_rate[0]))
         self.GA_mutation_rate_entry.grid(row=2, column=1)
         self.GA_parents_label = tk.Label(self.GA_window , text="Num of Parents")
         self.GA_parents_label.grid(row=3, column=0)
         self.GA_num_parents_entry = tk.Entry(self.GA_window)
-        self.GA_num_parents_entry.insert(0, "10")
+        self.GA_num_parents_entry.insert(0, str(self.df2.GA_num_parents[0]))
         self.GA_num_parents_entry.grid(row=3, column=1)
         self.GA_weight_button = tk.Button(self.GA_window, text="Weights", command=self.GA_Weight)
         self.GA_weight_button.grid(row=4, column=0)      
@@ -409,11 +411,24 @@ class Page(tk.Frame):
         self.GA_generation = int(self.GA_generations_entry.get())
         self.GA_mutation_rate = float(self.GA_mutation_rate_entry.get())
         self.GA_num_parents = int(self.GA_num_parents_entry.get())
+        df2 = pd.DataFrame({'GA_population': [self.GA_population],
+                           'GA_generation': [self.GA_generation],
+                           'GA_mutation_rate': [self.GA_mutation_rate],
+                           'GA_num_parents': [self.GA_num_parents]})
+        df2.to_csv('./settings/GAVals.csv', index=False)
         self.GA_window.destroy()
 
     def GA_Start(self):
+        df2 = pd.read_csv('./settings/GAVals.csv', usecols=['GA_population','GA_generation', 'GA_mutation_rate', 'GA_num_parents'])
+        self.GA_population = df2.GA_population[0]
+        self.GA_generation = df2.GA_generation[0]
+        self.GA_mutation_rate = df2.GA_mutation_rate[0]
+        self.GA_num_parents = df2.GA_num_parents[0]
         self.GA_GO=True
         self.GA_object = flattening_GA(self.GA_population, self.GA_generation, self.GA_num_parents, self.GA_mutation_rate, self.SLM.SLMwidth, self.SLM.SLMheight)
+
+    def GA_param_testing(self):
+        pass
 
     def nloops(self):
         self.nloop_pressed = True
@@ -643,10 +658,15 @@ class Page(tk.Frame):
                 self.GA_GO = False
                 np.save('./data/final_after_gen', self.ccd_data)
                 GA_convergence_data = pd.DataFrame(self.GA_object.GA_convergence)
+                GA_header = pd.DataFrame({'timestamp': [datetime.now()],
+                                         'other': 5})
+                GA_convergence_data = pd.concat([GA_header, GA_convergence_data])
                 GA_convergence_data.to_csv('./data/convergence.csv', sep='\t', index=False, header=False)
                 self.generation_number_counter = 0
                 self.population_number_counter = 0
                 self.delay = 100
+                print("GA DONE")
+                self.GA_param_testing()
 
             # set the current image to the SLM so the CCD can be measured in the next loop
             SLMgrating = self.GA_object.population_of_generation[self.population_number_counter, :, :]
@@ -674,7 +694,9 @@ class Page(tk.Frame):
                 self.GA_object.amplitudes = np.zeros((self.GA_object.population_size, self.GA_object.num_blocks_x, self.GA_object.num_blocks_y))
                 self.GA_object.fitness_of_population = np.zeros((self.GA_population, 1))
                 self.population_number_counter =0  
-                self.generation_number_counter +=1               
+                self.generation_number_counter +=1        
+
+
 
         ######### normal mode of operations
         else:
@@ -708,8 +730,8 @@ class Page(tk.Frame):
         if self.lineout_toggle:
             self.clearCanvas = False
             try:
-                data_y = self.ccd_data[int(cy),:]
-                data_x = self.ccd_data[:, int(cx)]
+                data_y = self.ccd_data_gui[int(cy),:]
+                data_x = self.ccd_data_gui[:, int(cx)]
                 x = np.arange(len(data_y))
                 y = np.arange(len(data_x))
 
