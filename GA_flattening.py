@@ -36,27 +36,29 @@ class flattening_GA:
         self.block_size_x = 10
         self.block_size_y = 10
 
-        self.num_blocks_x = (SLMwidth // self.block_size_x) +1
+        self.num_blocks_x = (SLMwidth // self.block_size_x) + 1
         self.num_blocks_y = (SLMheight // self.block_size_y) + 1# adding a plus one because it doesn't tile it properly for some reason
         
         self.weights = np.load('./settings/GA_adjusted_weights.npy')
-        zoom_factors = [self.SLMwidth / self.weights.shape[0],
-                self.SLMheight / self.weights.shape[1]]
+        zoom_factors = [self.SLMheight / self.weights.shape[0],
+                self.SLMwidth / self.weights.shape[1]]
         self.tiled_weights = gaussian_filter(zoom(self.weights , zoom_factors, order=3), sigma=50)
         self.tiled_weights = np.ones_like(self.tiled_weights)
         # self.tiled_weights = shift_array(self.tiled_weights, 50, 'left')
         # self.tiled_weights = shift_array(self.tiled_weights, 50, 'up')
 
-        self.population_of_generation = np.zeros((self.population_size, SLMwidth, SLMheight))
+        self.population_of_generation = np.zeros((self.population_size, SLMheight, SLMwidth))
         self.fitness_of_population = np.zeros((self.population_size, 1))
-        self.amplitudes =  np.zeros((self.population_size, self.num_blocks_x, self.num_blocks_y))
+        self.amplitudes =  np.zeros((self.population_size, self.num_blocks_y, self.num_blocks_x))
         
-        self.parents = np.zeros((self.num_parents, self.num_blocks_x, self.num_blocks_y))
+        self.parents = np.zeros((self.num_parents, self.num_blocks_y, self.num_blocks_x))
         self.binary_pattern = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
+
+        # self.binary_pattern = Image.open('THORLABSBLACK2.png')
         self.goal_image = None
         self.positive_goal_index = None
         self.negative_goal_index = None
-        self.GA_convergence = np.zeros((self.generations, 2))
+        self.GA_convergence = np.zeros((self.generations, 3))
         x = np.linspace(0, self.num_blocks_x, self.num_blocks_x)
         y = np.linspace(0, self.num_blocks_y, self.num_blocks_y)
         self.x, self.y = np.meshgrid(x, y)
@@ -67,18 +69,18 @@ class flattening_GA:
     def create_basic_block_pattern(self):
         # Create a 20x20 basic block with alternating 0s and 1s in the x-direction
         
-        basic_block = np.zeros((self.block_size_x, self.block_size_y))
+        basic_block = np.zeros((self.block_size_y, self.block_size_x))
         basic_block[:, ::2] = 1
         # x_blocks = np.linspace(0, self.block_size_x, self.block_size_x)
         # y_blocks = np.linspace(0, self.block_size_y, self.block_size_y)
         # meshX, meshY = np.meshgrid(x_blocks, y_blocks)
         
         # basic_block = (sawtooth(2 * np.pi * 4000 * meshX/np.max(meshX))+1)/2
-        return np.tile(basic_block, (self.num_blocks_x, self.num_blocks_y))
+        return np.tile(basic_block, (self.num_blocks_y, self.num_blocks_x))
     
 
     def initialize_individual_block_based(self, population_number):
-        initial_guess = np.random.uniform(0, 200, (self.num_blocks_x, self.num_blocks_y))
+        initial_guess = np.random.uniform(0, 200, (self.num_blocks_y, self.num_blocks_x))
         # initial_guess = np.zeros(( (self.num_blocks_x, self.num_blocks_y)))
         # number_of_gauss = 1
         # # # these are some initial guesses
@@ -93,13 +95,17 @@ class flattening_GA:
     def apply_block_pattern_to_grid(self, amplitudes):
   
         # Tile the amplitudes to match the size of the basic block pattern
-        tiled_amplitudes = np.repeat(np.repeat(amplitudes, self.block_size_x, axis=0), self.block_size_y, axis=1)
+        tiled_amplitudes = np.repeat(np.repeat(amplitudes, self.block_size_y, axis=0), self.block_size_x, axis=1)
 
         # Apply the modulated amplitudes to the basic block pattern
-        pattern_grid = self.basic_block_pattern * tiled_amplitudes
+        try:
+            pattern_grid = self.basic_block_pattern * np.transpose(tiled_amplitudes)
+        except:
+            pattern_grid = self.basic_block_pattern * tiled_amplitudes
 
-        # Trim the pattern to fit the SLM dimensions
-        return pattern_grid[:self.SLMwidth, :self.SLMheight]
+        # Trim the pattern to fit the SLM dimensions        
+        return pattern_grid[:self.SLMheight, :self.SLMwidth]
+        
         # return pattern_grid
 
     def calculate_fitness(self, ccd_data):
@@ -109,7 +115,7 @@ class flattening_GA:
         # IntensityDifference =  ((np.sum(self.goal_image) - np.sum(ccd_data))**2)/1000
         # reward = IntensityDifference
         # fitness = reward
-
+        # print(self.positive_goal_index)
         reward = (np.sum(ccd_data[self.positive_goal_index]) - np.sum(self.goal_image[self.positive_goal_index]))**2
         penalise = (np.sum(ccd_data[self.negative_goal_index]) - np.sum(self.goal_image[self.negative_goal_index]))**2
         fitness = reward + penalise
@@ -173,6 +179,7 @@ class flattening_GA:
     #     return child
     def smooth_crossover(self, parent1, parent2):
         child = (parent1 + parent2) / 2
+        # return np.transpose(child)
         return child
     
 

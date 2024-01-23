@@ -20,7 +20,7 @@ if __name__ == "__main__":
     
     Monitors = InitiateMonitors()
     SLM=DisplaySLM(Monitors)
-    GUIwindow = Page(root, root, camera, Monitors, SLM) 
+    GUIwindow = Page(root, root, camera, Monitors, SLM)
     SLMwindow = window2(root, Monitors, SLM, GUIwindow)
     root.protocol("WM_DELETE_WINDOW", close_application)
     root.mainloop()

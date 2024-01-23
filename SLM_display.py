@@ -7,12 +7,13 @@ class DisplaySLM(tk.Frame):
     def __init__(self, Monitors):
         self.SLMwidth = Monitors.SLMwidth
         self.SLMheight = Monitors.SLMheight
-        # self.SLMdisp = Image.fromarray(np.zeros((Monitors.SLMdim[0],Monitors.SLMdim[1])))
-        self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
-        self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
-        self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png"))
+        self.SLMdisp = Image.fromarray(np.zeros((Monitors.SLMdim[1],Monitors.SLMdim[0])))
+        self.browseImg = np.array(self.SLMdisp)
+        # self.SLMdisp = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
+        # self.browseImg = Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png")
+        # self.browseImg = np.array(Image.open("./settings/PreSets/HAMAMATSU/HAMAMATSU_black.png"))
         
-        self.SLMimage = np.zeros((Monitors.SLMdim[0], Monitors.SLMdim[1]))
+        self.SLMimage = np.zeros((Monitors.SLMdim[1], Monitors.SLMdim[0]))
         self.SLMimage[0][0] = None
         self.SLMpreview = self.SLMimage
 
@@ -40,6 +41,7 @@ class DisplaySLM(tk.Frame):
             # self.page.display_button.config(background='red')
 
     def clearSLM(self):
-        self.SLMdisp = Image.fromarray(np.zeros((self.SLMwidth, self.SLMheight)))
+        self.SLMdisp = Image.fromarray(np.zeros((self.SLMheight, self.SLMwidth)))
+        # print(self.SLMheight, self.SLMwidth)
         # self.page.clearSLM = True
 
