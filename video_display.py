@@ -483,6 +483,10 @@ class Page(tk.Frame):
                                      self.threshold_plot[self.center_y, :], 'r-')
                 self.CCD_right_ax.plot(self.threshold_plot[:, self.center_x],
                                        np.linspace(self.CCD_extent[2], self.CCD_extent[3], self.CCD_array.shape[0]), 'g-')
+                self.CCD_right_ax.set_xlim([0, 255])
+                self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
+                self.CCD_top_ax.set_ylim([0, 255])
+                self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
