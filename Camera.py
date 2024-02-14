@@ -142,7 +142,7 @@ class cameraCapture(tk.Frame):
     def Set_Exposure(self, exposure_value):
         with self.lock:
             self.camera.ExposureTimeRaw = exposure_value
-    
+
     def Set_Gain(self, gain_value):
         with self.lock:
             self.camera.GainRaw = gain_value

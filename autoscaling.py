@@ -29,6 +29,8 @@ def clickCorners(SLMimg, CCDimg):
     cv2.namedWindow('img')
     cv2.setMouseCallback('img', callback)
     
+    # img = np.asarray(CCDimg)
+    # img=Image.fromarray(CCDimg)
     img = np.asarray(CCDimg)
     
     print("Step 1/2: Please click the four crosshair corners in numerical order. The window will switch once you have clicked all four corners.")
@@ -103,7 +105,7 @@ def clickCorners(SLMimg, CCDimg):
     p1, p2, p3, p4 = list(p1), list(p2), list(p3), list(p4)
     new_CCD_click_list = [p1, p2, p3, p4]
 
-    img = np.asarray(CCDimg)
+    # img = np.asarray(CCDimg)
 
     input_pts = np.float32([new_CCD_click_list])
     output_pts = np.float32([SLM_click_list])

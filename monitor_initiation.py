@@ -15,3 +15,6 @@ class InitiateMonitors(tk.Frame):
         self.SLMwidth = self.SLMdim[0]
         self.SLMheight = self.SLMdim[1]
 
+        
+
+        

@@ -8,8 +8,10 @@ from SLM_display import *
 def close_application():
     if SLMwindow.winfo_exists():
         SLMwindow.destroy()
-    
     GUIwindow.exitGUI()
+    exit()
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -18,11 +20,9 @@ if __name__ == "__main__":
     
     Monitors = InitiateMonitors()
     SLM=DisplaySLM(Monitors)
-    GUIwindow = Page(root, root, camera, Monitors, SLM) 
-    SLMwindow = window2(root, Monitors, SLM)
-
+    GUIwindow = Page(root, root, camera, Monitors, SLM)
+    SLMwindow = window2(root, Monitors, SLM, GUIwindow)
     root.protocol("WM_DELETE_WINDOW", close_application)
     root.mainloop()
     camera.stop_capture() # thread locking
 
-    
