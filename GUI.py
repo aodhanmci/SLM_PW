@@ -42,7 +42,7 @@ class Page(tk.Frame):
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
+        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/4)}+{int(self.Monitors.mainDim[1]/2-window_height/4-gap)}")
         # print(window.geometry())
 
         # just leaving this here
@@ -208,6 +208,8 @@ class Page(tk.Frame):
         self.background_button.grid(row=numrows-2, column=6, sticky='news')
         self.GA_param_test_button = tk.Button(window, text="GA_PT", font = buttfont, command=self.GA_param_test_button)
         self.GA_param_test_button.grid(row=numrows-2, column=7, sticky='news')
+        # self.manual_gaussian = tk.Button(window, text="Gauss", font = buttfont, command=self.manual_gaussian_button)
+        # self.manual_gaussian.grid(row=numrows-2, column=8, sticky='news')
 
         self.browse_button = tk.Button(window, text="Browse", font = buttfont, command=self.SLM.browse)
         self.browse_button.grid(row=numrows-1, column=0, sticky='news')
@@ -514,7 +516,12 @@ class Page(tk.Frame):
     
     ## this has been moved to Anthony flattening
     def calibrate(self):
-        warp_transform = Flattening_algo.calibration(self.SLM.SLMdisp, self.ccd_data)
+        # self.test_data = np.random.randint(255, self.ccd_data.shape)
+        # self.test_data.astype(np.uint8)
+        # self.test_data2 = Image.fromarray(self.test_data)
+        # self.test_data2.save('./testimg.png')
+        self.test_data = Image.open('calibrate.png')
+        warp_transform = Flattening_algo.calibration(self.SLM.SLMdisp, self.test_data)
         self.cal_transform = warp_transform
 
     def save_image(self):
@@ -620,10 +627,16 @@ class Page(tk.Frame):
             self.flattening_object.count +=1
             self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
             self.delay = 100
+            if self.flattening_object.count == int(self.loop_entry.get())-1:
+                self.flattening_object.lastloop = True
+
+
             if self.flattening_object.count == int(self.loop_entry.get()):
+                print('last?')
                 self.nloop_pressed = False
                 self.loop_pressed = False
                 self.flattening_object.count=0
+                self.flattening_object.lastloop = False
                 # self.delay=100
 
         ##### creates weights used for genetic algorithm

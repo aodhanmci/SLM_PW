@@ -4,8 +4,8 @@ class GA_weight:
     def __init__(self, SLMwidth, SLMheight):
         self.SLMwidth = SLMwidth
         self.SLMheight = SLMheight
-        self.weight_block_size_x = 100
-        self.weight_block_size_y = 100
+        self.weight_block_size_x = 10
+        self.weight_block_size_y = 10
 
         self.weight_num_blocks_x = (SLMwidth // self.weight_block_size_x)
         self.weight_num_blocks_y = (SLMheight // self.weight_block_size_y) # adding a plus one because it doesn't tile it properly for some reason
@@ -20,7 +20,10 @@ class GA_weight:
         # Create a 20x20 basic block with alternating 0s and 1s in the x-direction
         
         basic_block = np.zeros((self.weight_block_size_y, self.weight_block_size_x))
+        # basic_block_ones = gaussian_filter(np.ones((self.weight_block_size_y, self.weight_block_size_x)), 1)
         basic_block[:, ::2] = 1
+        # basic_block = basic_block*basic_block_ones
+        
         # x_blocks = np.linspace(0, self.block_size_x, self.block_size_x)
         # y_blocks = np.linspace(0, self.block_size_y, self.block_size_y)
         # meshX, meshY = np.meshgrid(x_blocks, y_blocks)
@@ -35,8 +38,8 @@ class GA_weight:
 
         # Convert 1D index to 2D index
         row, col = np.unravel_index(population_number, initial_guess.shape)
-        initial_guess[row, col] = 255
-        return initial_guess
+        initial_guess[row, col] = 1000
+        return gaussian_filter(initial_guess, 1)
 
     def apply_weight_block_pattern_to_grid(self, amplitudes):
   
