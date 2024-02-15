@@ -106,7 +106,7 @@ class cameraCapture(tk.Frame):
                     print("Error: ", self.grabResult.ErrorCode)
         
                 self.grabResult.Release()
-                #time.sleep(0.01)
+                # time.sleep(0.01)
 
                 return self.img0
                 
@@ -132,8 +132,12 @@ class cameraCapture(tk.Frame):
                     # time.sleep(0.01)
 
                     return self.img0
-                else:
-                    print(error)
+            except RuntimeError:
+                print("RUNTIME")
+                pass
+            else:
+                print(error)
+    
 
     def stop_capture(self):
         self.continue_capture = False
