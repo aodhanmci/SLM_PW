@@ -205,7 +205,8 @@ class Page(tk.Frame):
 
 
         # Create frame for top buttons
-        self.upper_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
+        upper_frame_height = 2*large_button_height
+        self.upper_frame = tk.Frame(window, height = upper_frame_height, bg='white')
         self.upper_frame.pack(fill=X)
         # self.upper_first_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
         # self.upper_first_row.pack(fill=X, side='top')
@@ -213,7 +214,8 @@ class Page(tk.Frame):
         # self.upper_second_row.pack(fill=X, side='bottom')
 
         # Create frame for lower buttons
-        self.lower_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
+        lower_frame_height = 2*large_button_height*0
+        self.lower_frame = tk.Frame(window, height = lower_frame_height, bg='white')
         self.lower_frame.pack(fill=X, side='bottom')
         # self.lower_first_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
         # self.lower_first_row.pack(fill=X, side='top')
@@ -221,8 +223,9 @@ class Page(tk.Frame):
         # self.lower_second_row.pack(fill=X, side='bottom')
 
         # Create frame for middle displays
-        self.middle_frame = tk.Frame(window, width=200, bg='green')
+        self.middle_frame = tk.Frame(window, bg='green')
         self.middle_frame.pack(fill='both', expand=1)
+        middle_frame_height = window_height - upper_frame_height - lower_frame_height
 
 
         self.start_button = tk.Button(self.upper_frame, text="Start", font = buttfont, width = 50, image = self.play_icon, compound = 'top', bg='white', borderwidth=2, command=self.testFunc)
@@ -309,43 +312,59 @@ class Page(tk.Frame):
             self.cal_transform = 0
         self.counter_flag = 0
         
+
+        SLM_image_height = int(self.Monitors.SLMheight*scale_percent/100)
+        SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/100)
+        CCD_image_height = int(self.CCDheight*scale_percent/120)
+        CCD_image_width = int(self.CCDwidth*scale_percent/120)
+        SLM_preview_height = int(self.Monitors.SLMheight*scale_percent/100)
+        SLM_preview_width = int(self.Monitors.SLMwidth*scale_percent/100)
+        info_width = 200
+
+        y_gap = (middle_frame_height - SLM_image_height - SLM_preview_height) / 3
+        x_gap = (window_width - SLM_image_width - CCD_image_width - 2*info_width) / 3
+
         self.ccd_data_gui = np.zeros((int(self.CCDwidth*scale_percent/100),int(self.CCDheight*scale_percent/100)))
-        #Create a canvas that will display what is on the SLM
-        self.SLM_image_widget = tk.Label(self.middle_frame, 
-                                         width=int(self.Monitors.SLMwidth*scale_percent/100*1.5),
-                                         height=int(self.Monitors.SLMheight*scale_percent/100),
-                                         anchor='e'
+
+
+        self.SLM_image_frame = tk.Frame(self.middle_frame,
+                                        width = SLM_image_width + info_width, 
+                                        height = SLM_image_height)
+        self.SLM_image_frame.pack(side = "left", anchor = 'n', padx = (int(x_gap), int(x_gap/2)), pady = (y_gap, y_gap/2))
+        
+        self.SLM_image_widget = tk.Label(self.SLM_image_frame, 
+                                         width=SLM_image_width,
+                                         height=SLM_image_height
                                          )
-        # self.SLM_image_widget.place(
-        #                             x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
-        #                             y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
-        #                             anchor=tk.CENTER
-        #                             )
-        self.SLM_image_widget.pack(anchor = 'nw', padx = 50, pady = 50)
+        self.SLM_image_widget.pack(side = 'right')
+
+        self.SLM_image_info = tk.Frame(self.SLM_image_frame, width = info_width, bg = 'white')
+        self.SLM_image_info.pack(side = 'left', fill=Y, expand=1)
 
         #Create a canvas that will show the CCD image
-        self.ccd_image_widget = tk.Label(window, 
-                                         width=int(self.CCDwidth*scale_percent/100), 
-                                         height=int(self.CCDheight*scale_percent/100),
-                                         anchor=tk.CENTER
+        self.CCD_image_frame = tk.Frame(self.middle_frame)
+        # self.CCD_image_frame.pack(side = 'right', anchor = 'n', padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2))
+        
+        self.ccd_image_widget = tk.Label(self.CCD_image_frame, 
+                                         width=CCD_image_width, 
+                                         height=CCD_image_height
                                          )
-        self.ccd_image_widget.place(
-                                    x = int(window_width - self.CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
-                                    anchor=tk.CENTER
-                                    )
+        # self.ccd_image_widget.pack(side = 'left')
+
+        self.ccd_image_info = tk.Frame(self.CCD_image_frame, width = info_width)
+        # self.ccd_image_info.pack(side = 'right', fill = Y, expand = 1)
 
         #Create a canvas that will preview the SLM image
-        self.SLM_preview_widget = tk.Label(window, 
-                                         width=int(self.Monitors.SLMwidth*scale_percent/100),
-                                         height=int(self.Monitors.SLMheight*scale_percent/100),
-                                         anchor=tk.CENTER
+        self.SLM_preview_frame = tk.Frame(self.middle_frame, bg = 'red')
+        self.SLM_preview_frame.pack(anchor = 'w', side = 'bottom')
+        self.SLM_preview_widget = tk.Label(self.SLM_preview_frame, 
+                                         width=SLM_preview_width + info_width,
+                                         height=SLM_preview_height
                                          )
-        self.SLM_preview_widget.place(
-                                    x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent*1.5/100 + 2*gap),
-                                    anchor=tk.CENTER
-                                    )
+        self.SLM_preview_widget.pack(side = 'right')
+        self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, width = info_width, bg = 'purple')
+        self.SLM_preview_info.pack(side = 'left', fill = Y, expand = 1)
+
 
         fig, ax = plt.subplots(figsize=(4,3))
 
