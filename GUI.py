@@ -66,6 +66,19 @@ class Page(tk.Frame):
         upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
+        self.play_icon = tk.PhotoImage(file = r'./icons/play.png')
+        self.play_icon = self.play_icon.subsample(3,3)
+        self.pause_icon = tk.PhotoImage(file = r'./icons/pause.png')
+        self.pause_icon = self.pause_icon.subsample(3,3)
+        self.stop_icon = tk.PhotoImage(file = r'./icons/stop.png')
+        self.stop_icon = self.stop_icon.subsample(3,3)
+        self.no_icon = tk.PhotoImage(file = r'./icons/no.png')
+        self.no_icon = self.no_icon.subsample(3,3)
+        self.cancel_icon = tk.PhotoImage(file = r'./icons/cancel.png')
+        self.cancel_icon = self.cancel_icon.subsample(3,3)
+        self.save_icon = tk.PhotoImage(file = r'./icons/save.png')
+        self.save_icon = self.save_icon.subsample(3,3)
+
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
         self.ccd_data = np.zeros_like((self.CCDwidth, self.CCDheight))
         # Create a label for the SLM image
@@ -194,38 +207,41 @@ class Page(tk.Frame):
         # Create frame for top buttons
         self.upper_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
         self.upper_frame.pack(fill=X)
-        self.upper_first_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
-        self.upper_first_row.pack(fill=X, side='top')
-        self.upper_second_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
-        self.upper_second_row.pack(fill=X, side='bottom')
+        # self.upper_first_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
+        # self.upper_first_row.pack(fill=X, side='top')
+        # self.upper_second_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
+        # self.upper_second_row.pack(fill=X, side='bottom')
+
         # Create frame for lower buttons
         self.lower_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
         self.lower_frame.pack(fill=X, side='bottom')
-        self.lower_first_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
-        self.lower_first_row.pack(fill=X, side='top')
-        self.lower_second_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
-        self.lower_second_row.pack(fill=X, side='bottom')
+        # self.lower_first_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
+        # self.lower_first_row.pack(fill=X, side='top')
+        # self.lower_second_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
+        # self.lower_second_row.pack(fill=X, side='bottom')
+
         # Create frame for middle displays
         self.middle_frame = tk.Frame(window, width=200, bg='green')
         self.middle_frame.pack(fill='both', expand=1)
 
-        self.start_button = tk.Button(self.upper_first_row, text="Start", font = buttfont, bg='white', borderwidth=2, command=self.testFunc)
-        self.start_button.pack(side='left', padx=10)
-        # self.start_button.grid(row=0, column=0, sticky='news')
-        # self.start_button.grid(row=0, column=0)
 
-        # self.lower_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
-
-        self.stop_button = tk.Button(self.upper_first_row, text="Stop", font = buttfont, bg='white', borderwidth=2, command=self.stopGUI)
-        # self.stop_button.grid(row=0, column=1, sticky='news')
-        self.stop_button.pack(side='left')
-        self.exit_button = tk.Button(self.upper_first_row, text="Exit", font = buttfont, bg='white', borderwidth=2, command=self.exitGUI)
-        # self.exit_button.grid(row=0, column=2, sticky='news')
-        self.exit_button.pack(side='right')
+        self.start_button = tk.Button(self.upper_frame, text="Start", font = buttfont, width = 50, image = self.play_icon, compound = 'top', bg='white', borderwidth=2, command=self.testFunc)
+        # self.start_button.pack(side='left', padx=10)
+        self.start_button.grid(row=0, column=0, sticky='news')
+        # self.start_button.grid(row=1, column=3)
+        self.stop_button = tk.Button(self.upper_frame, text="Stop", font = buttfont, width = 50, image = self.stop_icon, compound = 'top', bg='white', borderwidth=2, command=self.stopGUI)
+        self.stop_button.grid(row=0, column=1, sticky='news')
+        # self.stop_button.pack(side='left')
+        self.exit_button = tk.Button(self.upper_frame, text="Exit", font = buttfont, width = 50, image = self.no_icon, compound = 'top', bg='white', borderwidth=2, command=self.exitGUI)
+        self.exit_button.grid(row=0, column=2, sticky='news')
+        # self.exit_button.pack(side='right')
+        self.save_SLM_button = tk.Button(self.upper_frame, text="Save SLM", font = buttfont, image = self.save_icon, compound = 'top', bg='white', borderwidth=2, command=self.save_SLM)
+        self.save_SLM_button.grid(row=0, column=3, sticky='news', padx = 15)
         self.save_SLM_entry = tk.Entry(window, width=10)
-        # self.save_SLM_entry.grid(row=numrows-2, column=3, sticky='news')
+        # self.save_SLM_entry.grid(row=1, column=3, sticky='news')
         self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
         # self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
+        # self.GA_Start_button.grid(row=1, column=3)
         self.loop_entry = tk.Entry(window, width=10, font = buttfont)
         self.loop_entry.insert(0, str(df.loop[0]))
         # self.loop_entry.grid(row=numrows-2, column=5, sticky='news')
@@ -238,12 +254,10 @@ class Page(tk.Frame):
 
         self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
         # self.browse_button.grid(row=numrows-1, column=0, sticky='news')
-        self.display_button = tk.Button(window, text="Display to SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
+        self.display_button = tk.Button(window, text="To SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
         # self.display_button.grid(row=numrows-1, column=1, sticky='news')
         self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
         # self.clear_button.grid(row=numrows-1, column=2, sticky='news')
-        self.save_SLM_button = tk.Button(window, text="Save SLM", font = buttfont, bg='white', borderwidth=2, command=self.save_SLM)
-        # self.save_SLM_button.grid(row=numrows-1, column=3, sticky='news')
         self.GA_button = tk.Button(window, text="GA", font = buttfont, bg='white', borderwidth=2, command=self.GA_parameters)
         # self.GA_button.grid(row=numrows-1, column=4, sticky='news')
         self.n_loop_button = tk.Button(window, text="n loop", font = buttfont, bg='white', borderwidth=2, command=self.nloops)
@@ -297,16 +311,17 @@ class Page(tk.Frame):
         
         self.ccd_data_gui = np.zeros((int(self.CCDwidth*scale_percent/100),int(self.CCDheight*scale_percent/100)))
         #Create a canvas that will display what is on the SLM
-        self.SLM_image_widget = tk.Label(window, 
-                                         width=int(self.Monitors.SLMwidth*scale_percent/100),
+        self.SLM_image_widget = tk.Label(self.middle_frame, 
+                                         width=int(self.Monitors.SLMwidth*scale_percent/100*1.5),
                                          height=int(self.Monitors.SLMheight*scale_percent/100),
-                                         anchor=tk.CENTER
+                                         anchor='e'
                                          )
-        self.SLM_image_widget.place(
-                                    x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
-                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
-                                    anchor=tk.CENTER
-                                    )
+        # self.SLM_image_widget.place(
+        #                             x = int(self.Monitors.SLMwidth*scale_percent/200 + gap),
+        #                             y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/200 + gap),
+        #                             anchor=tk.CENTER
+        #                             )
+        self.SLM_image_widget.pack(anchor = 'nw', padx = 50, pady = 50)
 
         #Create a canvas that will show the CCD image
         self.ccd_image_widget = tk.Label(window, 
