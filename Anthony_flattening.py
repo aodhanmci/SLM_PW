@@ -28,9 +28,10 @@ class Flattening_algo:
         self.count = 0
         self.threshold = 75  # default threshold
         self.beginningIntensity = 0
-        self.ccd_data = np.zeros((1600, 1200))
+        self.ccd_data = np.zeros((1920, 1080))
         self.gratingArray = np.zeros((SLMwidth, SLMheight))
-        self.grating = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
+        # self.grating = Image.open('./settings/PreSets/HAMAMATSU/HAMAMATSU_1px.png')
+        self.grating = Image.open('C:\\Users\\loasis\\Documents\\GitHub\\SLM_PW\\testimg\\10 255.png')
         self.blazedData = asarray(self.grating)
         
         self.initialImgArray = None
@@ -45,7 +46,7 @@ class Flattening_algo:
         self.cX, self.cY = None, None
         self.threshold = None
         self.innerBlur = 15, 15
-        self.blur = 15
+        self.blur = 500 # Originally 15
         self.rangeVal=5
         self.lastloop = False
         self.threshold = None
@@ -63,6 +64,7 @@ class Flattening_algo:
             self.initialArray = cv2.warpPerspective(self.initialImgArray, self.cal_transform, (np.shape(self.blazedData)[1], np.shape(self.blazedData)[0]), flags=cv2.INTER_LINEAR)
             self.initialImg = Image.fromarray(self.initialArray)
             self.threshold = np.mean(sorted(self.initialArray.flatten(), reverse=True)[50]) * 0.7
+            # self.threshold = np.clip(self.initialArray, a_max = 170)
 
             self.xi, self.yi = (self.initialArray >= int(self.threshold-5)).nonzero()
             self.stacked = np.stack((self.xi, self.yi), axis=-1)     # Must stack array in order to properly append new pixel coordinates to the array
@@ -229,7 +231,7 @@ class Flattening_algo:
         
         # totalMultArray = (totalMultArray2 + diffMult * aboveMultArray - diffMult * belowMultArray).astype(np.int32)
         # totalMultArray = (totalMultArray2 + 0.5 * aboveMultArray - 0.5 * belowMultArray).astype(np.int32)     # Add and subtract 1/2 of the above and below arrays. More conservative application, but slower. Use if encounter positive feedback loop issues.
-        self.totalMultArray = (totalMultArray2 + self.aboveMultArray/2 - self.belowMultArray/2).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
+        self.totalMultArray = (totalMultArray2 + self.aboveMultArray/6 - self.belowMultArray/6).astype(np.int32)     # Simply add the calculated array for pixels above threshold and subtract array for pixels below threshold. Should work in most cases.
         
         self.totalMultArray[self.totalMultArray < 0] = 0     # Sometimes, subtracting belowMultArray leads to negative grating values (overcorrection). This does not work with SLM, so change all negative numbers to zero
 
@@ -252,7 +254,7 @@ class Flattening_algo:
 
             yshiftArray[xi,yi] = self.totalMultArray[xi,yi]
             # yshiftArray[xi,yi] = totalMultArray[xi,yi] + 50    # Shift grating arary proportional to the local value of the grating array. Creates yshift the same shape as the grating
-            # yshiftArray[xi,yi] = 70 - totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
+            # yshiftArray[xi,yi] = 100 - self.totalMultArray[xi,yi] * 2     # Shift entire grating upward, and antiproportional to shape of grating. With some tweaking, this creates a final grating which has a flat top (all values match at top) and the yshift mirrors that
             # yshiftArray[xi,yi] = 50     # Constant yshift ONLY IN THE THRESHOLD AREA. Gaussian blur below ensures smooth transition back to zero outside the threshold area.
             # yshiftArray[xi,yi] = 70 - (totalMultArray[xi,yi] **2) / 100     # Squaring totalMultArray accounts LESS for the shape of totalMultArray. Just testing other ways to make different yshift shapes.
         

@@ -42,7 +42,8 @@ class Page(tk.Frame):
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap/2)}")
+        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/4)}+{int(self.Monitors.mainDim[1]/2-window_height/4-gap)}")
+        window.configure(bg='white')
         # print(window.geometry())
 
         # just leaving this here
@@ -60,47 +61,49 @@ class Page(tk.Frame):
         
         # consolas 11, cambria 12
 
+        # blue accent color #3395FF
+
         upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
         self.ccd_data = np.zeros_like((self.CCDwidth, self.CCDheight))
         # Create a label for the SLM image
-        self.slm_image_label = tk.Label(window, text="SLM", font = buttfont)
+        self.slm_image_label = tk.Label(window, text="SLM", font = buttfont, bg='white')
         self.slm_image_label.place(
             x = self.Monitors.SLMwidth*scale_percent/200 + gap,
             y= gap/2,
             anchor=tk.CENTER
             )
-        name_label = tk.Label(window, text="Aodhan McIlvenny and Anthony Lu LBNL")
-        name_label.place(
-            x = 120,
-            y= 10, 
-            anchor=tk.CENTER
-            )
+        # name_label = tk.Label(window, text="Aodhan McIlvenny and Anthony Lu LBNL", bg='white')
+        # name_label.place(
+        #     x = 120,
+        #     y= 10, 
+        #     anchor=tk.CENTER
+        #     )
 
-        test_label = tk.Label(window, text="THIS IS TEST TEXT")
+        test_label = tk.Label(window, text="THIS IS TEST TEXT", bg='white')
         test_label.place(
             x = int(self.winfo_width()/2),
             y = int(self.winfo_height()/2),
             anchor=tk.CENTER
         )
         # Create a label for the CCD image
-        self.ccd_image_label = tk.Label(window, text="CCD", font = buttfont)
+        self.ccd_image_label = tk.Label(window, text="CCD", font = buttfont, bg='white')
         self.ccd_image_label.place(
             x = window_width - self.CCDwidth*scale_percent/200 - gap,
             y= gap/2, 
             anchor=tk.CENTER
             )
         
-        self.slm_preview_label = tk.Label(window, text="SLM Preview", font = buttfont)
+        self.slm_preview_label = tk.Label(window, text="SLM Preview", font = buttfont, bg='white')
         self.slm_preview_label.place(
             x = self.Monitors.SLMwidth*scale_percent/200 + gap,
             y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
             anchor=tk.CENTER
             )
         
-        self.lineout_label = tk.Label(window, text="Center Lineout", font = buttfont)
+        self.lineout_label = tk.Label(window, text="Center Lineout", font = buttfont, bg='white')
         self.lineout_label.place(
             x = window_width - self.CCDwidth*scale_percent/200 - gap,
             y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
@@ -109,152 +112,177 @@ class Page(tk.Frame):
 
         # Create buttons
 
-        """
+        # numrows = 5
+        # numcols = 17
 
-        self.start_button = tk.Button(window, text="Start", command=self.testFunc)
-        self.start_button.place(x=0, **upper_row_dict)
-        self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
-        self.stop_button.place(x=large_button_width, **upper_row_dict)
-        self.exit_button = tk.Button(window, text="Exit", command=self.exitGUI)
-        self.exit_button.place(x=2*large_button_width, **upper_row_dict)
-        self.save_SLM_entry = tk.Entry(window)
-        self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
-        self.GA_Start_button = tk.Button(window, text="GA GO", command=self.GA_Start)
-        self.GA_Start_button.place(x=4*large_button_width, **upper_row_dict)
-        self.background_button = tk.Button(window, text="BG", command=self.get_background)
-        self.background_button.place(x=6*large_button_width, **upper_row_dict)
+        # for i in np.arange(numrows):
+        #     window.rowconfigure(i, weight=0)
+        # for j in np.arange(numcols):
+        #     window.columnconfigure(j, weight=0)
 
-        self.loop_entry = tk.Entry(window)
-        self.loop_entry.insert(0, str(df.loop[0]))
-        self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
+        # window.rowconfigure(2, weight=1)
+        # window.columnconfigure(12, weight=1)
 
-        self.browse_button = tk.Button(window, text="Browse", command=self.SLM.browse)
-        self.browse_button.place(x=0, **lower_row_dict)
-        self.display_button = tk.Button(window, text="Display to SLM", command=SLM.displayToSLM)
-        self.display_button.place(x=1*large_button_width, **lower_row_dict)
-        self.clear_button = tk.Button(window, text="Clear", command=SLM.clearSLM)
-        self.clear_button.place(x=2*large_button_width, **lower_row_dict)
-        self.save_SLM_button = tk.Button(window, text="Save SLM", command=self.save_SLM)
-        self.save_SLM_button.place(x=3*large_button_width, **lower_row_dict)
-        self.GA_button = tk.Button(window, text="GA", command=self.GA_parameters)
-        self.GA_button.place(x=4*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="n loop", command=self.nloops)
-        self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
-        self.crosshair_button = tk.Button(window, text="Crosshair", command=self.crosshair)
-        self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.calibrate)
-        self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
-        self.circle_button = tk.Button(window, text="Circle", command=self.circleDetection)
-        self.circle_button.place(x=8*large_button_width, **lower_row_dict)
-        self.lineout_toggle=False
-        self.lineout_button = tk.Button(window, text="Lineout", command= self.lineout)
-        self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
-        self.trigger_button = tk.Button(window, text="Trigger", command=self.trigger)
-        self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
-        self.wf_button = tk.Button(window, text="WF", command=self.wf)
-        self.wf_button.place(x=11*large_button_width, **lower_row_dict)
+        # self.start_button = tk.Button(window, text="Start", font = buttfont, bg='white', borderwidth=2, command=self.testFunc)
+        # self.start_button.grid(row=numrows-2, column=0, sticky='news')
+        # self.stop_button = tk.Button(window, text="Stop", font = buttfont, bg='white', borderwidth=2, command=self.stopGUI)
+        # self.stop_button.grid(row=numrows-2, column=1, sticky='news')
+        # self.exit_button = tk.Button(window, text="Exit", font = buttfont, bg='white', borderwidth=2, command=self.exitGUI)
+        # self.exit_button.grid(row=numrows-2, column=2, sticky='news')
+        # self.save_SLM_entry = tk.Entry(window, width=10)
+        # self.save_SLM_entry.grid(row=numrows-2, column=3, sticky='news')
+        # self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
+        # self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
+        # self.loop_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.loop_entry.insert(0, str(df.loop[0]))
+        # self.loop_entry.grid(row=numrows-2, column=5, sticky='news')
+        # self.background_button = tk.Button(window, text="BG", font = buttfont, bg='white', borderwidth=2, command=self.get_background)
+        # self.background_button.grid(row=numrows-2, column=6, sticky='news')
+        # self.GA_param_test_button = tk.Button(window, text="GA_PT", font = buttfont, bg='white', borderwidth=2, command=self.GA_param_test_button)
+        # self.GA_param_test_button.grid(row=numrows-2, column=7, sticky='news')
+        # # self.manual_gaussian = tk.Button(window, text="Gauss", font = buttfont, command=self.manual_gaussian_button)
+        # # self.manual_gaussian.grid(row=numrows-2, column=8, sticky='news')
 
-        # Create labels and entry widgets for exposure, gain, and save file
-        self.exposure_button = tk.Button(window, text="Set Exposure", command=self.exposure_change)
-        self.exposure_button.place(x=window_width-4*large_button_width, **lower_row_dict)
-        self.gain_button = tk.Button(window, text="Set Gain", command=self.gain_change)
-        self.gain_button.place(x=window_width-3*large_button_width, **lower_row_dict)
-        self.save_button = tk.Button(window, text="Save CCD", command=self.save_image)
-        self.save_button.place(x=window_width-2*large_button_width, **lower_row_dict)
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.saveLineout)
-        self.save_lineout_button.place(x=window_width-large_button_width, **lower_row_dict)
+        # self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
+        # self.browse_button.grid(row=numrows-1, column=0, sticky='news')
+        # self.display_button = tk.Button(window, text="Display to SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
+        # self.display_button.grid(row=numrows-1, column=1, sticky='news')
+        # self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
+        # self.clear_button.grid(row=numrows-1, column=2, sticky='news')
+        # self.save_SLM_button = tk.Button(window, text="Save SLM", font = buttfont, bg='white', borderwidth=2, command=self.save_SLM)
+        # self.save_SLM_button.grid(row=numrows-1, column=3, sticky='news')
+        # self.GA_button = tk.Button(window, text="GA", font = buttfont, bg='white', borderwidth=2, command=self.GA_parameters)
+        # self.GA_button.grid(row=numrows-1, column=4, sticky='news')
+        # self.n_loop_button = tk.Button(window, text="n loop", font = buttfont, bg='white', borderwidth=2, command=self.nloops)
+        # self.n_loop_button.grid(row=numrows-1, column=5, sticky='news')
+        # self.crosshair_button = tk.Button(window, text="Crosshair", font = buttfont, bg='white', borderwidth=2, command=self.crosshair)
+        # self.crosshair_button.grid(row=numrows-1, column=6, sticky='news')
+        # self.calibrate_button = tk.Button(window, text="Calibrate", font = buttfont, bg='white', borderwidth=2, command=self.calibrate)
+        # self.calibrate_button.grid(row=numrows-1, column=7, sticky='news')
+        # self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
+        # self.circle_button.grid(row=numrows-1, column=8, sticky='news')
+        # self.lineout_toggle=False
+        # self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
+        # self.lineout_button.grid(row=numrows-1, column=9, sticky='news')
+        # self.trigger_button = tk.Button(window, text="Trigger", font = buttfont, bg='white', borderwidth=2, command=self.trigger)
+        # self.trigger_button.grid(row=numrows-1, column=10, sticky='news')
+        # self.wf_button = tk.Button(window, text="WF", font = buttfont, bg='white', borderwidth=2, command=self.wf)
+        # self.wf_button.grid(row=numrows-1, column=11, sticky='news')
 
-        self.exposure_entry = tk.Entry(window)
-        self.exposure_entry.insert(0, str(df.exposure[0]))
-        self.exposure_entry.place(x=window_width-4*large_button_width, **upper_row_dict)
-        self.gain_entry = tk.Entry(window)
-        self.gain_entry.insert(0, str(df.gain[0]))
-        self.gain_entry.place(x=window_width-3*large_button_width, **upper_row_dict)
-        self.save_entry = tk.Entry(window)
-        self.save_entry.place(x=window_width-2*large_button_width, **upper_row_dict)
-        
-        self.save_lineout_entry = tk.Entry(window)
-        self.save_lineout_entry.place(x=window_width-large_button_width, **upper_row_dict)
+        # self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, bg='white', borderwidth=2, command=self.exposure_change)
+        # self.exposure_button.grid(row=numrows-1, column=numcols-4, sticky='news')
+        # self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, bg='white', borderwidth=2, command=self.gain_change)
+        # self.gain_button.grid(row=numrows-1, column=numcols-3, sticky='news')
+        # self.save_button = tk.Button(window, text="Save CCD", font = buttfont, bg='white', borderwidth=2, command=self.save_image)
+        # self.save_button.grid(row=numrows-1, column=numcols-2, sticky='news')
+        # self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
+        # self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
 
-        """
+        # self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.exposure_entry.insert(0, str(df.exposure[0]))
+        # self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
+        # self.gain_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.gain_entry.insert(0, str(df.gain[0]))
+        # self.gain_entry.grid(row=numrows-2, column=numcols-3, sticky='news')
 
-        # TRY NEW BUTTON PLACEMENT USING GRID AND MAKE DYNAMIC SIZING
+        # self.save_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.save_entry.grid(row=numrows-2, column=numcols-2, sticky='news')        
+        # self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
 
-        numrows = 5
-        numcols = 17
 
-        for i in np.arange(numrows):
-            window.rowconfigure(i, weight=0)
-        for j in np.arange(numcols):
-            window.columnconfigure(j, weight=0)
+        # Create frame for top buttons
+        self.upper_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
+        self.upper_frame.pack(fill=X)
+        self.upper_first_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
+        self.upper_first_row.pack(fill=X, side='top')
+        self.upper_second_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
+        self.upper_second_row.pack(fill=X, side='bottom')
+        # Create frame for lower buttons
+        self.lower_frame = tk.Frame(window, height = 2*large_button_height, bg='white')
+        self.lower_frame.pack(fill=X, side='bottom')
+        self.lower_first_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
+        self.lower_first_row.pack(fill=X, side='top')
+        self.lower_second_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
+        self.lower_second_row.pack(fill=X, side='bottom')
+        # Create frame for middle displays
+        self.middle_frame = tk.Frame(window, width=200, bg='green')
+        self.middle_frame.pack(fill='both', expand=1)
 
-        window.rowconfigure(2, weight=1)
-        window.columnconfigure(12, weight=1)
+        self.start_button = tk.Button(self.upper_first_row, text="Start", font = buttfont, bg='white', borderwidth=2, command=self.testFunc)
+        self.start_button.pack(side='left', padx=10)
+        # self.start_button.grid(row=0, column=0, sticky='news')
+        # self.start_button.grid(row=0, column=0)
 
-        self.start_button = tk.Button(window, text="Start", font = buttfont, command=self.testFunc)
-        self.start_button.grid(row=numrows-2, column=0, sticky='news')
-        self.stop_button = tk.Button(window, text="Stop", font = buttfont, command=self.stopGUI)
-        self.stop_button.grid(row=numrows-2, column=1, sticky='news')
-        self.exit_button = tk.Button(window, text="Exit", font = buttfont, command=self.exitGUI)
-        self.exit_button.grid(row=numrows-2, column=2, sticky='news')
+        # self.lower_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
+
+        self.stop_button = tk.Button(self.upper_first_row, text="Stop", font = buttfont, bg='white', borderwidth=2, command=self.stopGUI)
+        # self.stop_button.grid(row=0, column=1, sticky='news')
+        self.stop_button.pack(side='left')
+        self.exit_button = tk.Button(self.upper_first_row, text="Exit", font = buttfont, bg='white', borderwidth=2, command=self.exitGUI)
+        # self.exit_button.grid(row=0, column=2, sticky='news')
+        self.exit_button.pack(side='right')
         self.save_SLM_entry = tk.Entry(window, width=10)
-        self.save_SLM_entry.grid(row=numrows-2, column=3, sticky='news')
-        self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, command=self.GA_Start)
-        self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
+        # self.save_SLM_entry.grid(row=numrows-2, column=3, sticky='news')
+        self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
+        # self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
         self.loop_entry = tk.Entry(window, width=10, font = buttfont)
         self.loop_entry.insert(0, str(df.loop[0]))
-        self.loop_entry.grid(row=numrows-2, column=5, sticky='news')
-        self.background_button = tk.Button(window, text="BG", font = buttfont, command=self.get_background)
-        self.background_button.grid(row=numrows-2, column=6, sticky='news')
-        self.GA_param_test_button = tk.Button(window, text="GA_PT", font = buttfont, command=self.GA_param_test_button)
-        self.GA_param_test_button.grid(row=numrows-2, column=7, sticky='news')
+        # self.loop_entry.grid(row=numrows-2, column=5, sticky='news')
+        self.background_button = tk.Button(window, text="BG", font = buttfont, bg='white', borderwidth=2, command=self.get_background)
+        # self.background_button.grid(row=numrows-2, column=6, sticky='news')
+        self.GA_param_test_button = tk.Button(window, text="GA_PT", font = buttfont, bg='white', borderwidth=2, command=self.GA_param_test_button)
+        # self.GA_param_test_button.grid(row=numrows-2, column=7, sticky='news')
+        # self.manual_gaussian = tk.Button(window, text="Gauss", font = buttfont, command=self.manual_gaussian_button)
+        # self.manual_gaussian.grid(row=numrows-2, column=8, sticky='news')
 
-        self.browse_button = tk.Button(window, text="Browse", font = buttfont, command=self.SLM.browse)
-        self.browse_button.grid(row=numrows-1, column=0, sticky='news')
-        self.display_button = tk.Button(window, text="Display to SLM", font = buttfont, command=SLM.displayToSLM)
-        self.display_button.grid(row=numrows-1, column=1, sticky='news')
-        self.clear_button = tk.Button(window, text="Clear", font = buttfont, command=SLM.clearSLM)
-        self.clear_button.grid(row=numrows-1, column=2, sticky='news')
-        self.save_SLM_button = tk.Button(window, text="Save SLM", font = buttfont, command=self.save_SLM)
-        self.save_SLM_button.grid(row=numrows-1, column=3, sticky='news')
-        self.GA_button = tk.Button(window, text="GA", font = buttfont, command=self.GA_parameters)
-        self.GA_button.grid(row=numrows-1, column=4, sticky='news')
-        self.n_loop_button = tk.Button(window, text="n loop", font = buttfont, command=self.nloops)
-        self.n_loop_button.grid(row=numrows-1, column=5, sticky='news')
-        self.crosshair_button = tk.Button(window, text="Crosshair", font = buttfont, command=self.crosshair)
-        self.crosshair_button.grid(row=numrows-1, column=6, sticky='news')
-        self.calibrate_button = tk.Button(window, text="Calibrate", font = buttfont, command=self.calibrate)
-        self.calibrate_button.grid(row=numrows-1, column=7, sticky='news')
-        self.circle_button = tk.Button(window, text="Circle", font = buttfont, command=self.circleDetection)
-        self.circle_button.grid(row=numrows-1, column=8, sticky='news')
+        self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
+        # self.browse_button.grid(row=numrows-1, column=0, sticky='news')
+        self.display_button = tk.Button(window, text="Display to SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
+        # self.display_button.grid(row=numrows-1, column=1, sticky='news')
+        self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
+        # self.clear_button.grid(row=numrows-1, column=2, sticky='news')
+        self.save_SLM_button = tk.Button(window, text="Save SLM", font = buttfont, bg='white', borderwidth=2, command=self.save_SLM)
+        # self.save_SLM_button.grid(row=numrows-1, column=3, sticky='news')
+        self.GA_button = tk.Button(window, text="GA", font = buttfont, bg='white', borderwidth=2, command=self.GA_parameters)
+        # self.GA_button.grid(row=numrows-1, column=4, sticky='news')
+        self.n_loop_button = tk.Button(window, text="n loop", font = buttfont, bg='white', borderwidth=2, command=self.nloops)
+        # self.n_loop_button.grid(row=numrows-1, column=5, sticky='news')
+        self.crosshair_button = tk.Button(window, text="Crosshair", font = buttfont, bg='white', borderwidth=2, command=self.crosshair)
+        # self.crosshair_button.grid(row=numrows-1, column=6, sticky='news')
+        self.calibrate_button = tk.Button(window, text="Calibrate", font = buttfont, bg='white', borderwidth=2, command=self.calibrate)
+        # self.calibrate_button.grid(row=numrows-1, column=7, sticky='news')
+        self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
+        # self.circle_button.grid(row=numrows-1, column=8, sticky='news')
         self.lineout_toggle=False
-        self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, command= self.lineout)
-        self.lineout_button.grid(row=numrows-1, column=9, sticky='news')
-        self.trigger_button = tk.Button(window, text="Trigger", font = buttfont, command=self.trigger)
-        self.trigger_button.grid(row=numrows-1, column=10, sticky='news')
-        self.wf_button = tk.Button(window, text="WF", font = buttfont, command=self.wf)
-        self.wf_button.grid(row=numrows-1, column=11, sticky='news')
+        self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
+        # self.lineout_button.grid(row=numrows-1, column=9, sticky='news')
+        self.trigger_button = tk.Button(window, text="Trigger", font = buttfont, bg='white', borderwidth=2, command=self.trigger)
+        # self.trigger_button.grid(row=numrows-1, column=10, sticky='news')
+        self.wf_button = tk.Button(window, text="WF", font = buttfont, bg='white', borderwidth=2, command=self.wf)
+        # self.wf_button.grid(row=numrows-1, column=11, sticky='news')
 
-        self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, command=self.exposure_change)
-        self.exposure_button.grid(row=numrows-1, column=numcols-4, sticky='news')
-        self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, command=self.gain_change)
-        self.gain_button.grid(row=numrows-1, column=numcols-3, sticky='news')
-        self.save_button = tk.Button(window, text="Save CCD", font = buttfont, command=self.save_image)
-        self.save_button.grid(row=numrows-1, column=numcols-2, sticky='news')
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, command=self.saveLineout)
-        self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
+        self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, bg='white', borderwidth=2, command=self.exposure_change)
+        # self.exposure_button.grid(row=numrows-1, column=numcols-4, sticky='news')
+        self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, bg='white', borderwidth=2, command=self.gain_change)
+        # self.gain_button.grid(row=numrows-1, column=numcols-3, sticky='news')
+        self.save_button = tk.Button(window, text="Save CCD", font = buttfont, bg='white', borderwidth=2, command=self.save_image)
+        # self.save_button.grid(row=numrows-1, column=numcols-2, sticky='news')
+        self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
+        # self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
 
         self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
         self.exposure_entry.insert(0, str(df.exposure[0]))
-        self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
+        # self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
         self.gain_entry = tk.Entry(window, width=10, font = buttfont)
         self.gain_entry.insert(0, str(df.gain[0]))
-        self.gain_entry.grid(row=numrows-2, column=numcols-3, sticky='news')
+        # self.gain_entry.grid(row=numrows-2, column=numcols-3, sticky='news')
 
         self.save_entry = tk.Entry(window, width=10, font = buttfont)
-        self.save_entry.grid(row=numrows-2, column=numcols-2, sticky='news')        
+        # self.save_entry.grid(row=numrows-2, column=numcols-2, sticky='news')        
         self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
-        self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
+        # self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
+
 
         # with self.camera.lock:
         #     self.ccd_data = self.camera.getFrame()
@@ -342,6 +370,9 @@ class Page(tk.Frame):
         self.weights_pressed=False
         self.fitness_watch = None
         ##### end of anthony initialising
+
+
+
         self.delay=500
         print("HELLO")
         self.after(self.delay, self.updateGUI)
@@ -514,7 +545,12 @@ class Page(tk.Frame):
     
     ## this has been moved to Anthony flattening
     def calibrate(self):
-        warp_transform = Flattening_algo.calibration(self.SLM.SLMdisp, self.ccd_data)
+        # self.test_data = np.random.randint(255, self.ccd_data.shape)
+        # self.test_data.astype(np.uint8)
+        # self.test_data2 = Image.fromarray(self.test_data)
+        # self.test_data2.save('./testimg.png')
+        self.test_data = Image.open('calibrate.png')
+        warp_transform = Flattening_algo.calibration(self.SLM.SLMdisp, self.test_data)
         self.cal_transform = warp_transform
 
     def save_image(self):
@@ -620,10 +656,16 @@ class Page(tk.Frame):
             self.flattening_object.count +=1
             self.SLM.SLMdisp=PIL.Image.fromarray(SLMgrating)
             self.delay = 100
+            if self.flattening_object.count == int(self.loop_entry.get())-1:
+                self.flattening_object.lastloop = True
+
+
             if self.flattening_object.count == int(self.loop_entry.get()):
+                print('last?')
                 self.nloop_pressed = False
                 self.loop_pressed = False
                 self.flattening_object.count=0
+                self.flattening_object.lastloop = False
                 # self.delay=100
 
         ##### creates weights used for genetic algorithm
