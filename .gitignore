@@ -1,2 +1,2 @@
-prevVals.csv
 *.pyc
+*/*.pyc
