@@ -132,11 +132,13 @@ class cameraCapture(tk.Frame):
                     # time.sleep(0.01)
 
                     return self.img0
-            except RuntimeError:
-                print("RUNTIME")
-                pass
-            else:
-                print(error)
+                else:
+                    self.img0 = None
+                    # self.continue_capture = False
+                    return self.img0
+                
+                    pass
+                    print(error)
     
 
     def stop_capture(self):

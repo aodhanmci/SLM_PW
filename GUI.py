@@ -42,11 +42,10 @@ class Page(tk.Frame):
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
         window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
-        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/4)}+{int(self.Monitors.mainDim[1]/2-window_height/4-gap)}")
+        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap)}")
         window.configure(bg='white')
         # print(window.geometry())
 
-        # just leaving this here
         large_button_height = 40
         large_button_width = 70
 
@@ -223,9 +222,22 @@ class Page(tk.Frame):
         # self.lower_second_row.pack(fill=X, side='bottom')
 
         # Create frame for middle displays
-        self.middle_frame = tk.Frame(window, bg='green')
+        self.middle_frame = tk.Frame(window, bg='white')
         self.middle_frame.pack(fill='both', expand=1)
         middle_frame_height = window_height - upper_frame_height - lower_frame_height
+
+        self.middle_left_frame = tk.Frame(self.middle_frame, bg='green')
+        # self.middle_left_frame.pack(side = 'left', fill = 'both', expand = 1)
+        self.middle_left_frame.grid(row=0, column=0, sticky='news')
+
+        self.middle_right_frame = tk.Frame(self.middle_frame, bg='red')
+        # self.middle_right_frame.pack(side = 'right', fill = 'both', expand = 1)
+        self.middle_right_frame.grid(row=0, column=1, sticky='news')
+
+        self.middle_frame.grid_columnconfigure(0, weight=1)
+        self.middle_frame.grid_columnconfigure(1, weight=1)
+        self.middle_frame.grid_rowconfigure(0, weight=1)
+
 
 
         self.start_button = tk.Button(self.upper_frame, text="Start", font = buttfont, width = 50, image = self.play_icon, compound = 'top', bg='white', borderwidth=2, command=self.testFunc)
@@ -324,13 +336,14 @@ class Page(tk.Frame):
         y_gap = (middle_frame_height - SLM_image_height - SLM_preview_height) / 3
         x_gap = (window_width - SLM_image_width - CCD_image_width - 2*info_width) / 3
 
-        self.ccd_data_gui = np.zeros((int(self.CCDwidth*scale_percent/100),int(self.CCDheight*scale_percent/100)))
+        self.ccd_data_gui = np.zeros((CCD_image_height, CCD_image_width))
+        print(self.ccd_data_gui.shape)
 
 
-        self.SLM_image_frame = tk.Frame(self.middle_frame,
+        self.SLM_image_frame = tk.Frame(self.middle_left_frame,
                                         width = SLM_image_width + info_width, 
                                         height = SLM_image_height)
-        self.SLM_image_frame.pack(side = "left", anchor = 'n', padx = (int(x_gap), int(x_gap/2)), pady = (y_gap, y_gap/2))
+        self.SLM_image_frame.pack(anchor = 'n', padx = (int(x_gap), int(x_gap/2)), pady = (y_gap, y_gap/2))
         
         self.SLM_image_widget = tk.Label(self.SLM_image_frame, 
                                          width=SLM_image_width,
@@ -342,28 +355,29 @@ class Page(tk.Frame):
         self.SLM_image_info.pack(side = 'left', fill=Y, expand=1)
 
         #Create a canvas that will show the CCD image
-        self.CCD_image_frame = tk.Frame(self.middle_frame)
-        # self.CCD_image_frame.pack(side = 'right', anchor = 'n', padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2))
+        self.CCD_image_frame = tk.Frame(self.middle_right_frame,
+                                        width = CCD_image_width + info_width,
+                                        height = CCD_image_height, bg = 'yellow')
+        self.CCD_image_frame.pack(anchor = 'n', padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2))
         
         self.ccd_image_widget = tk.Label(self.CCD_image_frame, 
-                                         width=CCD_image_width, 
-                                         height=CCD_image_height
+                                         bg = 'orange'
                                          )
-        # self.ccd_image_widget.pack(side = 'left')
+        self.ccd_image_widget.pack(side = 'right')
 
         self.ccd_image_info = tk.Frame(self.CCD_image_frame, width = info_width)
         # self.ccd_image_info.pack(side = 'right', fill = Y, expand = 1)
 
         #Create a canvas that will preview the SLM image
-        self.SLM_preview_frame = tk.Frame(self.middle_frame, bg = 'red')
-        self.SLM_preview_frame.pack(anchor = 'w', side = 'bottom')
-        self.SLM_preview_widget = tk.Label(self.SLM_preview_frame, 
-                                         width=SLM_preview_width + info_width,
-                                         height=SLM_preview_height
-                                         )
-        self.SLM_preview_widget.pack(side = 'right')
-        self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, width = info_width, bg = 'purple')
-        self.SLM_preview_info.pack(side = 'left', fill = Y, expand = 1)
+        self.SLM_preview_frame = tk.Frame(self.middle_frame, bg = 'red', width = 50, height = 50)
+        # self.SLM_preview_frame.pack(anchor = 'w', fill = Y)
+        # self.SLM_preview_widget = tk.Label(self.SLM_preview_frame, 
+        #                                  width=SLM_preview_width + info_width,
+        #                                  height=SLM_preview_height
+        #                                  )
+        # self.SLM_preview_widget.pack(side = 'right')
+        # self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, width = info_width, bg = 'purple')
+        # self.SLM_preview_info.pack(side = 'left', fill = X, expand = 1)
 
 
         fig, ax = plt.subplots(figsize=(4,3))
@@ -435,7 +449,7 @@ class Page(tk.Frame):
             self.background = self.ccd_data
             self.background_toggle = True
         else:
-            self.background = np.zeros_like((self.CCDheight, self.CCDwidth))
+            self.background = np.zeros((self.CCDheight, self.CCDwidth))
             self.background_toggle = False
 
 
@@ -674,9 +688,12 @@ class Page(tk.Frame):
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
+            if self.camera.getFrame() == None:
+                self.ccd_data = np.zeros_like(self.background)
+            else:
+                self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
             self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-        # print(np.shape(self.ccd_data))
+        print(self.ccd_data.shape, self.ccd_data_gui.shape)
         ########### Flattening
 
         ########### Anthony Flattening
