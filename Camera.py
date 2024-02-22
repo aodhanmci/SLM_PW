@@ -5,6 +5,7 @@ from tkinter.filedialog import askopenfile
 import pandas as pd
 import os
 import threading
+import numpy as np
 os.environ["PYLON_CAMEMU"] = "3"
 
 class cameraCapture(tk.Frame):
@@ -133,6 +134,11 @@ class cameraCapture(tk.Frame):
 
                     return self.img0
                 else:
+                    self.img0 = None
+                    # self.continue_capture = False
+                    return self.img0
+                
+                    pass
                     print(error)
 
     def stop_capture(self):

@@ -33,8 +33,9 @@ class Page(tk.Frame):
         
         self.CCDwidth = self.camera.camera.Width.GetValue()
         self.CCDheight = self.camera.camera.Height.GetValue()
-        # self.CCDwidth=1600
-        # self.CCDheight=1200
+        if self.CCDwidth == 0:
+            self.CCDwidth=1600
+            self.CCDheight=1200
 
         scale_percent = 30 # percent of original size
         self.scale_percent = scale_percent
@@ -64,7 +65,7 @@ class Page(tk.Frame):
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
-        self.ccd_data = np.zeros_like((self.CCDwidth, self.CCDheight))
+        self.ccd_data = np.zeros((self.CCDheight, self.CCDwidth))
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM", font = buttfont)
         self.slm_image_label.place(
@@ -108,77 +109,6 @@ class Page(tk.Frame):
             )
 
         # Create buttons
-
-        """
-
-        self.start_button = tk.Button(window, text="Start", command=self.testFunc)
-        self.start_button.place(x=0, **upper_row_dict)
-        self.stop_button = tk.Button(window, text="Stop", command=self.stopGUI)
-        self.stop_button.place(x=large_button_width, **upper_row_dict)
-        self.exit_button = tk.Button(window, text="Exit", command=self.exitGUI)
-        self.exit_button.place(x=2*large_button_width, **upper_row_dict)
-        self.save_SLM_entry = tk.Entry(window)
-        self.save_SLM_entry.place(x=3*large_button_width, **upper_row_dict)
-        self.GA_Start_button = tk.Button(window, text="GA GO", command=self.GA_Start)
-        self.GA_Start_button.place(x=4*large_button_width, **upper_row_dict)
-        self.background_button = tk.Button(window, text="BG", command=self.get_background)
-        self.background_button.place(x=6*large_button_width, **upper_row_dict)
-
-        self.loop_entry = tk.Entry(window)
-        self.loop_entry.insert(0, str(df.loop[0]))
-        self.loop_entry.place(x=5*large_button_width, **upper_row_dict)
-
-        self.browse_button = tk.Button(window, text="Browse", command=self.SLM.browse)
-        self.browse_button.place(x=0, **lower_row_dict)
-        self.display_button = tk.Button(window, text="Display to SLM", command=SLM.displayToSLM)
-        self.display_button.place(x=1*large_button_width, **lower_row_dict)
-        self.clear_button = tk.Button(window, text="Clear", command=SLM.clearSLM)
-        self.clear_button.place(x=2*large_button_width, **lower_row_dict)
-        self.save_SLM_button = tk.Button(window, text="Save SLM", command=self.save_SLM)
-        self.save_SLM_button.place(x=3*large_button_width, **lower_row_dict)
-        self.GA_button = tk.Button(window, text="GA", command=self.GA_parameters)
-        self.GA_button.place(x=4*large_button_width, **lower_row_dict)
-        self.five_loop_button = tk.Button(window, text="n loop", command=self.nloops)
-        self.five_loop_button.place(x=5*large_button_width, **lower_row_dict)
-        self.crosshair_button = tk.Button(window, text="Crosshair", command=self.crosshair)
-        self.crosshair_button.place(x=6*large_button_width, **lower_row_dict)
-        self.calibrate_button = tk.Button(window, text="Calibrate", command=self.calibrate)
-        self.calibrate_button.place(x=7*large_button_width, **lower_row_dict)
-        self.circle_button = tk.Button(window, text="Circle", command=self.circleDetection)
-        self.circle_button.place(x=8*large_button_width, **lower_row_dict)
-        self.lineout_toggle=False
-        self.lineout_button = tk.Button(window, text="Lineout", command= self.lineout)
-        self.lineout_button.place(x=9*large_button_width, **lower_row_dict)
-        self.trigger_button = tk.Button(window, text="Trigger", command=self.trigger)
-        self.trigger_button.place(x=10*large_button_width, **lower_row_dict)
-        self.wf_button = tk.Button(window, text="WF", command=self.wf)
-        self.wf_button.place(x=11*large_button_width, **lower_row_dict)
-
-        # Create labels and entry widgets for exposure, gain, and save file
-        self.exposure_button = tk.Button(window, text="Set Exposure", command=self.exposure_change)
-        self.exposure_button.place(x=window_width-4*large_button_width, **lower_row_dict)
-        self.gain_button = tk.Button(window, text="Set Gain", command=self.gain_change)
-        self.gain_button.place(x=window_width-3*large_button_width, **lower_row_dict)
-        self.save_button = tk.Button(window, text="Save CCD", command=self.save_image)
-        self.save_button.place(x=window_width-2*large_button_width, **lower_row_dict)
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", command=self.saveLineout)
-        self.save_lineout_button.place(x=window_width-large_button_width, **lower_row_dict)
-
-        self.exposure_entry = tk.Entry(window)
-        self.exposure_entry.insert(0, str(df.exposure[0]))
-        self.exposure_entry.place(x=window_width-4*large_button_width, **upper_row_dict)
-        self.gain_entry = tk.Entry(window)
-        self.gain_entry.insert(0, str(df.gain[0]))
-        self.gain_entry.place(x=window_width-3*large_button_width, **upper_row_dict)
-        self.save_entry = tk.Entry(window)
-        self.save_entry.place(x=window_width-2*large_button_width, **upper_row_dict)
-        
-        self.save_lineout_entry = tk.Entry(window)
-        self.save_lineout_entry.place(x=window_width-large_button_width, **upper_row_dict)
-
-        """
-
-        # TRY NEW BUTTON PLACEMENT USING GRID AND MAKE DYNAMIC SIZING
 
         numrows = 5
         numcols = 17
@@ -269,7 +199,7 @@ class Page(tk.Frame):
             self.cal_transform = 0
         self.counter_flag = 0
         
-        self.ccd_data_gui = np.zeros((int(self.CCDwidth*scale_percent/100),int(self.CCDheight*scale_percent/100)))
+        self.ccd_data_gui = np.zeros((int(self.CCDheight*scale_percent/100),int(self.CCDwidth*scale_percent/100)))
         #Create a canvas that will display what is on the SLM
         self.SLM_image_widget = tk.Label(window, 
                                          width=int(self.Monitors.SLMwidth*scale_percent/100),
@@ -328,6 +258,7 @@ class Page(tk.Frame):
         self.nloop_pressed = False
         self.clearSLM = False
         self.background_toggle = False
+        
         self.background = np.zeros((self.CCDheight, self.CCDwidth))
         ##### initialising Anthony Feedback
         self.count = 0 
@@ -606,12 +537,14 @@ class Page(tk.Frame):
 
     def updateGUI(self):
 
-
-
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
+            if self.camera.getFrame() == None:
+                self.ccd_data = np.zeros_like(self.background)
+                
+            else:
+                self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
             self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
         # print(np.shape(self.ccd_data))
         ########### Flattening
