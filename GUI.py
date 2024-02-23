@@ -325,8 +325,8 @@ class Page(tk.Frame):
         self.counter_flag = 0
         
 
-        SLM_image_height = int(self.Monitors.SLMheight*scale_percent/100)
-        SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/100)
+        SLM_image_height = int(self.Monitors.SLMheight*scale_percent/200)
+        SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/200)
         CCD_image_height = int(self.CCDheight*scale_percent/120)
         CCD_image_width = int(self.CCDwidth*scale_percent/120)
         SLM_preview_height = int(self.Monitors.SLMheight*scale_percent/100)
@@ -692,8 +692,7 @@ class Page(tk.Frame):
                 self.ccd_data = np.zeros_like(self.background)
             else:
                 self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
-            self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-        print(self.ccd_data.shape, self.ccd_data_gui.shape)
+            self.ccd_data_gui = cv2.resize(self.ccd_data, dsize=(self.ccd_data_gui.shape[1], self.ccd_data_gui.shape[0]), interpolation=cv2.INTER_CUBIC)
         ########### Flattening
 
         ########### Anthony Flattening
