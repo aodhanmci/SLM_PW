@@ -80,12 +80,6 @@ class Page(tk.Frame):
             anchor=tk.CENTER
             )
 
-        test_label = tk.Label(window, text="THIS IS TEST TEXT")
-        test_label.place(
-            x = int(self.winfo_width()/2),
-            y = int(self.winfo_height()/2),
-            anchor=tk.CENTER
-        )
         # Create a label for the CCD image
         self.ccd_image_label = tk.Label(window, text="CCD", font = buttfont)
         self.ccd_image_label.place(
