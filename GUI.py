@@ -22,7 +22,6 @@ from tkinter.filedialog import asksaveasfile
 class Page(tk.Frame):
 
     def __init__(self, parent, window, camera, Monitors, SLM):
-        print("init")
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.window = window
@@ -145,21 +144,15 @@ class Page(tk.Frame):
         self.middle_frame.grid_columnconfigure(1, weight=1)
         self.middle_frame.grid_rowconfigure(0, weight=1)
 
-
-
-        self.start_button = tk.Button(self.upper_frame, text="Start", font = buttfont, width = 50, image = self.play_icon, compound = 'top', bg='white', borderwidth=2, command=self.testFunc)
+        
+        
         # self.start_button.pack(side='left', padx=10)
-        self.start_button.grid(row=0, column=0, sticky='news')
         # self.start_button.grid(row=1, column=3)
-        self.stop_button = tk.Button(self.upper_frame, text="Stop", font = buttfont, width = 50, image = self.stop_icon, compound = 'top', bg='white', borderwidth=2, command=self.stopGUI)
-        self.stop_button.grid(row=0, column=1, sticky='news')
         # self.stop_button.pack(side='left')
-        self.exit_button = tk.Button(self.upper_frame, text="Exit", font = buttfont, width = 50, image = self.no_icon, compound = 'top', bg='white', borderwidth=2, command=self.exitGUI)
-        self.exit_button.grid(row=0, column=2, sticky='news')
         # self.exit_button.pack(side='right')
-        self.save_SLM_button = tk.Button(self.upper_frame, text="Save SLM", font = buttfont, image = self.save_icon, compound = 'top', bg='white', borderwidth=2, command=self.save_SLM)
+        # self.save_SLM_button = tk.Button(self.upper_frame, text="Save SLM", font = buttfont, image = self.save_icon, compound = 'top', bg='white', borderwidth=2, command=self.save_SLM)
         # self.save_SLM_button.grid(row=0, column=3, sticky='news', padx = 15)
-        self.save_SLM_entry = tk.Entry(window, width=10)
+        # self.save_SLM_entry = tk.Entry(window, width=10)
         # self.save_SLM_entry.grid(row=1, column=3, sticky='news')
         self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
         # self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
@@ -191,38 +184,40 @@ class Page(tk.Frame):
         # self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
         # self.circle_button.grid(row=numrows-1, column=8, sticky='news')
         self.lineout_toggle=False
-        self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
+        # self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
         # self.lineout_button.grid(row=numrows-1, column=9, sticky='news')
         self.trigger_button = tk.Button(window, text="Trigger", font = buttfont, bg='white', borderwidth=2, command=self.trigger)
         # self.trigger_button.grid(row=numrows-1, column=10, sticky='news')
         self.wf_button = tk.Button(window, text="WF", font = buttfont, bg='white', borderwidth=2, command=self.wf)
         # self.wf_button.grid(row=numrows-1, column=11, sticky='news')
 
-        self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, bg='white', borderwidth=2, command=self.exposure_change)
+        # self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, bg='white', borderwidth=2, command=self.exposure_change)
         # self.exposure_button.grid(row=numrows-1, column=numcols-4, sticky='news')
-        self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, bg='white', borderwidth=2, command=self.gain_change)
+        # self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, bg='white', borderwidth=2, command=self.gain_change)
         # self.gain_button.grid(row=numrows-1, column=numcols-3, sticky='news')
-        self.save_button = tk.Button(window, text="Save CCD", font = buttfont, bg='white', borderwidth=2, command=self.save_image)
+        # self.save_button = tk.Button(window, text="Save CCD", font = buttfont, bg='white', borderwidth=2, command=self.save_image)
         # self.save_button.grid(row=numrows-1, column=numcols-2, sticky='news')
-        self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
+        # self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
         # self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
 
         # self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
         # self.exposure_entry.insert(0, str(df.exposure[0]))
         # self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
-        self.gain_entry = tk.Entry(window, width=10, font = buttfont)
-        self.gain_entry.insert(0, str(df.gain[0]))
+        # self.gain_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.gain_entry.insert(0, str(df.gain[0]))
         # self.gain_entry.grid(row=numrows-2, column=numcols-3, sticky='news')
 
-        self.save_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.save_entry = tk.Entry(window, width=10, font = buttfont)
         # self.save_entry.grid(row=numrows-2, column=numcols-2, sticky='news')        
-        self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
         # self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
 
 
         # with self.camera.lock:
         #     self.ccd_data = self.camera.getFrame()
         # load in the last saved image transformation object
+
+
         try:
             with open('./settings/calibration/warp_transform.pckl', 'rb') as warp_trans_file:
                 self.cal_transform = pickle.load(warp_trans_file)
@@ -231,6 +226,12 @@ class Page(tk.Frame):
             self.cal_transform = 0
         self.counter_flag = 0
         
+        self.start_button = tk.Button(self.upper_frame, text="Start", font = buttfont, width = 50, image = self.play_icon, compound = 'top', bg='white', borderwidth=2, command=self.testFunc)
+        self.start_button.grid(row=0, column=0, sticky='news')
+        self.stop_button = tk.Button(self.upper_frame, text="Stop", font = buttfont, width = 50, image = self.stop_icon, compound = 'top', bg='white', borderwidth=2, command=self.stopGUI)
+        self.stop_button.grid(row=0, column=1, sticky='news')
+        self.exit_button = tk.Button(self.upper_frame, text="Exit", font = buttfont, width = 50, image = self.no_icon, compound = 'top', bg='white', borderwidth=2, command=self.exitGUI)
+        self.exit_button.grid(row=0, column=2, sticky='news')
 
         SLM_image_height = int(self.Monitors.SLMheight*scale_percent/150)
         SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/150)
@@ -257,7 +258,9 @@ class Page(tk.Frame):
         self.SLM_image_info = tk.Frame(self.SLM_image_frame, 
                                        width = info_width, 
                                        height = SLM_image_height, 
-                                       bg = 'white')
+                                       bg = 'white',
+                                       highlightbackground = 'light gray',
+                                       highlightthickness = 1)
         self.SLM_image_info.pack(side = 'left', 
                                 #  fill = Y, expand = 1
                                  )
@@ -297,7 +300,9 @@ class Page(tk.Frame):
         self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, 
                                          width = info_width, 
                                          height = SLM_preview_height, 
-                                         bg = 'white'
+                                         bg = 'white',
+                                         highlightbackground = 'light gray',
+                                         highlightthickness = 1
                                          )
         self.SLM_preview_info.pack(side = 'left'
                                 #    , fill = Y, expand = 1
@@ -348,7 +353,9 @@ class Page(tk.Frame):
         self.ccd_image_info = tk.Frame(self.CCD_image_frame, 
                                        width = info_width, 
                                        height = CCD_image_height,
-                                       bg = 'white'
+                                       bg = 'white',
+                                       highlightbackground = 'light gray',
+                                       highlightthickness = 1
                                        )
         self.ccd_image_info.pack(side = 'right'
                                 #  , fill = Y, expand = 1
@@ -408,16 +415,26 @@ class Page(tk.Frame):
 
         px = 1/plt.rcParams['figure.dpi']
         fig, ax = plt.subplots(figsize=(SLM_image_width*px,SLM_image_width*px*3/4)) # width, height
-        
+        self.fig, self.ax = fig, ax
+        self.fig.subplots_adjust(right = 0.95, left = 0.17, bottom = 0.17)
         self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'white')
         self.lineout_frame.pack(anchor = 's', fill = Y, expand = 1)
         canvas = FigureCanvasTkAgg(fig, self.lineout_frame)
+        self.canvas = canvas
+        self.ax.set_ylim([0,260])
+        self.ax.set_xlim([0,int(self.CCDwidth)]) # FIX THIS
+        self.ax.set_xlabel("Position (x)")
+        self.ax.set_ylabel("Pixel Intensity (0-255)")
+        self.ax.set_title("CCD Lineout")
         canvas.draw()
         canvas.get_tk_widget().configure(bg = 'gray', bd = 1)
         canvas.get_tk_widget().pack(side = 'left')
         self.lineout_info = tk.Frame(self.lineout_frame,
                                      width = info_width,
-                                     height = SLM_image_height, bg = 'white')
+                                     height = SLM_image_height, 
+                                     bg = 'white',
+                                     highlightbackground = 'light gray',
+                                     highlightthickness = 1)
         self.lineout_info.pack(side = 'right')
         self.lineout_info.pack_propagate(0)
         self.lineout_label = tk.Label(self.lineout_info, text="Lineouts", font = labelfont1, bg='white')
@@ -444,11 +461,6 @@ class Page(tk.Frame):
 
         window_width = int(2*SLM_preview_width + 2.5*info_width)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap)}")
-
-
-        self.ax = ax
-        self.canvas = canvas
-        self.fig = fig
 
         self.circle_toggle = False
         self.lineout_toggle = False
@@ -689,10 +701,10 @@ class Page(tk.Frame):
                                  filetypes=[("PNG Image","*.png")])
             if file:
                 self.fig.savefig(file)
-            self.save_SLM_button.config(background="white")
+            self.save_lineout_button.config(background="white")
         except Exception as error:
             print(error)
-            self.save_SLM_button.config(background="red")
+            self.save_lineout_button.config(background="red")
 
     def circleDetection(self):
         if self.circle_toggle:
@@ -971,7 +983,7 @@ class Page(tk.Frame):
                 y = np.arange(len(data_x))
 
                 self.ax.clear()
-                self.ax.plot(x,data_y, color = "green")
+                self.x_plot = self.ax.plot(x,data_y, color = "green")
                 self.ax.plot(y,data_x, color = "red")
 
                 cv2.line(image, (0, int(cy)), (int(max(x)*2), int(cy)), color=255, thickness=1)
@@ -1006,14 +1018,18 @@ class Page(tk.Frame):
                 self.ax.set_ylim([0,260])
                 self.ax.set_xlabel("Position (x)")
                 self.ax.set_ylabel("Pixel Intensity (0-255)")
-                self.ax.set_title("Center Horizontal Lineout of CCD")
+                self.ax.set_title("CCD Lineout")
                 self.canvas.draw()
             except Exception as error:
                 print(error)
         else:
             if self.clearCanvas == False:
-                self.canvas.get_tk_widget().pack_forget()
-                # self.ax.clear()
+                # self.canvas.get_tk_widget().pack_forget()
+                self.ax.clear()
+                self.ax.set_ylim([0,260])
+                self.ax.set_xlabel("Position (x)")
+                self.ax.set_ylabel("Pixel Intensity (0-255)")
+                self.ax.set_title("CCD Lineout")
                 self.canvas.draw()
                 print("CLEAR")
                 self.clearCanvas = True
