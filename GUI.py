@@ -17,11 +17,12 @@ from scipy.ndimage import gaussian_filter
 from datetime import datetime
 import csv
 import os.path
+from tkinter.filedialog import asksaveasfile
 
 class Page(tk.Frame):
 
     def __init__(self, parent, window, camera, Monitors, SLM):
-
+        print("init")
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.window = window
@@ -57,6 +58,11 @@ class Page(tk.Frame):
         buttfont = tkFont.Font(family='Cambria', size=12
                             #    , weight=tkFont.BOLD
                                )
+        labelfont1 = tkFont.Font(family = 'Helvetica', size = 14
+                                 , weight=tkFont.BOLD
+                                 )
+        labelfont2 = tkFont.Font(family = 'Helvetica', size = 12)
+        self.buttfont, self.labelfont1, self.labelfont2 = buttfont, labelfont1, labelfont2
         
         # consolas 11, cambria 12
 
@@ -77,131 +83,32 @@ class Page(tk.Frame):
         self.cancel_icon = self.cancel_icon.subsample(3,3)
         self.save_icon = tk.PhotoImage(file = r'./icons/save.png')
         self.save_icon = self.save_icon.subsample(3,3)
+        # self.small_save_icon = self.save_icon.subsample(1,1)
+        self.openfile_icon = tk.PhotoImage(file = r'./icons/openfile.png')
+        self.openfile_icon = self.openfile_icon.subsample(4,4)
+        self.display_icon = tk.PhotoImage(file = r'./icons/upload.png')
+        self.display_icon = self.display_icon.subsample(4,4)
+        self.remove_icon = tk.PhotoImage(file = r'./icons/remove.png')
+        self.remove_icon = self.remove_icon.subsample(4,4)
+        self.toggle_off = tk.PhotoImage(file = r'./icons/toggle_off.png')
+        self.toggle_off = self.toggle_off.subsample(3,3)
+        self.toggle_on = tk.PhotoImage(file = r'./icons/toggle_on.png')
+        self.toggle_on = self.toggle_on.subsample(3,3)
+
+
+        # self.toggle_gif = Image.open('./icons/toggle.gif')
+        # self.frames = self.toggle_gif.n_frames # 28 frames
+        # self.photoimage_objects = []
+        # for i in range(self.frames):
+        #     obj = tk.PhotoImage(file = './icons/toggle.gif', format = f"gif -index {i}")
+        #     self.photoimage_objects.append(obj)
+    
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
         self.ccd_data = np.zeros_like((self.CCDwidth, self.CCDheight))
-        # Create a label for the SLM image
-        self.slm_image_label = tk.Label(window, text="SLM", font = buttfont, bg='white')
-        self.slm_image_label.place(
-            x = self.Monitors.SLMwidth*scale_percent/200 + gap,
-            y= gap/2,
-            anchor=tk.CENTER
-            )
-        # name_label = tk.Label(window, text="Aodhan McIlvenny and Anthony Lu LBNL", bg='white')
-        # name_label.place(
-        #     x = 120,
-        #     y= 10, 
-        #     anchor=tk.CENTER
-        #     )
 
-        test_label = tk.Label(window, text="THIS IS TEST TEXT", bg='white')
-        test_label.place(
-            x = int(self.winfo_width()/2),
-            y = int(self.winfo_height()/2),
-            anchor=tk.CENTER
-        )
-        # Create a label for the CCD image
-        self.ccd_image_label = tk.Label(window, text="CCD", font = buttfont, bg='white')
-        self.ccd_image_label.place(
-            x = window_width - self.CCDwidth*scale_percent/200 - gap,
-            y= gap/2, 
-            anchor=tk.CENTER
-            )
-        
-        self.slm_preview_label = tk.Label(window, text="SLM Preview", font = buttfont, bg='white')
-        self.slm_preview_label.place(
-            x = self.Monitors.SLMwidth*scale_percent/200 + gap,
-            y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
-            anchor=tk.CENTER
-            )
-        
-        self.lineout_label = tk.Label(window, text="Center Lineout", font = buttfont, bg='white')
-        self.lineout_label.place(
-            x = window_width - self.CCDwidth*scale_percent/200 - gap,
-            y= 3*gap/2 + max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/100, 
-            anchor=tk.CENTER
-            )
 
         # Create buttons
-
-        # numrows = 5
-        # numcols = 17
-
-        # for i in np.arange(numrows):
-        #     window.rowconfigure(i, weight=0)
-        # for j in np.arange(numcols):
-        #     window.columnconfigure(j, weight=0)
-
-        # window.rowconfigure(2, weight=1)
-        # window.columnconfigure(12, weight=1)
-
-        # self.start_button = tk.Button(window, text="Start", font = buttfont, bg='white', borderwidth=2, command=self.testFunc)
-        # self.start_button.grid(row=numrows-2, column=0, sticky='news')
-        # self.stop_button = tk.Button(window, text="Stop", font = buttfont, bg='white', borderwidth=2, command=self.stopGUI)
-        # self.stop_button.grid(row=numrows-2, column=1, sticky='news')
-        # self.exit_button = tk.Button(window, text="Exit", font = buttfont, bg='white', borderwidth=2, command=self.exitGUI)
-        # self.exit_button.grid(row=numrows-2, column=2, sticky='news')
-        # self.save_SLM_entry = tk.Entry(window, width=10)
-        # self.save_SLM_entry.grid(row=numrows-2, column=3, sticky='news')
-        # self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
-        # self.GA_Start_button.grid(row=numrows-2, column=4, sticky='news')
-        # self.loop_entry = tk.Entry(window, width=10, font = buttfont)
-        # self.loop_entry.insert(0, str(df.loop[0]))
-        # self.loop_entry.grid(row=numrows-2, column=5, sticky='news')
-        # self.background_button = tk.Button(window, text="BG", font = buttfont, bg='white', borderwidth=2, command=self.get_background)
-        # self.background_button.grid(row=numrows-2, column=6, sticky='news')
-        # self.GA_param_test_button = tk.Button(window, text="GA_PT", font = buttfont, bg='white', borderwidth=2, command=self.GA_param_test_button)
-        # self.GA_param_test_button.grid(row=numrows-2, column=7, sticky='news')
-        # # self.manual_gaussian = tk.Button(window, text="Gauss", font = buttfont, command=self.manual_gaussian_button)
-        # # self.manual_gaussian.grid(row=numrows-2, column=8, sticky='news')
-
-        # self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
-        # self.browse_button.grid(row=numrows-1, column=0, sticky='news')
-        # self.display_button = tk.Button(window, text="Display to SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
-        # self.display_button.grid(row=numrows-1, column=1, sticky='news')
-        # self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
-        # self.clear_button.grid(row=numrows-1, column=2, sticky='news')
-        # self.save_SLM_button = tk.Button(window, text="Save SLM", font = buttfont, bg='white', borderwidth=2, command=self.save_SLM)
-        # self.save_SLM_button.grid(row=numrows-1, column=3, sticky='news')
-        # self.GA_button = tk.Button(window, text="GA", font = buttfont, bg='white', borderwidth=2, command=self.GA_parameters)
-        # self.GA_button.grid(row=numrows-1, column=4, sticky='news')
-        # self.n_loop_button = tk.Button(window, text="n loop", font = buttfont, bg='white', borderwidth=2, command=self.nloops)
-        # self.n_loop_button.grid(row=numrows-1, column=5, sticky='news')
-        # self.crosshair_button = tk.Button(window, text="Crosshair", font = buttfont, bg='white', borderwidth=2, command=self.crosshair)
-        # self.crosshair_button.grid(row=numrows-1, column=6, sticky='news')
-        # self.calibrate_button = tk.Button(window, text="Calibrate", font = buttfont, bg='white', borderwidth=2, command=self.calibrate)
-        # self.calibrate_button.grid(row=numrows-1, column=7, sticky='news')
-        # self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
-        # self.circle_button.grid(row=numrows-1, column=8, sticky='news')
-        # self.lineout_toggle=False
-        # self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
-        # self.lineout_button.grid(row=numrows-1, column=9, sticky='news')
-        # self.trigger_button = tk.Button(window, text="Trigger", font = buttfont, bg='white', borderwidth=2, command=self.trigger)
-        # self.trigger_button.grid(row=numrows-1, column=10, sticky='news')
-        # self.wf_button = tk.Button(window, text="WF", font = buttfont, bg='white', borderwidth=2, command=self.wf)
-        # self.wf_button.grid(row=numrows-1, column=11, sticky='news')
-
-        # self.exposure_button = tk.Button(window, text="Set Exposure", font = buttfont, bg='white', borderwidth=2, command=self.exposure_change)
-        # self.exposure_button.grid(row=numrows-1, column=numcols-4, sticky='news')
-        # self.gain_button = tk.Button(window, text="Set Gain", font = buttfont, bg='white', borderwidth=2, command=self.gain_change)
-        # self.gain_button.grid(row=numrows-1, column=numcols-3, sticky='news')
-        # self.save_button = tk.Button(window, text="Save CCD", font = buttfont, bg='white', borderwidth=2, command=self.save_image)
-        # self.save_button.grid(row=numrows-1, column=numcols-2, sticky='news')
-        # self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
-        # self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
-
-        # self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
-        # self.exposure_entry.insert(0, str(df.exposure[0]))
-        # self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
-        # self.gain_entry = tk.Entry(window, width=10, font = buttfont)
-        # self.gain_entry.insert(0, str(df.gain[0]))
-        # self.gain_entry.grid(row=numrows-2, column=numcols-3, sticky='news')
-
-        # self.save_entry = tk.Entry(window, width=10, font = buttfont)
-        # self.save_entry.grid(row=numrows-2, column=numcols-2, sticky='news')        
-        # self.save_lineout_entry = tk.Entry(window, width=10, font = buttfont)
-        # self.save_lineout_entry.grid(row=numrows-2, column=numcols-1, sticky='news')
-
 
         # Create frame for top buttons
         upper_frame_height = 2*large_button_height
@@ -226,11 +133,11 @@ class Page(tk.Frame):
         self.middle_frame.pack(fill='both', expand=1)
         middle_frame_height = window_height - upper_frame_height - lower_frame_height
 
-        self.middle_left_frame = tk.Frame(self.middle_frame, bg='green')
+        self.middle_left_frame = tk.Frame(self.middle_frame, bg='white')
         # self.middle_left_frame.pack(side = 'left', fill = 'both', expand = 1)
         self.middle_left_frame.grid(row=0, column=0, sticky='news')
 
-        self.middle_right_frame = tk.Frame(self.middle_frame, bg='red')
+        self.middle_right_frame = tk.Frame(self.middle_frame, bg='white')
         # self.middle_right_frame.pack(side = 'right', fill = 'both', expand = 1)
         self.middle_right_frame.grid(row=0, column=1, sticky='news')
 
@@ -251,7 +158,7 @@ class Page(tk.Frame):
         self.exit_button.grid(row=0, column=2, sticky='news')
         # self.exit_button.pack(side='right')
         self.save_SLM_button = tk.Button(self.upper_frame, text="Save SLM", font = buttfont, image = self.save_icon, compound = 'top', bg='white', borderwidth=2, command=self.save_SLM)
-        self.save_SLM_button.grid(row=0, column=3, sticky='news', padx = 15)
+        # self.save_SLM_button.grid(row=0, column=3, sticky='news', padx = 15)
         self.save_SLM_entry = tk.Entry(window, width=10)
         # self.save_SLM_entry.grid(row=1, column=3, sticky='news')
         self.GA_Start_button = tk.Button(window, text="GA GO", font = buttfont, bg='white', borderwidth=2, command=self.GA_Start)
@@ -267,11 +174,11 @@ class Page(tk.Frame):
         # self.manual_gaussian = tk.Button(window, text="Gauss", font = buttfont, command=self.manual_gaussian_button)
         # self.manual_gaussian.grid(row=numrows-2, column=8, sticky='news')
 
-        self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
+        # self.browse_button = tk.Button(window, text="Browse", font = buttfont, bg='white', borderwidth=2, command=self.SLM.browse)
         # self.browse_button.grid(row=numrows-1, column=0, sticky='news')
-        self.display_button = tk.Button(window, text="To SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
+        # self.display_button = tk.Button(window, text="To SLM", font = buttfont, bg='white', borderwidth=2, command=SLM.displayToSLM)
         # self.display_button.grid(row=numrows-1, column=1, sticky='news')
-        self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
+        # self.clear_button = tk.Button(window, text="Clear", font = buttfont, bg='white', borderwidth=2, command=SLM.clearSLM)
         # self.clear_button.grid(row=numrows-1, column=2, sticky='news')
         self.GA_button = tk.Button(window, text="GA", font = buttfont, bg='white', borderwidth=2, command=self.GA_parameters)
         # self.GA_button.grid(row=numrows-1, column=4, sticky='news')
@@ -281,7 +188,7 @@ class Page(tk.Frame):
         # self.crosshair_button.grid(row=numrows-1, column=6, sticky='news')
         self.calibrate_button = tk.Button(window, text="Calibrate", font = buttfont, bg='white', borderwidth=2, command=self.calibrate)
         # self.calibrate_button.grid(row=numrows-1, column=7, sticky='news')
-        self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
+        # self.circle_button = tk.Button(window, text="Circle", font = buttfont, bg='white', borderwidth=2, command=self.circleDetection)
         # self.circle_button.grid(row=numrows-1, column=8, sticky='news')
         self.lineout_toggle=False
         self.lineout_button = tk.Button(window, text="Lineout", font = buttfont, bg='white', borderwidth=2, command= self.lineout)
@@ -300,8 +207,8 @@ class Page(tk.Frame):
         self.save_lineout_button = tk.Button(window, text="Save Lineout", font = buttfont, bg='white', borderwidth=2, command=self.saveLineout)
         # self.save_lineout_button.grid(row=numrows-1, column=numcols-1, sticky='news')
 
-        self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
-        self.exposure_entry.insert(0, str(df.exposure[0]))
+        # self.exposure_entry = tk.Entry(window, width=10, font = buttfont)
+        # self.exposure_entry.insert(0, str(df.exposure[0]))
         # self.exposure_entry.grid(row=numrows-2, column=numcols-4, sticky='news')
         self.gain_entry = tk.Entry(window, width=10, font = buttfont)
         self.gain_entry.insert(0, str(df.gain[0]))
@@ -325,70 +232,219 @@ class Page(tk.Frame):
         self.counter_flag = 0
         
 
-        SLM_image_height = int(self.Monitors.SLMheight*scale_percent/200)
-        SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/200)
+        SLM_image_height = int(self.Monitors.SLMheight*scale_percent/150)
+        SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/150)
         CCD_image_height = int(self.CCDheight*scale_percent/120)
         CCD_image_width = int(self.CCDwidth*scale_percent/120)
-        SLM_preview_height = int(self.Monitors.SLMheight*scale_percent/100)
-        SLM_preview_width = int(self.Monitors.SLMwidth*scale_percent/100)
-        info_width = 200
-
-        y_gap = (middle_frame_height - SLM_image_height - SLM_preview_height) / 3
-        x_gap = (window_width - SLM_image_width - CCD_image_width - 2*info_width) / 3
+        SLM_preview_height = int(self.Monitors.SLMheight*scale_percent/150)
+        SLM_preview_width = int(self.Monitors.SLMwidth*scale_percent/150)
+        info_width = 150
 
         self.ccd_data_gui = np.zeros((CCD_image_height, CCD_image_width))
-        print(self.ccd_data_gui.shape)
-
 
         self.SLM_image_frame = tk.Frame(self.middle_left_frame,
                                         width = SLM_image_width + info_width, 
-                                        height = SLM_image_height)
-        self.SLM_image_frame.pack(anchor = 'n', padx = (int(x_gap), int(x_gap/2)), pady = (y_gap, y_gap/2))
-        
+                                        height = SLM_image_height, bg = 'white')
+        self.SLM_image_frame.pack(anchor = 'n', 
+                                #   padx = (int(x_gap), int(x_gap/2)), pady = (y_gap, y_gap/2)
+                                    fill = Y, expand = 1
+                                  )
         self.SLM_image_widget = tk.Label(self.SLM_image_frame, 
                                          width=SLM_image_width,
                                          height=SLM_image_height
                                          )
         self.SLM_image_widget.pack(side = 'right')
+        self.SLM_image_info = tk.Frame(self.SLM_image_frame, 
+                                       width = info_width, 
+                                       height = SLM_image_height, 
+                                       bg = 'white')
+        self.SLM_image_info.pack(side = 'left', 
+                                #  fill = Y, expand = 1
+                                 )
+        self.SLM_image_info.pack_propagate(0)
+        self.SLM_image_label = tk.Label(self.SLM_image_info, text="SLM", font = labelfont1, bg='white')
+        self.SLM_image_label.pack(side = 'top', expand = 1)
+        self.SLMfilename = tk.StringVar()
+        self.SLMfilename.set('Filename:\n\nN/A')
+        self.SLM_i_filename = tk.Label(self.SLM_image_info, 
+                                       textvariable=self.SLMfilename, 
+                                       font = labelfont2, 
+                                       wraplength = info_width*4/5,
+                                       bg='white')
+        self.SLM_i_filename.pack(side = 'top', expand = 1)
+        self.SLM_i_buttons = tk.Frame(self.SLM_image_info, bg = 'white')
+        self.SLM_i_buttons.pack(side = 'top', expand = 1)
+        self.clear_button = tk.Button(self.SLM_i_buttons, 
+                                       font = buttfont, 
+                                       image = self.remove_icon, 
+                                       compound = 'top', 
+                                       bg='white', 
+                                       borderwidth=2, 
+                                       command=self.clear_SLM
+                                        # command = self.animation(0)
+                                       )
+        self.clear_button.pack(side = 'top', expand = 1, ipadx = 5, ipady = 5)
 
-        self.SLM_image_info = tk.Frame(self.SLM_image_frame, width = info_width, bg = 'white')
-        self.SLM_image_info.pack(side = 'left', fill=Y, expand=1)
-
-        #Create a canvas that will show the CCD image
-        self.CCD_image_frame = tk.Frame(self.middle_right_frame,
-                                        width = CCD_image_width + info_width,
-                                        height = CCD_image_height, bg = 'yellow')
-        self.CCD_image_frame.pack(anchor = 'n', padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2))
-        
-        self.ccd_image_widget = tk.Label(self.CCD_image_frame, 
-                                         bg = 'orange'
-                                         )
-        self.ccd_image_widget.pack(side = 'right')
-
-        self.ccd_image_info = tk.Frame(self.CCD_image_frame, width = info_width)
-        # self.ccd_image_info.pack(side = 'right', fill = Y, expand = 1)
 
         #Create a canvas that will preview the SLM image
-        self.SLM_preview_frame = tk.Frame(self.middle_frame, bg = 'red', width = 50, height = 50)
-        # self.SLM_preview_frame.pack(anchor = 'w', fill = Y)
-        # self.SLM_preview_widget = tk.Label(self.SLM_preview_frame, 
-        #                                  width=SLM_preview_width + info_width,
-        #                                  height=SLM_preview_height
-        #                                  )
-        # self.SLM_preview_widget.pack(side = 'right')
-        # self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, width = info_width, bg = 'purple')
-        # self.SLM_preview_info.pack(side = 'left', fill = X, expand = 1)
+        self.SLM_preview_frame = tk.Frame(self.middle_left_frame, bg = 'white')
+        self.SLM_preview_frame.pack(anchor = 's', fill = Y, expand = 1)
+        self.SLM_preview_widget = tk.Label(self.SLM_preview_frame, 
+                                         width=SLM_preview_width,
+                                         height=SLM_preview_height, bg='white'
+                                         )
+        self.SLM_preview_widget.pack(side = 'right')
+        self.SLM_preview_info = tk.Frame(self.SLM_preview_frame, 
+                                         width = info_width, 
+                                         height = SLM_preview_height, 
+                                         bg = 'white'
+                                         )
+        self.SLM_preview_info.pack(side = 'left'
+                                #    , fill = Y, expand = 1
+                                   )
+        self.SLM_preview_info.pack_propagate(0)
+        self.SLM_preview_label = tk.Label(self.SLM_preview_info, text="SLM Preview", font = labelfont1, bg='white')
+        self.SLM_preview_label.pack(side = 'top', expand = 1)
+        self.SLMpfilename = tk.StringVar()
+        self.SLMpfilename.set('Filename:\n\nN/A')
+        self.SLM_p_filename = tk.Label(self.SLM_preview_info, 
+                                       textvariable=self.SLMpfilename, 
+                                       font = labelfont2, 
+                                       wraplength = info_width*4/5,
+                                       bg='white')
+        self.SLM_p_filename.pack(side = 'top', expand = 1)
+        self.SLM_p_buttons = tk.Frame(self.SLM_preview_info, bg = 'white')
+        self.SLM_p_buttons.pack(side = 'top', expand = 1)
+        self.browse_button = tk.Button(self.SLM_p_buttons, 
+                                       font = buttfont, 
+                                       image = self.openfile_icon, 
+                                       compound = 'top', 
+                                       bg='white', 
+                                       borderwidth=2, 
+                                       command=self.browse_SLM)
+        self.browse_button.pack(side = 'left', expand = 1, ipadx = 5, ipady = 5, padx = 5)
+        self.display_button = tk.Button(self.SLM_p_buttons, 
+                                        font = buttfont, 
+                                        image = self.display_icon,
+                                        bg='white', 
+                                        borderwidth=2, 
+                                        command=self.display_SLM)
+        self.display_button.pack(side = 'right', expand = 1, ipadx = 5, ipady = 5, padx = 5)
 
 
-        fig, ax = plt.subplots(figsize=(4,3))
+        #Create a canvas that will show the CCD image
+        self.CCD_image_frame = tk.Frame(self.middle_right_frame
+                                        # width = CCD_image_width + info_width + 5000,
+                                        # height = CCD_image_height, bg = 'yellow'
+                                        , bg = 'white'
+                                        )
+        self.CCD_image_frame.pack(anchor = 'n', 
+                                #   padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2)
+                                  fill = Y, expand = 1)
+        self.ccd_image_widget = tk.Label(self.CCD_image_frame, 
+                                         bg = 'white'
+                                         )
+        self.ccd_image_widget.pack(side = 'left')
+        self.ccd_image_info = tk.Frame(self.CCD_image_frame, 
+                                       width = info_width, 
+                                       height = CCD_image_height,
+                                       bg = 'white'
+                                       )
+        self.ccd_image_info.pack(side = 'right'
+                                #  , fill = Y, expand = 1
+                                 )
+        self.ccd_image_info.pack_propagate(0)
+        self.ccd_label = tk.Label(self.ccd_image_info, text="CCD", font = labelfont1, bg='white')
+        self.ccd_label.pack(side = 'top', expand = 1)
+        self.circle_frame = tk.Frame(self.ccd_image_info, bg = 'white')
+        self.circle_frame.pack(side = 'top', expand = 1)
+        self.circle_label = tk.Label(self.circle_frame, text="Circle", font = labelfont2, bg = 'white')
+        self.circle_label.pack(side = 'left', expand = 1)
+        self.circle_toggle_button = tk.Button(self.circle_frame, 
+                                             image = self.toggle_off, 
+                                             bg = 'white', 
+                                             relief = 'sunken',
+                                             borderwidth = 0,
+                                             activebackground = 'white',
+                                             command = self.circleDetection)
+        self.circle_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 5)
+        self.ccdcon_frame = tk.Frame(self.ccd_image_info, bg = 'white')
+        self.ccdcon_frame.pack(side = 'top', expand = 1)
+        self.exposure_frame = tk.Frame(self.ccdcon_frame, bg = 'white')
+        self.exposure_frame.pack(side = 'left', expand = 1, padx = 2)
+        self.exposure_entry = tk.Entry(self.exposure_frame, width=8, font = buttfont)
+        self.exposure_entry.insert(0, str(df.exposure[0]))
+        self.exposure_entry.pack(side = 'top')
+        self.exposure_entry.bind('<Return>', self.exposure_change)
+        self.exposure_button = tk.Button(self.exposure_frame, 
+                                         text="Exposure", 
+                                         font = buttfont, 
+                                         bg='white', 
+                                         borderwidth=2, 
+                                        #  command=self.exposure_change
+                                         )
+        self.exposure_button.bind('<Button-1>', self.exposure_change)
+        self.exposure_button.pack(side = 'bottom')
+        self.gain_frame = tk.Frame(self.ccdcon_frame, bg = 'white')
+        self.gain_frame.pack(side = 'right', expand = 1, padx = 2)
+        self.gain_entry = tk.Entry(self.gain_frame, width=5, font = buttfont)
+        self.gain_entry.insert(0, str(df.gain[0]))
+        self.gain_entry.pack(side = 'top')
+        self.gain_entry.bind('<Return>', self.gain_change)
+        self.gain_button = tk.Button(self.gain_frame, 
+                                         text="Gain", 
+                                         font = buttfont, 
+                                         bg='white', 
+                                         borderwidth=2)
+        self.gain_button.bind('<Button-2>', self.gain_change)
+        self.gain_button.pack(side = 'bottom')
+        self.save_CCD = tk.Button(self.ccd_image_info,
+                                  image = self.save_icon,
+                                  bg = 'white',
+                                  borderwidth = 2,
+                                  command = self.save_image)
+        self.save_CCD.pack(side = 'top', expand = 1)
 
-        canvas = FigureCanvasTkAgg(fig, parent)
+
+        px = 1/plt.rcParams['figure.dpi']
+        fig, ax = plt.subplots(figsize=(SLM_image_width*px,SLM_image_width*px*3/4)) # width, height
+        
+        self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'white')
+        self.lineout_frame.pack(anchor = 's', fill = Y, expand = 1)
+        canvas = FigureCanvasTkAgg(fig, self.lineout_frame)
         canvas.draw()
-        canvas.get_tk_widget().place(
-                                    x = int(window_width - self.CCDwidth*scale_percent/200 - gap),
-                                    y = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent*1.5/100 + 2*gap),
-                                    anchor=tk.CENTER
-        )
+        canvas.get_tk_widget().configure(bg = 'gray', bd = 1)
+        canvas.get_tk_widget().pack(side = 'left')
+        self.lineout_info = tk.Frame(self.lineout_frame,
+                                     width = info_width,
+                                     height = SLM_image_height, bg = 'white')
+        self.lineout_info.pack(side = 'right')
+        self.lineout_info.pack_propagate(0)
+        self.lineout_label = tk.Label(self.lineout_info, text="Lineouts", font = labelfont1, bg='white')
+        self.lineout_label.pack(side = 'top', expand = 1)
+        self.lineout_toggle_frame = tk.Frame(self.lineout_info, bg = 'white')
+        self.lineout_toggle_frame.pack(side = 'top', expand = 1)
+        self.lineout_toggle_label = tk.Label(self.lineout_toggle_frame, text="Lineout", font = labelfont2, bg = 'white')
+        self.lineout_toggle_label.pack(side = 'left', expand = 1)
+        self.lineout_toggle_button = tk.Button(self.lineout_toggle_frame, 
+                                             image = self.toggle_off, 
+                                             bg = 'white', 
+                                             relief = 'sunken',
+                                             borderwidth = 0,
+                                             activebackground = 'white',
+                                             command = self.lineout)
+        self.lineout_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 5)
+        self.save_lineout_button = tk.Button(self.lineout_info,
+                                  image = self.save_icon,
+                                  bg = 'white',
+                                  borderwidth = 2,
+                                  command = self.saveLineout)
+        self.save_lineout_button.pack(side = 'top', expand = 1)
+        
+
+        window_width = int(2*SLM_preview_width + 2.5*info_width)
+        window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap)}")
+
 
         self.ax = ax
         self.canvas = canvas
@@ -423,11 +479,10 @@ class Page(tk.Frame):
 
         self.delay=500
         print("HELLO")
-        self.after(self.delay, self.updateGUI)
+        self.after(self.delay, self.updateGUI) # THIS CREATES A NEW THREAD. HOW TO STOP THIS???
         ## end of initialisation ##
     
-
-    def gain_change(self):
+    def gain_change(self, event):
         try:
             self.camera.Set_Gain(int(self.gain_entry.get()))
             self.gain_entry.config(background="white")
@@ -435,7 +490,7 @@ class Page(tk.Frame):
             print(error)
             self.gain_entry.config(background="red")
 
-    def exposure_change(self):
+    def exposure_change(self, event):
         try:
             self.camera.Set_Exposure(int(self.exposure_entry.get()))
             self.exposure_entry.config(background="white")
@@ -573,6 +628,19 @@ class Page(tk.Frame):
 
     def nloops(self):
         self.nloop_pressed = True
+
+    def browse_SLM(self):
+        filename = self.SLM.browse()
+        self.SLMpfilename.set('Filename:\n\n' + str(filename))
+    
+    def display_SLM(self):
+        filename = self.SLM.displayToSLM()
+        self.SLMfilename.set('Filename:\n\n' + str(filename))
+
+    def clear_SLM(self):
+        self.SLM.clearSLM()
+        self.SLMfilename.set('Filename:\n\nClear')
+
     
     def save_SLM(self):
         filename = self.save_SLM_entry.get()
@@ -602,22 +670,26 @@ class Page(tk.Frame):
         self.cal_transform = warp_transform
 
     def save_image(self):
-        filename = self.save_entry.get()
+        # filename = self.save_entry.get()
         try:
-            cv2.imwrite(f'{filename}.png', self.ccd_data)  # Save the captured image to a file
-            print(f"Image saved as {filename}.png")
-            self.save_button.config(background="SystemButtonFace")
-
+            tosave = Image.fromarray(self.ccd_data).convert("L")
+            file = asksaveasfile(mode='wb', defaultextension=".png",
+                                 filetypes=[("PNG Image","*.png")])
+            if file:
+                tosave.save(file)
+            print("CCD image saved")
+            self.save_button.config(background='white')
         except Exception as error:
             print(error)
             self.save_button.config(background="red")
     
     def saveLineout(self):
-        filename = self.save_lineout_entry.get()
         try:
-            self.fig.savefig(f"./data/{filename}")
-            print(f"Image saved as /data/{filename}.png")
-            self.save_SLM_button.config(background="SystemButtonFace")
+            file = asksaveasfile(mode='wb', defaultextension=".png",
+                                 filetypes=[("PNG Image","*.png")])
+            if file:
+                self.fig.savefig(file)
+            self.save_SLM_button.config(background="white")
         except Exception as error:
             print(error)
             self.save_SLM_button.config(background="red")
@@ -625,18 +697,18 @@ class Page(tk.Frame):
     def circleDetection(self):
         if self.circle_toggle:
             self.circle_toggle = False
-            self.circle_button.config(background="SystemButtonFace")
+            self.circle_toggle_button.configure(image = self.toggle_off)
         else:
             self.circle_toggle = True
-            self.circle_button.config(background="white")
+            self.circle_toggle_button.configure(image = self.toggle_on)
 
     def lineout(self):
         if self.lineout_toggle:
             self.lineout_toggle = False
-            self.lineout_button.config(background="SystemButtonFace")
+            self.lineout_toggle_button.configure(image = self.toggle_off)
         else:
             self.lineout_toggle = True
-            self.lineout_button.config(background="white")
+            self.lineout_toggle_button.configure(image = self.toggle_on)
 
 
     def trigger(self):
@@ -940,9 +1012,10 @@ class Page(tk.Frame):
                 print(error)
         else:
             if self.clearCanvas == False:
-                self.ax.clear()
+                self.canvas.get_tk_widget().pack_forget()
+                # self.ax.clear()
                 self.canvas.draw()
-                # print("CLEAR")
+                print("CLEAR")
                 self.clearCanvas = True
 
         # Circle detection
@@ -963,6 +1036,7 @@ class Page(tk.Frame):
         self.window.after(self.delay, self.updateGUI)
         time2 = time.time()
         # print(time2-time1)
+
 
 
 
