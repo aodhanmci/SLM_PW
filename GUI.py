@@ -772,7 +772,7 @@ class Page(tk.Frame):
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            if self.camera.getFrame() == None:
+            if self.camera.getFrame().any() == None:
                 self.ccd_data = np.zeros_like(self.background)
             else:
                 self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner

@@ -5,6 +5,7 @@ from tkinter.filedialog import askopenfile
 import pandas as pd
 import os
 import threading
+import numpy as np
 os.environ["PYLON_CAMEMU"] = "3"
 
 class cameraCapture(tk.Frame):
@@ -54,12 +55,32 @@ class cameraCapture(tk.Frame):
             # self.camera.PixelFormat = "Mono8"
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
             # self.camera.PixelFormat = "Mono8"
-            self.camera.ExposureTimeRaw = int(df.exposure[0])
-            # self.camera.height = self.camera.Height.GetValue()
-            # self.camera.width = self.camera.width.GetValue()
-            self.camera.GainRaw = int(df.gain[0])
+
+            minExp = int(self.camera.ExposureTimeRaw.GetMin())
+            maxExp = int(self.camera.ExposureTimeRaw.GetMax())
+            minGain = int(self.camera.GainRaw.GetMin())
+            maxGain = int(self.camera.GainRaw.GetMax())
+
+            prevExp = int(df.exposure[0])
+            prevGain = int(df.gain[0])
+
+            if prevExp > maxExp:
+                self.camera.ExposureTimeRaw = maxExp
+            elif prevExp < minExp:
+                self.camera.ExposureTimeRaw = minExp
+            else:
+                self.camera.ExposureTimeRaw = prevExp
+            
+            if prevGain > maxGain:
+                self.camera.GainRaw = maxGain
+            elif prevGain < minGain:
+                self.camera.GainRaw = minGain
+            else:
+                self.camera.GainRaw = prevGain
+
             self.camera.TriggerSource.SetValue("Line1")
             self.camera.AcquisitionMode.SetValue("Continuous")
+            
 
             # self.camera.TriggerMode.SetValue("On")
             # self.camera.TriggerMode.GetValue()
@@ -107,6 +128,7 @@ class cameraCapture(tk.Frame):
         
                 self.grabResult.Release()
                 # time.sleep(0.01)
+                # print("dos")
 
                 return self.img0
                 
@@ -133,7 +155,10 @@ class cameraCapture(tk.Frame):
 
                     return self.img0
                 else:
-                    self.img0 = None
+                    # print("hello")
+                    # self.img0 = np.zeros((2,2))
+                    self.img0 = np.zeros((1200,1600))
+                    self.img0[0][0] = False
                     # self.continue_capture = False
                     return self.img0
                 
