@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[ (r'C:\Users\loasis\Documents\GitHub\SLM_PW\settings\prevVals.csv', '.') ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

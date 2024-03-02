@@ -27,6 +27,17 @@ class cameraCapture(tk.Frame):
         self.lock = threading.Lock()
         self.frame = None
 
+        df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
+        # Create an instant camera object with the camera device found first.
+        # maxCamerasToUse = 2
+        # get transport layer and all attached devices
+        tlf = pylon.TlFactory.GetInstance()
+        devices = tlf.EnumerateDevices()
+        NUM_CAMERAS = len(devices)
+        os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
+        exitCode = 0
+
+
         try:
             df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
@@ -38,6 +49,7 @@ class cameraCapture(tk.Frame):
             os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
             exitCode = 0
             if NUM_CAMERAS == 0:
+                print("WHAT")
                 raise pylon.RuntimeException("No camera connected")
             else:
                 # print(f'{NUM_CAMERAS} cameras detected:\n')
