@@ -17,6 +17,7 @@ from scipy.ndimage import gaussian_filter
 from datetime import datetime
 import csv
 import os.path
+from sys import exit
 
 class Page(tk.Frame):
 
@@ -64,7 +65,7 @@ class Page(tk.Frame):
         upper_row_dict = {"y":first_row_button_height, "height":large_button_height, "width":large_button_width}
         lower_row_dict = {"y":second_row_button_height, "height":large_button_height, "width":large_button_width}
 
-        df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
+        df = pd.read_csv('./_internal/settings/prevVals.csv', usecols=['exposure','gain','loop'])
         self.ccd_data = np.zeros((self.CCDheight, self.CCDwidth))
         # Create a label for the SLM image
         self.slm_image_label = tk.Label(window, text="SLM", font = buttfont)
@@ -501,7 +502,7 @@ class Page(tk.Frame):
         df = pd.DataFrame({'exposure': [self.exposure_entry.get()],
                            'gain': [self.gain_entry.get()],
                            'loop': [self.loop_entry.get()]})
-        df.to_csv('./settings/prevVals.csv', index=False)
+        df.to_csv('./_internal/settings/prevVals.csv', index=False)
         self.camera.camera.Close()
         # self.parent.destroy() # THIS CAUSES ISSUES, DO NOT UNCOMMENT, USE exit() INSTEAD
         exit()
