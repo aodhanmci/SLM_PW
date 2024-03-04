@@ -41,7 +41,7 @@ class Page(tk.Frame):
         gap = min(self.Monitors.SLMwidth, self.CCDwidth)*scale_percent/600
 
         window_width = int(self.Monitors.SLMwidth*scale_percent/100 + self.CCDwidth*scale_percent/100 + 8*gap)
-        window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 3*gap)
+        window_height = int(max(self.Monitors.SLMheight, self.CCDheight)*scale_percent/50 + 2*gap)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap)}")
         window.configure(bg='white')
         # print(window.geometry())
@@ -767,12 +767,10 @@ class Page(tk.Frame):
 
     def updateGUI(self):
 
-
-
         # self.counter_flag +=1
         # print(f'CCD: {self.counter_flag}')
         with self.camera.lock:
-            if self.camera.getFrame().any() == None:
+            if self.camera.getFrame()[0][0] == -1:
                 self.ccd_data = np.zeros_like(self.background)
             else:
                 self.ccd_data = self.camera.getFrame() - self.background # Access the shared frame in a thread-safe manner
