@@ -414,11 +414,30 @@ class Page(tk.Frame):
 
 
         px = 1/plt.rcParams['figure.dpi']
+        self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'red')
+        self.lineout_frame.pack(anchor = 's', fill = Y, expand = 1)
+        self.plots_frame = tk.Frame(self.lineout_frame, bg = 'yellow')
+        self.plots_frame.pack(side = 'left', fill = 'both', expand = 1)
+        self.CCD_fig, self.CCD_ax = plt.subplots(figsize = (SLM_image_width*px, SLM_image_width*px*3/4))
+        self.CCD_canvas = FigureCanvasTkAgg(self.CCD_fig, self.plots_frame)
+        self.CCD_canvas.get_tk_widget().grid(row = 1, column = 0, sticky = 'news')
+        
+        self.x_fig, self.x_ax = plt.subplots(figsize = (SLM_image_width*px, SLM_image_width*px*3/10))
+        self.y_fig, self.y_ax = plt.subplots(figsize = (SLM_image_width*px*3/10, SLM_image_width*px*3/4))
+        self.x_lineout = FigureCanvasTkAgg(self.x_fig, self.plots_frame)
+        self.x_lineout.get_tk_widget().grid(row = 0, column = 0, sticky = 'news')
+        self.y_lineout = FigureCanvasTkAgg(self.y_fig, self.plots_frame)
+        self.y_lineout.get_tk_widget().grid(row = 1, column = 1, sticky = 'news')
+        self.x_ax.autoscale(enable = False)
+        self.x_fig.tight_layout()
+        self.x_ax.xaxis.set_tick_params(labelbottom = False)
+
+
+
+
         fig, ax = plt.subplots(figsize=(SLM_image_width*px,SLM_image_width*px*3/4)) # width, height
         self.fig, self.ax = fig, ax
         self.fig.subplots_adjust(right = 0.95, left = 0.17, bottom = 0.17)
-        self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'white')
-        self.lineout_frame.pack(anchor = 's', fill = Y, expand = 1)
         canvas = FigureCanvasTkAgg(fig, self.lineout_frame)
         self.canvas = canvas
         self.ax.set_ylim([0,260])
@@ -428,7 +447,7 @@ class Page(tk.Frame):
         self.ax.set_title("CCD Lineout")
         canvas.draw()
         canvas.get_tk_widget().configure(bg = 'gray', bd = 1)
-        canvas.get_tk_widget().pack(side = 'left')
+        # canvas.get_tk_widget().pack(side = 'left')
         self.lineout_info = tk.Frame(self.lineout_frame,
                                      width = info_width,
                                      height = SLM_image_height, 
