@@ -508,7 +508,7 @@ class Page(tk.Frame):
 
 
 
-        self.delay=500
+        self.delay=5
         print("HELLO")
         self.after(self.delay, self.updateGUI) # THIS CREATES A NEW THREAD. HOW TO STOP THIS???
         ## end of initialisation ##
