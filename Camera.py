@@ -27,16 +27,6 @@ class cameraCapture(tk.Frame):
         self.lock = threading.Lock()
         self.frame = None
 
-        df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
-        # Create an instant camera object with the camera device found first.
-        # maxCamerasToUse = 2
-        # get transport layer and all attached devices
-        tlf = pylon.TlFactory.GetInstance()
-        devices = tlf.EnumerateDevices()
-        NUM_CAMERAS = len(devices)
-        os.environ["PYLON_CAMEMU"] = f"{NUM_CAMERAS}"
-        exitCode = 0
-
         try:
             df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain'])
             # Create an instant camera object with the camera device found first.
@@ -65,6 +55,7 @@ class cameraCapture(tk.Frame):
             # self.camera.PixelFormat = "Mono8"
             self.camera.Open()  #Need to open camera before can use camera.ExposureTime
             # self.camera.PixelFormat = "Mono8"
+
             minExp = int(self.camera.ExposureTimeRaw.GetMin())
             maxExp = int(self.camera.ExposureTimeRaw.GetMax())
             minGain = int(self.camera.GainRaw.GetMin())
@@ -72,6 +63,7 @@ class cameraCapture(tk.Frame):
 
             prevExp = int(df.exposure[0])
             prevGain = int(df.gain[0])
+
             if prevExp > maxExp:
                 self.camera.ExposureTimeRaw = maxExp
             elif prevExp < minExp:
@@ -89,6 +81,13 @@ class cameraCapture(tk.Frame):
             self.camera.TriggerSource.SetValue("Line1")
             self.camera.AcquisitionMode.SetValue("Continuous")
             
+
+            # self.camera.TriggerMode.SetValue("On")
+            # self.camera.TriggerMode.GetValue()
+            # Print the model name of the camera.
+            # print("Using device ", self.camera.GetDeviceInfo().GetModelName())
+            # print("Exposure time ", self.camera.ExposureTime.GetValue())
+
             # According to their default configuration, the cameras are
             # set up for free-running continuous acquisition.
             #Grabbing continuously (video) with minimal delay
@@ -121,12 +120,22 @@ class cameraCapture(tk.Frame):
         while self.continue_capture:
             try:
                 self.grabResult = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_ThrowException)
-                image = self.converter.Convert(self.grabResult)
-                self.img0 = image.GetArray()
+                if self.grabResult.GrabSucceeded():
+                    image = self.converter.Convert(self.grabResult) # Access the openCV image data
+                    self.img0 = image.GetArray()
+                else:
+                    print("Error: ", self.grabResult.ErrorCode)
+        
                 self.grabResult.Release()
                 # time.sleep(0.01)
+                # print("dos")
+
                 return self.img0
                 
+            # except genicam.GenericException as e:
+            #     # Error handling
+            #     print("An exception occurred.", e.GetDescription())
+            #     exitCode = 1
             except Exception as error:
                 if self.camera.TriggerMode.GetValue() == "On":
                     self.camera.StopGrabbing()
@@ -146,9 +155,10 @@ class cameraCapture(tk.Frame):
 
                     return self.img0
                 else:
+                    # print("hello")
                     # self.img0 = np.zeros((2,2))
                     self.img0 = np.zeros((1200,1600))
-                    self.img0[0][0] = -1
+                    self.img0[0][0] = False
                     # self.continue_capture = False
                     return self.img0
                 

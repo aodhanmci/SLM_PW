@@ -4,7 +4,6 @@ from SLM_window import *
 from Camera import *
 from monitor_initiation import *
 from SLM_display import *
-from sys import exit
 
 def close_application():
     if SLMwindow.winfo_exists():
