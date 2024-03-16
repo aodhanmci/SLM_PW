@@ -447,14 +447,30 @@ class Page(tk.Frame):
                 center_x = np.where(self.CCD_array == input_max)[1]
                 self.center_x = int(np.mean(center_x))
                 self.center_y = int(np.mean(center_y))
-                self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
-                self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
+                self.CCD_main_ax.axvline(int(self.center_x - self.CCD_array.shape[1] / 2), color='r')
+                self.CCD_main_ax.axhline(int(self.center_y - self.CCD_array.shape[0] / 2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
-                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+
+                bound_thres = input_max * np.e ** -2
+
+                x = np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1])
+                y = np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0])
+
+                self.CCD_top_ax.plot(x, self.CCD_array[self.center_y, :], 'g-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], y, 'r-')
+
+                x_bound = x[self.CCD_array[self.center_y, :] >= bound_thres]
+                y_bound = y[self.CCD_array[:, self.center_x] >= bound_thres]
+
+                x_dia = (x_bound[-1] - x_bound[0]) * 4.5 * 10**-3
+                y_dia = (y_bound[-1] - y_bound[0]) * 4.5 * 10**-3
+
+                print(f"horizontal diameter = {x_dia} mm")
+                print(f"vertical diameter = {y_dia} mm")
+
                 self.CCD_top_ax.set_title('X Cross-section')
                 self.CCD_right_ax.set_title('Y Cross-section')
                 self.CCD_canvas.draw()
@@ -465,14 +481,28 @@ class Page(tk.Frame):
             try:
                 self.CCD_top_ax.clear()
                 self.CCD_right_ax.clear()
-                self.CCD_main_ax.axvline(int(self.center_x-self.CCD_array.shape[1]/2), color='r')
-                self.CCD_main_ax.axhline(int(self.center_y-self.CCD_array.shape[0]/2), color='g')
+                self.CCD_main_ax.axvline(int(self.center_x - self.CCD_array.shape[1] / 2), color='r')
+                self.CCD_main_ax.axhline(int(self.center_y - self.CCD_array.shape[0] / 2), color='g')
                 self.CCD_right_ax.set_xlim([0, 255])
                 self.CCD_right_ax.set_ylim([int(self.CCD_array.shape[0] / 2), -int(self.CCD_array.shape[0] / 2)])
                 self.CCD_top_ax.set_ylim([0, 255])
                 self.CCD_top_ax.set_xlim([-int(self.CCD_array.shape[1] / 2), int(self.CCD_array.shape[1] / 2)])
-                self.CCD_top_ax.plot(np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1]), self.CCD_array[self.center_y, :], 'g-')
-                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0]), 'r-')
+
+                bound_thres = np.amax(self.CCD_array) * np.e ** -2
+                x = np.linspace(self.CCD_extent[0], self.CCD_extent[1], self.CCD_array.shape[1])
+                y = np.linspace(-self.CCD_extent[2], -self.CCD_extent[3], self.CCD_array.shape[0])
+
+                x_bound = x[self.CCD_array[self.center_y, :] >= bound_thres]
+                y_bound = y[self.CCD_array[:, self.center_x] >= bound_thres]
+
+                x_dia = (x_bound[-1] - x_bound[0]) * 4.5 * 10**-3
+                y_dia = (y_bound[-1] - y_bound[0]) * 4.5 * 10**-3
+
+                print(f"horizontal diameter = {x_dia} mm")
+                print(f"vertical diameter = {y_dia} mm")
+
+                self.CCD_top_ax.plot(x, self.CCD_array[self.center_y, :], 'g-')
+                self.CCD_right_ax.plot(self.CCD_array[:, self.center_x], y, 'r-')
                 self.CCD_canvas.draw()
             except Exception as error:
                 print(error)
