@@ -93,14 +93,13 @@ class Page(tk.Frame):
         self.toggle_off = self.toggle_off.subsample(3,3)
         self.toggle_on = tk.PhotoImage(file = r'./icons/toggle_on.png')
         self.toggle_on = self.toggle_on.subsample(3,3)
+        self.toggle_green = tk.PhotoImage(file = r'./icons/toggle_on_green.png')
+        self.toggle_green = self.toggle_green.subsample(3,3)
+        self.loop_icon = tk.PhotoImage(file = r'./icons/loop.png')
+        self.loop_icon = self.loop_icon.subsample(3,3)
+        self.info_icon = tk.PhotoImage(file = r'./icons/info.png')
+        self.info_icon = self.info_icon.subsample(5,5)
 
-
-        # self.toggle_gif = Image.open('./icons/toggle.gif')
-        # self.frames = self.toggle_gif.n_frames # 28 frames
-        # self.photoimage_objects = []
-        # for i in range(self.frames):
-        #     obj = tk.PhotoImage(file = './icons/toggle.gif', format = f"gif -index {i}")
-        #     self.photoimage_objects.append(obj)
     
 
         df = pd.read_csv('./settings/prevVals.csv', usecols=['exposure','gain','loop'])
@@ -113,19 +112,11 @@ class Page(tk.Frame):
         upper_frame_height = 2*large_button_height
         self.upper_frame = tk.Frame(window, height = upper_frame_height, bg='white')
         self.upper_frame.pack(fill=X)
-        # self.upper_first_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
-        # self.upper_first_row.pack(fill=X, side='top')
-        # self.upper_second_row = tk.Frame(self.upper_frame, height = large_button_height, bg='white')
-        # self.upper_second_row.pack(fill=X, side='bottom')
 
         # Create frame for lower buttons
         lower_frame_height = 2*large_button_height*0
         self.lower_frame = tk.Frame(window, height = lower_frame_height, bg='white')
         self.lower_frame.pack(fill=X, side='bottom')
-        # self.lower_first_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
-        # self.lower_first_row.pack(fill=X, side='top')
-        # self.lower_second_row = tk.Frame(self.lower_frame, height = large_button_height, bg='white')
-        # self.lower_second_row.pack(fill=X, side='bottom')
 
         # Create frame for middle displays
         self.middle_frame = tk.Frame(window, bg='white')
@@ -133,11 +124,9 @@ class Page(tk.Frame):
         middle_frame_height = window_height - upper_frame_height - lower_frame_height
 
         self.middle_left_frame = tk.Frame(self.middle_frame, bg='white')
-        # self.middle_left_frame.pack(side = 'left', fill = 'both', expand = 1)
         self.middle_left_frame.grid(row=0, column=0, sticky='news')
 
         self.middle_right_frame = tk.Frame(self.middle_frame, bg='white')
-        # self.middle_right_frame.pack(side = 'right', fill = 'both', expand = 1)
         self.middle_right_frame.grid(row=0, column=1, sticky='news')
 
         self.middle_frame.grid_columnconfigure(0, weight=1)
@@ -232,6 +221,17 @@ class Page(tk.Frame):
         self.stop_button.grid(row=0, column=1, sticky='news')
         self.exit_button = tk.Button(self.upper_frame, text="Exit", font = buttfont, width = 50, image = self.no_icon, compound = 'top', bg='white', borderwidth=2, command=self.exitGUI)
         self.exit_button.grid(row=0, column=2, sticky='news')
+        self.gap_label = tk.Label(self.upper_frame, width = 5, bg='white', borderwidth = 0)
+        self.gap_label.grid(row = 0, column = 3, sticky = 'news')
+        self.loop_button = tk.Button(self.upper_frame, text='Loop', font = buttfont, width = 50, image = self.loop_icon, compound = 'top', bg = 'white', borderwidth = 2)
+        self.loop_button.grid(row = 0, column = 4, sticky = 'news')
+        
+        row, column = self.upper_frame.grid_size()
+        self.info_button = tk.Button(self.upper_frame, width = 20, image = self.info_icon, bg = 'white', borderwidth = 0)
+        self.info_button.grid(row=0, column=50, sticky = 'e', ipadx = 15)
+        self.upper_frame.grid_columnconfigure(50, weight=1)
+
+        
 
         SLM_image_height = int(self.Monitors.SLMheight*scale_percent/150)
         SLM_image_width = int(self.Monitors.SLMwidth*scale_percent/150)
@@ -346,10 +346,34 @@ class Page(tk.Frame):
         self.CCD_image_frame.pack(anchor = 'n', 
                                 #   padx = (x_gap/2, x_gap), pady = (y_gap, y_gap/2)
                                   fill = Y, expand = 1)
-        self.ccd_image_widget = tk.Label(self.CCD_image_frame, 
+        self.CCD_lineouts_frame = tk.Frame(self.CCD_image_frame, bg = 'white')
+        self.CCD_lineouts_frame.pack(side = 'left')
+        self.ccd_image_widget = tk.Label(self.CCD_lineouts_frame, 
                                          bg = 'white'
                                          )
-        self.ccd_image_widget.pack(side = 'left')
+        # self.ccd_image_widget.pack(side = 'left')
+        self.ccd_image_widget.grid(row = 1, column = 0, sticky = 'news')
+
+        px = 1/plt.rcParams['figure.dpi']
+
+        self.x_lineout_fig, self.x_lineout_ax = plt.subplots(
+            figsize = (CCD_image_width*px, CCD_image_width*px*3/15)
+            )
+        self.x_canvas = FigureCanvasTkAgg(self.x_lineout_fig, self.CCD_lineouts_frame)
+        self.x_canvas.get_tk_widget().grid(row = 0, column = 0, sticky = 'news')
+        self.x_lineout_ax.tick_params(direction = 'in', labelsize = 0, left = False, bottom = False)
+        self.x_lineout_ax.set_position([0, 0, 1, 1])
+
+        self.y_lineout_fig, self.y_lineout_ax = plt.subplots(
+            figsize = (CCD_image_width*px*3/15, CCD_image_width*px*3/4)
+            )
+        self.y_canvas = FigureCanvasTkAgg(self.y_lineout_fig, self.CCD_lineouts_frame)
+        self.y_canvas.get_tk_widget().grid(row = 1, column = 1, sticky = 'news')
+        self.y_lineout_ax.tick_params(direction = 'in', labelsize = 0, left = False, bottom = False)
+        self.y_lineout_ax.set_position([0, 0, 1, 1])
+
+
+
         self.ccd_image_info = tk.Frame(self.CCD_image_frame, 
                                        width = info_width, 
                                        height = CCD_image_height,
@@ -374,7 +398,19 @@ class Page(tk.Frame):
                                              borderwidth = 0,
                                              activebackground = 'white',
                                              command = self.circleDetection)
-        self.circle_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 5)
+        self.circle_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 2)
+        self.lineout_toggle_frame = tk.Frame(self.ccd_image_info, bg = 'white')
+        self.lineout_toggle_frame.pack(side = 'top', expand = 1)
+        self.lineout_toggle_label = tk.Label(self.lineout_toggle_frame, text="Lineout", font = labelfont2, bg = 'white')
+        self.lineout_toggle_label.pack(side = 'left', expand = 1)
+        self.lineout_toggle_button = tk.Button(self.lineout_toggle_frame, 
+                                             image = self.toggle_off, 
+                                             bg = 'white', 
+                                             relief = 'sunken',
+                                             borderwidth = 0,
+                                             activebackground = 'white',
+                                             command = self.lineout)
+        self.lineout_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 2)
         self.ccdcon_frame = tk.Frame(self.ccd_image_info, bg = 'white')
         self.ccdcon_frame.pack(side = 'top', expand = 1)
         self.exposure_frame = tk.Frame(self.ccdcon_frame, bg = 'white')
@@ -413,40 +449,30 @@ class Page(tk.Frame):
         self.save_CCD.pack(side = 'top', expand = 1)
 
 
-        px = 1/plt.rcParams['figure.dpi']
-        self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'red')
+        self.lineout_frame = tk.Frame(self.middle_right_frame, bg = 'white')
         self.lineout_frame.pack(anchor = 's', fill = Y, expand = 1)
-        self.plots_frame = tk.Frame(self.lineout_frame, bg = 'yellow')
-        self.plots_frame.pack(side = 'left', fill = 'both', expand = 1)
+        # self.plots_frame = tk.Frame(self.lineout_frame, bg = 'yellow')
+        # self.plots_frame.pack(side = 'left', fill = 'both', expand = 1)
         self.CCD_fig, self.CCD_ax = plt.subplots(figsize = (SLM_image_width*px, SLM_image_width*px*3/4))
-        self.CCD_canvas = FigureCanvasTkAgg(self.CCD_fig, self.plots_frame)
-        self.CCD_canvas.get_tk_widget().grid(row = 1, column = 0, sticky = 'news')
-        
-        self.x_fig, self.x_ax = plt.subplots(figsize = (SLM_image_width*px, SLM_image_width*px*3/10))
-        self.y_fig, self.y_ax = plt.subplots(figsize = (SLM_image_width*px*3/10, SLM_image_width*px*3/4))
-        self.x_lineout = FigureCanvasTkAgg(self.x_fig, self.plots_frame)
-        self.x_lineout.get_tk_widget().grid(row = 0, column = 0, sticky = 'news')
-        self.y_lineout = FigureCanvasTkAgg(self.y_fig, self.plots_frame)
-        self.y_lineout.get_tk_widget().grid(row = 1, column = 1, sticky = 'news')
-        self.x_ax.autoscale(enable = False)
-        self.x_fig.tight_layout()
-        self.x_ax.xaxis.set_tick_params(labelbottom = False)
+        self.CCD_canvas = FigureCanvasTkAgg(self.CCD_fig, self.lineout_frame)
+        # self.CCD_canvas.get_tk_widget().grid(row = 1, column = 0, sticky = 'news')
+        self.CCD_canvas.get_tk_widget().pack(side = 'left')
 
 
 
 
-        fig, ax = plt.subplots(figsize=(SLM_image_width*px,SLM_image_width*px*3/4)) # width, height
-        self.fig, self.ax = fig, ax
-        self.fig.subplots_adjust(right = 0.95, left = 0.17, bottom = 0.17)
-        canvas = FigureCanvasTkAgg(fig, self.lineout_frame)
-        self.canvas = canvas
-        self.ax.set_ylim([0,260])
-        self.ax.set_xlim([0,int(self.CCDwidth)]) # FIX THIS
-        self.ax.set_xlabel("Position (x)")
-        self.ax.set_ylabel("Pixel Intensity (0-255)")
-        self.ax.set_title("CCD Lineout")
-        canvas.draw()
-        canvas.get_tk_widget().configure(bg = 'gray', bd = 1)
+        # fig, ax = plt.subplots(figsize=(SLM_image_width*px,SLM_image_width*px*3/4)) # width, height
+        # self.fig, self.ax = fig, ax
+        # self.fig.subplots_adjust(right = 0.95, left = 0.17, bottom = 0.17)
+        # # canvas = FigureCanvasTkAgg(fig, self.lineout_frame)
+        # self.canvas = canvas
+        # self.ax.set_ylim([0,260])
+        # self.ax.set_xlim([0,int(self.CCDwidth)]) # FIX THIS
+        # self.ax.set_xlabel("Position (x)")
+        # self.ax.set_ylabel("Pixel Intensity (0-255)")
+        # self.ax.set_title("CCD Lineout")
+        # canvas.draw()
+        # canvas.get_tk_widget().configure(bg = 'gray', bd = 1)
         # canvas.get_tk_widget().pack(side = 'left')
         self.lineout_info = tk.Frame(self.lineout_frame,
                                      width = info_width,
@@ -456,20 +482,20 @@ class Page(tk.Frame):
                                      highlightthickness = 1)
         self.lineout_info.pack(side = 'right')
         self.lineout_info.pack_propagate(0)
-        self.lineout_label = tk.Label(self.lineout_info, text="Lineouts", font = labelfont1, bg='white')
+        self.lineout_label = tk.Label(self.lineout_info, text="Lineouts\n(NOT IN USE)", font = labelfont1, bg='white')
         self.lineout_label.pack(side = 'top', expand = 1)
-        self.lineout_toggle_frame = tk.Frame(self.lineout_info, bg = 'white')
-        self.lineout_toggle_frame.pack(side = 'top', expand = 1)
-        self.lineout_toggle_label = tk.Label(self.lineout_toggle_frame, text="Lineout", font = labelfont2, bg = 'white')
-        self.lineout_toggle_label.pack(side = 'left', expand = 1)
-        self.lineout_toggle_button = tk.Button(self.lineout_toggle_frame, 
-                                             image = self.toggle_off, 
-                                             bg = 'white', 
-                                             relief = 'sunken',
-                                             borderwidth = 0,
-                                             activebackground = 'white',
-                                             command = self.lineout)
-        self.lineout_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 5)
+        # self.lineout_toggle_frame = tk.Frame(self.lineout_info, bg = 'white')
+        # self.lineout_toggle_frame.pack(side = 'top', expand = 1)
+        # self.lineout_toggle_label = tk.Label(self.lineout_toggle_frame, text="Lineout", font = labelfont2, bg = 'white')
+        # self.lineout_toggle_label.pack(side = 'left', expand = 1)
+        # self.lineout_toggle_button = tk.Button(self.lineout_toggle_frame, 
+        #                                      image = self.toggle_off, 
+        #                                      bg = 'white', 
+        #                                      relief = 'sunken',
+        #                                      borderwidth = 0,
+        #                                      activebackground = 'white',
+        #                                      command = self.lineout)
+        # self.lineout_toggle_button.pack(side = 'right', expand = 1, padx = 10, pady = 5)
         self.save_lineout_button = tk.Button(self.lineout_info,
                                   image = self.save_icon,
                                   bg = 'white',
@@ -478,7 +504,7 @@ class Page(tk.Frame):
         self.save_lineout_button.pack(side = 'top', expand = 1)
         
 
-        window_width = int(2*SLM_preview_width + 2.5*info_width)
+        window_width = int(2*SLM_preview_width + 3.5*info_width)
         window.geometry(f"{window_width}x{window_height}+{int(self.Monitors.mainDim[0]/2-window_width/2)}+{int(self.Monitors.mainDim[1]/2-window_height/2-gap)}")
 
         self.circle_toggle = False
@@ -996,61 +1022,60 @@ class Page(tk.Frame):
         if self.lineout_toggle:
             self.clearCanvas = False
             try:
-                data_y = self.ccd_data_gui[int(cy),:]
-                data_x = self.ccd_data_gui[:, int(cx)]
+                data_y = np.flip(self.ccd_data_gui[int(cy),:])
+                data_x = np.flip(self.ccd_data_gui[:, int(cx)])
                 x = np.arange(len(data_y))
                 y = np.arange(len(data_x))
 
-                self.ax.clear()
-                self.x_plot = self.ax.plot(x,data_y, color = "green")
-                self.ax.plot(y,data_x, color = "red")
+                self.x_lineout_ax.clear()
+                self.y_lineout_ax.clear()
+                self.x_lineout_ax.plot(x,data_y, color = "black")
+                self.y_lineout_ax.plot(data_x,y, color = 'black')
 
                 cv2.line(image, (0, int(cy)), (int(max(x)*2), int(cy)), color=255, thickness=1)
                 cv2.line(image, (int(cx), 0), (int(cx), int(max(y)*2)), color=255, thickness=1)
                 
-                try:
-                    self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
-                except:
-                    pass
+                # try:
+                #     self.ax.plot(x, self.GA_object.goal_image[int(cy),:])
+                # except:
+                #     pass
 
-                try:
-                    if np.amax(self.SLM.SLMimage) != 0.0:
-                        gratingArrayRescaled = cv2.resize(SLMgrating, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-                        SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
-                        ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
-                        # ySLM = gratingArray[int(self.SLMheight/2),:]
-                        self.ax.plot(x,ySLM, color="red")
-                    else:
-                        # if self.clearCanvas != False:
-                        self.clearCanvas = False
+                # try:
+                #     if np.amax(self.SLM.SLMimage) != 0.0:
+                #         gratingArrayRescaled = cv2.resize(SLMgrating, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                #         SLMrescaledwidth, SLMrescaledheight = gratingArrayRescaled.shape
+                #         ySLM = gratingArrayRescaled[int(SLMrescaledwidth/2),:]
+                #         # ySLM = gratingArray[int(self.SLMheight/2),:]
+                #         self.ax.plot(x,ySLM, color="red")
+                #     else:
+                #         # if self.clearCanvas != False:
+                #         self.clearCanvas = False
 
-                except Exception as error:
-                    # print(error)
-                    pass
+                # except Exception as error:
+                #     # print(error)
+                #     pass
 
-                try:
-                    goalArray = cv2.resize(goalArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
-                    yGoal = goalArray[int(cy),:]
-                    self.ax.plot(x,yGoal, color="black")
-                except Exception as error:
-                    pass
-                self.ax.set_ylim([0,260])
-                self.ax.set_xlabel("Position (x)")
-                self.ax.set_ylabel("Pixel Intensity (0-255)")
-                self.ax.set_title("CCD Lineout")
-                self.canvas.draw()
+                # try:
+                #     goalArray = cv2.resize(goalArray, dsize=(int(self.ccd_data.shape[1]*self.scale_percent/100), int(self.ccd_data.shape[0]*self.scale_percent/100)), interpolation=cv2.INTER_CUBIC)
+                #     yGoal = goalArray[int(cy),:]
+                #     self.ax.plot(x,yGoal, color="black")
+                # except Exception as error:
+                #     pass
+                self.x_lineout_ax.set_ylim([0,256])
+                self.x_lineout_ax.set_xlim([0,int(self.ccd_data_gui.shape[1])])
+                self.y_lineout_ax.set_xlim([0,256])
+                self.y_lineout_ax.set_ylim([0,int(self.ccd_data_gui.shape[0])])
+                self.x_canvas.draw()
+                self.y_canvas.draw()
             except Exception as error:
                 print(error)
         else:
             if self.clearCanvas == False:
-                # self.canvas.get_tk_widget().pack_forget()
-                self.ax.clear()
-                self.ax.set_ylim([0,260])
-                self.ax.set_xlabel("Position (x)")
-                self.ax.set_ylabel("Pixel Intensity (0-255)")
-                self.ax.set_title("CCD Lineout")
-                self.canvas.draw()
-                print("CLEAR")
+                self.x_lineout_ax.clear()
+                self.y_lineout_ax.clear()
+                self.x_canvas.draw()
+                self.y_canvas.draw()
+                # print("CLEAR")
                 self.clearCanvas = True
 
         # Circle detection
