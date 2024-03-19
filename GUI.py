@@ -227,8 +227,8 @@ class Page(tk.Frame):
         self.loop_button.grid(row = 0, column = 4, sticky = 'news')
         
         row, column = self.upper_frame.grid_size()
-        self.info_button = tk.Button(self.upper_frame, width = 20, image = self.info_icon, bg = 'white', borderwidth = 0)
-        self.info_button.grid(row=0, column=50, sticky = 'e', ipadx = 15)
+        self.info_button = tk.Button(self.upper_frame, width = 20, image = self.info_icon, bg = 'white', borderwidth = 0, relief = 'sunken', activebackground = 'white')
+        self.info_button.grid(row=0, column=50, sticky = 'e', padx = 15)
         self.upper_frame.grid_columnconfigure(50, weight=1)
 
         
